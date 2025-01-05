@@ -12,9 +12,9 @@ class Category extends Model
     protected $primaryKey = "id_category";
     public  $timesstamp = false;
     protected $fillable = [
-        'category',
-        'description',
-        'status'
+    'category',
+    'description',
+    'status'
     ];
 
     protected $guarded = [];

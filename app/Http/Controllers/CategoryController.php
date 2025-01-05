@@ -23,7 +23,7 @@ class CategoryController extends Controller
             $categories = DB::table("category")
                 ->where('category', 'like', '%' . $query . '%')
                 ->where('status', "==", '1')
-                ->orderBy('id_category', 'desc')
+                ->orderBy('id', 'desc')
                 ->paginate(7);
 
             return view('store.category.index', ['category' => $categories, 'searchText' => $query]);
