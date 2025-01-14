@@ -24,7 +24,7 @@ class CategoryController extends Controller
                 ->where('category', 'like', '%' . $query . '%')
                 ->where('status', "=", 1)
                 ->orderBy('id', 'desc')
-                ->paginate(7);
+                ->paginate(5);
 
             return view('store.category.index', ['category' => $categories, 'searchText' => $query]);
         }
@@ -70,7 +70,7 @@ class CategoryController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(CategoryFormRequest $request, $id)
     {
         $category = Category::findOrFail($id); 
         $category->category = $request->get('category');

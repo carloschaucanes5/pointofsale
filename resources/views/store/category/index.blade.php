@@ -65,7 +65,7 @@
                         @forEach($category as $cat)
                         <tr>
                             <td>
-                                <a href="#" class="btn btn-warning btn-sm"><i class="bi bi-pen"></i></a>
+                                <a href="{{route('category.edit',$cat->id)}}" class="btn btn-warning btn-sm"><i class="bi bi-pen"></i></a>
                                 <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target><i class="bi bi-trash"></i></button>
                             </td>
                             <td>{{$cat->id}}</td>
@@ -75,7 +75,7 @@
                         @endforeach
                     </tbody>
                 </table>
-                        {{$category->links('pagination::bootstrap-5')}}
+                    {{$category->links('pagination::bootstrap-5')}}
             </div>
         </div>
     </section>
