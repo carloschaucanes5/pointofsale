@@ -87,6 +87,6 @@ class CategoryController extends Controller
         $category = Category::findOrFail($id);
         $category->status = 0;
         $category->update();
-        return Redirect::to("store/category");
+        return Redirect::to("store/category")->with("success","Categoria eliminada correctamente");
     }
 }

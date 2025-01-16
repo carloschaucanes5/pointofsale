@@ -66,12 +66,13 @@
                         <tr>
                             <td>
                                 <a href="{{route('category.edit',$cat->id)}}" class="btn btn-warning btn-sm"><i class="bi bi-pen"></i></a>
-                                <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target><i class="bi bi-trash"></i></button>
+                                <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#modal-delete-{{$cat->id}}"><i class="bi bi-trash"></i></button>
                             </td>
                             <td>{{$cat->id}}</td>
                             <td>{{$cat->category}}</td>
                             <td>{{$cat->description}}</td>
                         </tr>
+                        @include("store.category.modal")
                         @endforeach
                     </tbody>
                 </table>
@@ -79,7 +80,6 @@
             </div>
         </div>
     </section>
-
-    
-
 @endsection
+
+
