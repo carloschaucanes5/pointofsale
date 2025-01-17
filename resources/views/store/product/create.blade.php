@@ -46,17 +46,6 @@
 
                     <div class="col-md-6 col-12">
                         <div class="form-group">
-                            <label for="unit">Unidad</label>
-                            <select name="unit" class="form-control" id="unit">
-                                <option>Piezas</option>
-                                <option>Kilos</option>
-                                <option>Cajas</option>
-                                <option>Paquetes</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-md-6 col-12">
-                        <div class="form-group">
                             <label for="description">Descripcion</label>
                             <input type="text" class="form-control" name="description" id="description" placeholder="Ingresar la descripcion">
                         </div>

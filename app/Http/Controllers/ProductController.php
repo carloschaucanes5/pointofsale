@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 use App\Models\Product;
+use App\Models\Category;
 use App\Http\Requests\ProductFormRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -35,7 +36,8 @@ class ProductController extends Controller
         $categories = DB::table("category")
                 ->where('status', "=", 1)
                 ->orderBy('id', 'desc')
-                ->paginate(5);
+                ->get();
+                
         return view("store.product.create",['category' => $categories]);
     }
 
@@ -75,15 +77,35 @@ class ProductController extends Controller
      */
     public function edit(string $id)
     {
-        //
+        $product = Product::findOrFail($id);
+        $categories = DB::table("category")
+            ->where('status', "=", 1)
+            ->orderBy('id', 'desc')
+            ->get();
+        return view('store.product.edit',['product'=>$product,'categories'=>$categories]);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(ProductFormRequest $request, string $id)
     {
-        //
+        $product = Product::findOrFail($id);
+        $product->code = $request->input('code');
+        $product->category_id = $request->input('category_id');
+        $product->name = $request->input('name');
+        $product->description = $request->input('description');
+        $product->stock= $request->input('stock');
+        if($request->hashFile('image')){
+            $image = $request->file("image");
+            $nameimage = Str::slug($request->name).".".$image->guessExtension();
+            $route = public_path('/images/products/');
+            copy($image->getRealPath(),$route.$nameimage);
+            $product->image = $nameimage;
+
+        }
+        $product->update();
+        return redirect()->route('product.index');
     }
 
     /**
