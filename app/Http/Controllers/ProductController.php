@@ -113,6 +113,9 @@ class ProductController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $product = Product::findOrFail($id);
+        $product->status = 0;
+        $product->update();
+        return Redirect::to("store/product")->with("success","Producto ha cambiado a estado inactivo");
     }
 }

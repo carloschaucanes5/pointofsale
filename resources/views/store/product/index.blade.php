@@ -78,7 +78,7 @@
                             <td><img src="{{asset('/images/products/'.$pro->image)}}" alt="imagen producto" class="img-thumbnail" width="70px" height="70px"/></td>
                             <td>{{$pro->status==1?'Activo':'Inactivo'}}</td>
                         </tr>
-                      
+                        @include('store.product.modal')
                         @endforeach
                     </tbody>
                 </table>
