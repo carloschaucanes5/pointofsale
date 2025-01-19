@@ -20,6 +20,7 @@ class CustomerController extends Controller
             $query = trim($request->get('searchText'));
             $customers = DB::table("person")
                 ->where('name', 'like', '%' . $query . '%')
+                ->where('person_type','=','customer')
                 ->where('status', "=", 1)
                 ->orderBy('name', 'asc')
                 ->paginate(7);
@@ -42,7 +43,7 @@ class CustomerController extends Controller
     public function store(CustomerFormRequest $request)
     {
         $customer = new Customer();
-        $customer->person_type = $request->get('person_type');
+        $customer->person_type = 'customer';
         $customer->name = $request->get('name');
         $customer->document_type = $request->get('document_type');
         $customer->document_number = $request->get('document_number');
