@@ -77,8 +77,8 @@
                             <td>{{$cus->address}}</td>
                             <td>{{$cus->phone}}</td>
                             <td>{{$cus->email}}</td>
-                            <td>{{$cus->document_number}}</td>
                         </tr>
+                        @include('sale.customer.modal')
                         @endforeach
                     </tbody>
                 </table>

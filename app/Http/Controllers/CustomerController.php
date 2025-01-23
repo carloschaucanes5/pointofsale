@@ -44,14 +44,14 @@ class CustomerController extends Controller
     {
         $customer = new Customer();
         $customer->person_type = 'customer';
-        $customer->name = $request->get('name');
-        $customer->document_type = $request->get('document_type');
-        $customer->document_number = $request->get('document_number');
-        $customer->address = $request->get('address');
-        $customer->phone = $request->get('phone');
-        $customer->email = $request->get('email');
+        $customer->name = $request->post('name');
+        $customer->document_type = $request->post('document_type');
+        $customer->document_number = $request->post('document_number');
+        $customer->address = $request->post('address');
+        $customer->phone = $request->post('phone');
+        $customer->email = $request->post('email');
         $customer->status = 1;
-        $category->save();
+        $customer->save();
         return Redirect::to('sale/customer');
     }
 
@@ -68,7 +68,7 @@ class CustomerController extends Controller
      */
     public function edit(string $id)
     {
-        return view("sale.customer.edit", ["customer" => Category::findOrFail($id)]);
+        return view("sale.customer.edit", ["customer" => Customer::findOrFail($id)]);
     }
 
     /**
@@ -77,7 +77,7 @@ class CustomerController extends Controller
     public function update(CustomerFormRequest $request, $id)
     {
         $customer = Customer::findOrFail($id); 
-        $customer->person_type = $request->get('person_type');
+        $customer->person_type = 'customer';
         $customer->name = $request->get('name');
         $customer->document_type = $request->get('document_type');
         $customer->document_number = $request->get('document_number');
@@ -93,7 +93,7 @@ class CustomerController extends Controller
      */
     public function destroy(string $id)
     {
-        $customer = Category::findOrFail($id);
+        $customer = Customer::findOrFail($id);
         $customer->status = 0;
         $customer->update();
         return Redirect::to("sale/customer")->with("success","Cliente eliminado correctamente");

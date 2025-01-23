@@ -23,14 +23,12 @@ class CustomerFormRequest extends FormRequest
     {
 
         return [
-            'person_type' => 'required|max:50',
             'name' => 'required|max:100',
             'document_type'=>'required|max:20',
             'document_number'=>'required:max:15',
             'address'=>'required|max:70',
             'phone'=>'required|max:15',
             'email'=>'required|max:50',
-            'status'=>'required'
         ];
     }
 }
