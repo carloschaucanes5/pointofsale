@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('voucher_number',10);
             $table->decimal('tax',11,4);
             $table->timestamps();
+            $table->string('status');
         });
     }
 

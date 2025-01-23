@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('detail_income', function (Blueprint $table) {
+        Schema::table('income_detail', function (Blueprint $table) {
             $table->unsignedBigInteger('product_id');
 
             // Crear la llave foránea
@@ -24,7 +24,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('detail_income', function (Blueprint $table) {
+        Schema::table('income_detail', function (Blueprint $table) {
             //
         });
     }
