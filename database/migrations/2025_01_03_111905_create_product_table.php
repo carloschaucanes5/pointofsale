@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('description',512);
             $table->string('image',50);
             $table->integer('status');
+            $table->string('unit',50);
         });
     }
 
