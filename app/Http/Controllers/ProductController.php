@@ -52,6 +52,7 @@ class ProductController extends Controller
         $product->description = $request->input('description');
         $product->stock = $request->input('stock');
         $product->name = $request->input('name');
+        $product->unit = "unit";
         $product->status = 1;
         if($request->hashFile('image')){
             $image = $request->file("image");

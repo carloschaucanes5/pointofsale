@@ -28,16 +28,16 @@ class IncomeController extends Controller
     public function index(Request $request)
     {
         if($request){
-            $query = trim($request->get('texto'));
+            $query = trim($request->get('searchText'));
             $incomes = DB::table("income as inc")
                        ->join('person as pe','pe.id','=','inc.supplier_id')
                        ->join('income_detail as ide','ide.income_id','=','inc.id')
-                       ->select('inc.id','inc.created_at','inc.updated_at','pe.name','inc.voucher_type','inc.voucher_number','inc.tax','inc.status',DB::raw('sum(ide.quantity * ide.purchase_price) as total'))
+                       ->select('inc.id','inc.created_at','pe.name','inc.voucher_type','inc.voucher_number','inc.tax','inc.status',DB::raw('sum(ide.quantity * ide.purchase_price) as total'))
                        ->where('inc.voucher_number','like','%'.$query.'%')
                        ->groupBy('inc.id','inc.created_at','pe.name','inc.voucher_type','inc.voucher_number','inc.tax','inc.status')
                        ->orderBy('inc.id','desc')
                        ->paginate(15);
-            return view('purchase.income.index',['incomes'=>$incomes,'text'=>$query]);
+            return view('purchase.income.index',['incomes'=>$incomes,'texto'=>$query]);
         }
     }
 
@@ -49,31 +49,33 @@ class IncomeController extends Controller
         $persons = DB::table("person")->where('person_type','=','supplier')->get();
         $incomes = Income::all();
         $products = DB::table("product as p")
-                    ->select(DB::raw('CONCAT(p.code," ",p.name) as article'),'p.stock','p.unit')
+                    ->select(DB::raw('CONCAT(p.code," ",p.name) as article'),'p.stock','p.unit','p.id')
                     ->where('p.status','=',1)
                     ->get();
         return view('purchase.income.create',['persons'=>$persons,'incomes'=>$incomes,'products'=>$products]);            
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Store a newly createds resource in storage.
      */
-    public function store(Request $request)
+    public function store(IncomeFormRequest $request)
     {
+        echo json_encode($request);
+        exit;
         try{
             DB::beginTransaction();
             $income = new Income();
-            $income->supplier_id = $request->get('supplier_id');
-            $income->voucher_type = $request->get('voucher_type');
-            $income->voucher_number = $request->get('voucher_number');
+            $income->supplier_id = $request->post('supplier_id');
+            $income->voucher_type = $request->post('voucher_type');
+            $income->voucher_number = $request->post('voucher_number');
             $income->tax = 16;
             $income->status = 1;
             $income->save();
 
-            $products = $request->get('products');
-            $quantities = $request->get('quantities');
-            $purchase_prices = $request->get('purchase_price');
-            $sale_prices = $request->get('sale_price');
+            $products = $request->post('products');
+            $quantities = $request->post('quantities');
+            $purchase_prices = $request->post('purchase_prices');
+            $sale_prices = $request->post('sale_prices');
             
             $cont = 0;
             while($cont < count($products)){
@@ -98,7 +100,23 @@ class IncomeController extends Controller
      */
     public function show(string $id)
     {
-        
+        $income = DB::table("income as i")
+                 ->join("person as p","i.supplier_id","=","p.id")
+                 ->join("income_detail as ide","i.id","=","ide.income_id")
+                 ->select("i.id","i.created_at","i.updated_at","p.name","i.voucher_type","i.voucher_number","i.tax","i.status",DB::raw('sum(ide.quantity*ide.purchase_price) as total'))
+                 ->where("i.id","=",$id)
+                 ->groupBy("i.id","i.created_at","i.updated_at","p.name","i.voucher_type","i.voucher_number","i.tax","i.status")
+                 ->orderBy("i.id","desc")
+                 ->first();
+
+                 $details = DB::table("income_detail as d")
+                            ->join("product as pro","pro.id","=","d.product_id")
+                            ->select("pro.name as article","d.quantity","d.purchase_price","d.sale_price")
+                            ->where("d.income_id","=",$id)
+                            ->get();
+
+                            return view("purchase.income.show",["income"=>$income,"details"=>$details]);
+
     }
 
     /**
@@ -122,6 +140,9 @@ class IncomeController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $income = Income::findOrFail($id);
+        $income->status = "C";
+        $income->update();
+        return Redirect::to("purchase/income");
     }
 }
