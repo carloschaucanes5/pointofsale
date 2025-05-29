@@ -70,7 +70,7 @@
                             </td>
                             <td>{{$us->id}}</td>
                             <td>{{$us->name}}</td>
-                            <td>{{$us->email}}</td>
+                            <td>{{$us->email}}</td> 
                         </tr>
                       
                         @endforeach
