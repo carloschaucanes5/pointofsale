@@ -16,6 +16,7 @@ class UserController extends Controller
             $query = trim($request->get('searchText'));
             $users = DB::table("users")
                 ->where('name', 'like', '%' . $query . '%')
+                ->where('status',1)
                 ->orderBy('id', 'desc')
                 ->paginate(5);
 
@@ -53,5 +54,13 @@ class UserController extends Controller
         $user->update();
         return Redirect::to("segurity/user");
 
+    }
+
+    public function destroy(string $id)
+    {
+        $user = User::findOrFail($id);
+        $user->status = 0;
+        $user->update();
+        return Redirect::to("segurity/user")->with("success","Usuario ha cambiado a estado inactivo");
     }
 }

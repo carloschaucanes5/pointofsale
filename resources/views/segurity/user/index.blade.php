@@ -72,7 +72,7 @@
                             <td>{{$us->name}}</td>
                             <td>{{$us->email}}</td> 
                         </tr>
-                      
+                        @include('segurity.user.modal')
                         @endforeach
                     </tbody>
                 </table>
