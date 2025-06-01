@@ -60,13 +60,14 @@ class IncomeController extends Controller
      */
     public function create()
     {
+        $forms = DB::table("formsale")->get();
         $persons = DB::table("person")->where('person_type','=','supplier')->get();
         $incomes = Income::all();
         $products = DB::table("product as p")
                     ->select(DB::raw('CONCAT(p.code," ",p.name) as article'),'p.stock','p.id')
                     ->where('p.status','=',1)
                     ->get();
-        return view('purchase.income.create',['persons'=>$persons,'incomes'=>$incomes,'products'=>$products]);            
+        return view('purchase.income.create',['persons'=>$persons,'incomes'=>$incomes,'products'=>$products, 'forms'=>$forms]);            
     }
 
     /**
@@ -90,6 +91,7 @@ class IncomeController extends Controller
             $quantities = $request->post('quantities');
             $purchase_prices = $request->post('purchase_prices');
             $sale_prices = $request->post('sale_prices');
+            $forms_sale = $request->post('forms_sale');
             
             $cont = 0;
             while($cont < count($products)){
@@ -99,6 +101,7 @@ class IncomeController extends Controller
                 $detail->quantity = $quantities[$cont];
                 $detail->purchase_price = $purchase_prices[$cont];
                 $detail->sale_price = $sale_prices[$cont];
+                $detail->form_sale = $forms_sale[$cont];
                 $detail->save();
                 $cont = $cont + 1;
             }

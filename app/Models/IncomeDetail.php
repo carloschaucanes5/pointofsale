@@ -16,6 +16,7 @@ class IncomeDetail extends Model
     'purchase_price',
     'sale_price',
     'income_id',
-    'product_id'
+    'product_id',
+    'form_sale'
     ];
 }

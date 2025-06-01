@@ -11,45 +11,50 @@
             <form action="{{route('income.store')}}" method="POST" class="form">
                 @csrf
                 <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                            <label for="supplier_id">Proveedor</label>
-                            <select name="supplier_id" id="supplier_id" class="form-control">
-                                @foreach ($persons as $per)
-                                <option value="{{$per->id}}">{{$per->name}}</option>   
-                                @endforeach
-                                
+                    <div style="display: none">
+                        <div class="form-group">
+                            <label for="voucher_type">Tipo de comprobante</label>
+                            <select name="voucher_type" id="voucher_type" class="form-control">
+                                <option value="RFC">RFC</option>
                             </select>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label for="voucher_type">Tipo de comprobante</label>
-                                <select name="voucher_type" id="voucher_type" class="form-control">
-                                    <option value="RFC">RFC</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label for="voucher_number">Número de comprobante</label>
-                                <input type="text" class="form-control" name="voucher_number" id="voucher_number" placeholder="Número comprobante">
-                            </div>
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="product_id">Producto</label>
-                                <input type="text" id="product_search" class="form-control" placeholder="Buscar producto...">
-                                <input type="hidden" name="product_id" id="product_id">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="supplier_id">Proveedor</label>
+                                        <select name="supplier_id" id="supplier_id" class="form-control">
+                                            @foreach ($persons as $per)
+                                            <option value="{{$per->id}}">{{$per->name}}</option>   
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="voucher_number">Número de comprobante</label>
+                                        <input type="text" class="form-control" name="voucher_number" id="voucher_number" placeholder="Número comprobante">
+                                    </div>
+                                </div>
                             </div>
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label for="product_id">Producto</label>
+                                        <input type="text" id="product_search" class="form-control" placeholder="Buscar producto...">
+                                        <input type="hidden" name="product_id" id="product_id">
+                                    </div>
+                                </div>
+                            </div> 
                         </div>
-                        <div class="col-md-6" id="product_info"></div>
+                        <div class="col-md-6">
+                            <div id="product_info"></div>
+                        </div>
                     </div>
                     <div class="row">
-                        <div class="col-md-3">
+                        <div class="col-md-1">
                             <div class="form-group">
                                 <label for="quantity">Cantidad</label>
                                 <input type="number" class="form-control" name="quantity" id="quantity" placeholder="Cantidad">
@@ -69,6 +74,16 @@
                         </div>
                         <div class="col-md-3">
                             <div class="form-group">
+                                <label for="form_sale">Forma/V</label>
+                                <select name="form_sale" id="form_sale" class="form-control">
+                                    @foreach ($forms as $for)
+                                    <option value="{{$for->description}}">{{$for->description}}</option>   
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-group">
                                 <label for="btn_add"></label><br/>
                                 <button type="button" id="btn_add" class="btn btn-success me-1 mb-1">Agregar</button>
                             </div>
@@ -86,24 +101,22 @@
                                         <th>Cantidad</th>
                                         <th>Costo/U</th>
                                         <th>Costo/T</th>
+                                        <th>M/V</th>
                                         <th>Precio/U</th>
                                         <th>Precio/T</th>
                                         <th>Utilidad</th> 
                                     </tr>
                                 </thead>
                                 <tfoot>
-                                    <th>TOTAL</th>
-                                    <th></th>
-                                    <th></th>
+                                    <th colspan="4">TOTALES</th>
                                     <th></th>
                                     <th id="total_purchase">$ 0.00</th>
                                     <th></th>
-                                    <th></th>
                                     <th id="total_sale">$ 0.00</th>
+                                    <th></th>
                                     <th id="total_profit">$ 0.00</th>
                                 </tfoot>
                                 <tbody>
-                                  
                                 </tbody> 
                             </table>
                         </div>
@@ -130,6 +143,7 @@
 @push("scripts")
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+
     document.getElementById('product_search').addEventListener('keypress', function(e) {
         if (e.which === 13 || e.keyCode === 13) {
             e.preventDefault();
@@ -178,6 +192,18 @@
             }
         }
     });
+
+   document.getElementById('purchase_price').addEventListener('blur', function() {
+        let purchasePrice = parseFloat(this.value);
+        if (isNaN(purchasePrice) || purchasePrice < 0) {
+            this.value = '';
+            alert('El precio de compra debe ser un número positivo.');
+        }else{
+            document.getElementById('sale_price').value = (purchasePrice / 0.70).toFixed(2);
+        }
+    });
+
+    
 });
 
 $(document).ready(function(){
@@ -194,6 +220,7 @@ var total_profit = 0;
 var subtotal_sale = [];
 var subtotal_purchase = [];
 var subtotal_profit = [];
+var forms_sale = [];
 $('#save').hide();
 $('#product_id').change(showValues());
 
@@ -212,11 +239,14 @@ function add(){
     var quantity = $('#quantity').val();
     var purchase_price = $('#purchase_price').val();
     var sale_price = $('#sale_price').val();
+    var form_sale = $('#form_sale').val();
     var profit = 0;
     if(product_id!="" && quantity!="" && quantity > 0 && purchase_price !="" && sale_price!=""){
         subtotal_purchase[cont] = quantity * purchase_price;
         subtotal_sale[cont] = quantity * sale_price;
         subtotal_profit[cont] = subtotal_sale[cont] - subtotal_purchase[cont];
+        forms_sale[cont] = form_sale;
+
         total_purchase = total_purchase + subtotal_purchase[cont];
         total_sale = total_sale + subtotal_sale[cont];
         total_profit = total_profit + subtotal_profit[cont];
@@ -228,22 +258,25 @@ function add(){
             <input type="hidden" name="products[]" value="`+product_id+`">`+product_id+`
             <td>`+code+`</td>
             <td>`+product_name+`</td>
-            <td><input class="form-control" type="number" size="2" name="quantities[]" value="`+quantity+`"></td>
-            <td><input class="form-control" type="number" size="4" name="purchase_prices[]" value="`+purchase_price+`"></td>
-            <td><input class="form-control" type="number" size="4" name="subtotal_purchases[]" value="`+subtotal_purchase[cont]+`"></td>
-            <td><input class="form-control" type="number" size="4" name="sale_prices[]" value="`+sale_price+`"></td>
-            <td><input class="form-control" type="number" size="4" name="subtotal_sales[]" value="`+subtotal_sale[cont]+`"></td>
-            <td><input class="form-control" type="number" size="4" name="subtotal_profits[]" value="`+subtotal_profit[cont]+`"></td>
+            <td><input class="form-control" type="number" class="w-10" name="quantities[]" value="`+quantity+`"></td>
+            <td><input class="form-control" type="number"  name="purchase_prices[]" value="`+purchase_price+`"></td>
+            <td><input class="form-control" type="number"  name="subtotal_purchases[]" value="`+subtotal_purchase[cont]+`"></td>
+            <td><input class="form-control" type="text" readonly name="forms_sale[]" value="`+forms_sale[cont]+`"></td>
+            <td><input class="form-control" type="number"  name="sale_prices[]" value="`+sale_price+`"></td>
+            <td><input class="form-control" type="number"  name="subtotal_sales[]" value="`+subtotal_sale[cont]+`"></td>
+            <td><input class="form-control" type="number"  name="subtotal_profits[]" value="`+subtotal_profit[cont]+`"></td>
         </tr>
         `;
         cont++;
         limpiar();
-        $('#total_purchase').html("$ "+total_purchase.toFixed(2));
-        $('#total_sale').html("$ "+total_sale);
-        $('#total_profit').html("$ "+total_profit.toFixed(2));
-        
+        $('#total_purchase').html(formatCurrency.format(total_purchase.toFixed(2)));
+        $('#total_sale').html(formatCurrency.format(total_sale));
+        $('#total_profit').html(formatCurrency.format(total_profit.toFixed(2)));
         evaluate();
         $('#detalles').append(row);
+        $('#product_search').val("");
+        $('#product_search').focus();
+        $('#product_info').html('');
     }
     else
     {
@@ -258,7 +291,7 @@ function limpiar(){
 }
 
 function evaluate(){
-    if(total > 0){
+    if(total_purchase > 0){
         $('#save').show();
     }
     else
@@ -268,8 +301,15 @@ function evaluate(){
 }
 
 function eliminar(index){
-    total = total -subtotal[index];
-    $('#total').html('$ '+ total);
+    total_purchase = total_purchase -subtotal_purchase[index];
+    $('#total_purchase').html('$ '+ total_purchase.toFixed(2));
+
+    total_sale = total_sale -subtotal_sale[index];
+    $('#total_sale').html('$ '+ total_sale);
+
+    total_profit = total_profit -subtotal_profit[index];
+    $('#total_profit').html('$ '+ total_profit);
+
     $('#fila'+index).remove();
     evaluate();
 }

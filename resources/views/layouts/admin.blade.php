@@ -509,4 +509,9 @@
     function hideSpinner() {
         document.getElementById('global-spinner-overlay').style.display = 'none';
     }
+    const formatCurrency = new Intl.NumberFormat('es-CO', {
+    style: 'currency',
+    currency: 'COP'
+    });
+
 </script>
