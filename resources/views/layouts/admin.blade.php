@@ -265,6 +265,10 @@
                     <ul class="nav sidebar-menu flex-column" data-lte-toggle="treeview" role="menu"
                         data-accordion="false">
                         <li class="nav-item menu-open">
+                            <a href="{{ route('home') }}" class="nav-link active">
+                                <i class="nav-icon bi bi-circle"></i>
+                                <p>Home</p>
+                            </a>
                             <a href="#" class="nav-link active">
                                 <i class="nav-icon bi bi-speedometer"></i>
                                 <p>
@@ -487,7 +491,22 @@
         });
     </script>
     <!-- jsvectormap -->
+    <div id="global-spinner-overlay" style="display:none;position:fixed;z-index:9999;top:0;left:0;width:100vw;height:100vh;background:rgba(255,255,255,0.7);justify-content:center;align-items:center;">
+    <div class="spinner-border text-primary" style="width: 4rem; height: 4rem;" role="status">
+        <span class="visually-hidden">Cargando...</span>
+    </div>
+</div>
 </body>
 <!--end::Body-->
 
 </html>
+
+@stack('scripts')
+<script>
+    function showSpinner() {
+        document.getElementById('global-spinner-overlay').style.display = 'flex';
+    }
+    function hideSpinner() {
+        document.getElementById('global-spinner-overlay').style.display = 'none';
+    }
+</script>

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
 use App\Models\Income;
+use App\Models\Product;
 use App\Models\IncomeDetail;
 use App\Http\Requests\IncomeFormRequest;
 use Exception;
@@ -36,9 +37,22 @@ class IncomeController extends Controller
                        ->where('inc.voucher_number','like','%'.$query.'%')
                        ->groupBy('inc.id','inc.created_at','pe.name','inc.voucher_type','inc.voucher_number','inc.tax','inc.status')
                        ->orderBy('inc.id','desc')
-                       ->paginate(15);
+                       ->paginate(8);
             return view('purchase.income.index',['incomes'=>$incomes,'texto'=>$query]);
         }
+    }
+
+    public function search_product($codeOrName){
+        $products = DB::table('product')
+            ->where(function($query) use ($codeOrName) {
+                $query->where('name', 'like', '%' . $codeOrName . '%')
+                      ->orWhere('code', 'like', '%' . $codeOrName . '%');
+            })
+            ->where('status', '=', 1)
+            ->select('id', 'code', 'name', 'stock','concentration', 'presentation')
+            ->get();
+
+        return response()->json($products);
     }
 
     /**

@@ -11,6 +11,7 @@ use App\Http\Controllers\LoginController;
 use App\Http\Controllers\SaleController;
 use App\Models\Laboratory;
 use App\http\Controllers\UserController;
+use App\Http\Controllers\HomeController;
 
 /*
 |--------------------------------------------------------------------------
@@ -47,9 +48,10 @@ Route::resource('sale/customer', CustomerController::class);
 Route::resource('sale/sale', SaleController::class);
 Route::resource('purchase/supplier', SupplierController::class);
 Route::resource('purchase/income', IncomeController::class);
+Route::get('purchase/income/search_product/{codeOrName}', [IncomeController::class, 'search_product']);
 
 Route::resource('segurity/user', UserController::class);
 
 Auth::routes();
 
-Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+Route::get('/home', [HomeController::class, 'index'])->name('home');
