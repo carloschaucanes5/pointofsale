@@ -53,7 +53,7 @@
                             <div id="product_info"></div>
                         </div>
                     </div>
-                    <div class="row">
+                    <div class="row" id="row_add" style="display: none">
                         <div class="col-md-1">
                             <div class="form-group">
                                 <label for="quantity">Cantidad</label>
@@ -112,8 +112,8 @@
                                     <th></th>
                                     <th id="total_purchase">$ 0.00</th>
                                     <th></th>
-                                    <th id="total_sale">$ 0.00</th>
                                     <th></th>
+                                    <th id="total_sale">$ 0.00</th>
                                     <th id="total_profit">$ 0.00</th>
                                 </tfoot>
                                 <tbody>
@@ -143,6 +143,8 @@
 @push("scripts")
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('product_search').focus();
+
 
     document.getElementById('product_search').addEventListener('keypress', function(e) {
         if (e.which === 13 || e.keyCode === 13) {
@@ -171,6 +173,7 @@
                                 
                             </div>
                                 `;
+                            document.getElementById('row_add').style.display = '';
                         } else {
                             productInfo.innerHTML = '<span class="text-danger">Producto no encontrado.</span>';
                             document.getElementById('product_id').value = '';
@@ -203,7 +206,17 @@
         }
     });
 
-    
+document.querySelector('#detalles tbody').addEventListener('input', function(e) {
+    if (
+        e.target.name === 'quantities[]' ||
+        e.target.name === 'purchase_prices[]' ||
+        e.target.name === 'sale_prices[]'
+    ) {
+        recalcularTotales();
+    }
+});
+
+
 });
 
 $(document).ready(function(){
@@ -274,14 +287,21 @@ function add(){
         $('#total_profit').html(formatCurrency.format(total_profit.toFixed(2)));
         evaluate();
         $('#detalles').append(row);
+        // Agrega eventos para recalcular totales al cambiar valores en la fila recién agregada
+        $('#fila'+(cont-1)).find('input[name="quantities[]"], input[name="purchase_prices[]"], input[name="sale_prices[]"]').on('input', function() {
+            recalcularTotales();
+        });
+
         $('#product_search').val("");
         $('#product_search').focus();
         $('#product_info').html('');
+        document.getElementById('row_add').style.display = 'none';
     }
     else
     {
         alert("Error al ingresar el detalle del ingreso, revise los datos del articulo");
     }
+    recalcularTotales
 }
 
 function limpiar(){
@@ -312,7 +332,39 @@ function eliminar(index){
 
     $('#fila'+index).remove();
     evaluate();
+    recalcularTotales();
 }
+
+
+function recalcularTotales() {
+    let total_purchase = 0;
+    let total_sale = 0;
+    let total_profit = 0;
+
+    document.querySelectorAll('#detalles tbody tr').forEach(function(row) {
+        let quantity = parseFloat(row.querySelector('input[name="quantities[]"]').value) || 0;
+        let purchase_price = parseFloat(row.querySelector('input[name="purchase_prices[]"]').value) || 0;
+        let sale_price = parseFloat(row.querySelector('input[name="sale_prices[]"]').value) || 0;
+
+        let subtotal_purchase = quantity * purchase_price;
+        let subtotal_sale = quantity * sale_price;
+        let subtotal_profit = subtotal_sale - subtotal_purchase;
+
+        row.querySelector('input[name="subtotal_purchases[]"]').value = subtotal_purchase.toFixed(2);
+        row.querySelector('input[name="subtotal_sales[]"]').value = subtotal_sale.toFixed(2);
+        row.querySelector('input[name="subtotal_profits[]"]').value = subtotal_profit.toFixed(2);
+
+        total_purchase += subtotal_purchase;
+        total_sale += subtotal_sale;
+        total_profit += subtotal_profit;
+    });
+
+    document.getElementById('total_purchase').innerHTML = formatCurrency.format(total_purchase.toFixed(2));
+    document.getElementById('total_sale').innerHTML = formatCurrency.format(total_sale.toFixed(2));
+    document.getElementById('total_profit').innerHTML = formatCurrency.format(total_profit.toFixed(2));
+}
+
+
 </script>
 @endpush
 
