@@ -142,11 +142,20 @@
 
 @push("scripts")
 <script>
+    //inicializacion de variables
+    var cont = 0; 
+    var total_sale = 0;
+    var total_purchase = 0;
+    var total_profit = 0;
+
+    var subtotal_sale = [];
+    var subtotal_purchase = [];
+    var subtotal_profit = [];
+    var forms_sale = [];
     document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('product_search').focus();
-
-
-    document.getElementById('product_search').addEventListener('keypress', function(e) {
+        //evento buscar producto
+        document.getElementById('product_search').focus();
+        document.getElementById('product_search').addEventListener('keypress', function(e) {
         if (e.which === 13 || e.keyCode === 13) {
             e.preventDefault();
             let search = this.value;
@@ -195,7 +204,7 @@
             }
         }
     });
-
+    //evento para calcular el precio sugerido
    document.getElementById('purchase_price').addEventListener('blur', function() {
         let purchasePrice = parseFloat(this.value);
         if (isNaN(purchasePrice) || purchasePrice < 0) {
@@ -206,36 +215,26 @@
         }
     });
 
-document.querySelector('#detalles tbody').addEventListener('input', function(e) {
-    if (
-        e.target.name === 'quantities[]' ||
-        e.target.name === 'purchase_prices[]' ||
-        e.target.name === 'sale_prices[]'
-    ) {
-        recalcularTotales();
-    }
-});
 
-
-});
-
-$(document).ready(function(){
-    $('#btn_add').click(function(){
+    //evento para adicinar un nuevo item a la compra
+    document.getElementById('btn_add').addEventListener('click',function(){
         add();
     });
 
-});
-var cont = 0; 
-var total_sale = 0;
-var total_purchase = 0;
-var total_profit = 0;
 
-var subtotal_sale = [];
-var subtotal_purchase = [];
-var subtotal_profit = [];
-var forms_sale = [];
-$('#save').hide();
-$('#product_id').change(showValues());
+
+    //ocultar el boton de guardar y mostrar los detalles de cada producto
+    $('#save').hide();
+    $('#product_id').change(showValues());
+
+    //funcion para recalcular los totales
+
+
+});
+
+
+
+
 
 function showValues(){
     var dataArticle = document.getElementById('product_id').value.split('_');
@@ -271,13 +270,13 @@ function add(){
             <input type="hidden" name="products[]" value="`+product_id+`">`+product_id+`
             <td>`+code+`</td>
             <td>`+product_name+`</td>
-            <td><input class="form-control" type="number" class="w-10" name="quantities[]" value="`+quantity+`"></td>
-            <td><input class="form-control" type="number"  name="purchase_prices[]" value="`+purchase_price+`"></td>
-            <td><input class="form-control" type="number"  name="subtotal_purchases[]" value="`+subtotal_purchase[cont]+`"></td>
-            <td><input class="form-control" type="text" readonly name="forms_sale[]" value="`+forms_sale[cont]+`"></td>
-            <td><input class="form-control" type="number"  name="sale_prices[]" value="`+sale_price+`"></td>
-            <td><input class="form-control" type="number"  name="subtotal_sales[]" value="`+subtotal_sale[cont]+`"></td>
-            <td><input class="form-control" type="number"  name="subtotal_profits[]" value="`+subtotal_profit[cont]+`"></td>
+            <td><input class="form-control" onchange="actualizarTotales(this)" type="number" class="w-10" name="quantities[]" value="`+quantity+`"></td>
+            <td><input class="form-control" onchange="actualizarTotales(this)" type="number"  name="purchase_prices[]" value="`+purchase_price+`"></td>
+            <td><input class="form-control" onchange="actualizarTotales(this)" type="number"  name="subtotal_purchases[]" value="`+subtotal_purchase[cont]+`"></td>
+            <td><input class="form-control" onchange="actualizarTotales(this)" type="text" readonly name="forms_sale[]" value="`+forms_sale[cont]+`"></td>
+            <td><input class="form-control" onchange="actualizarTotales(this)" type="number"  name="sale_prices[]" value="`+sale_price+`"></td>
+            <td><input class="form-control" onchange="actualizarTotales(this)" type="number"  name="subtotal_sales[]" value="`+subtotal_sale[cont]+`"></td>
+            <td><input class="form-control" onchange="actualizarTotales(this)" type="number"  name="subtotal_profits[]" value="`+subtotal_profit[cont]+`"></td>
         </tr>
         `;
         cont++;
@@ -301,8 +300,27 @@ function add(){
     {
         alert("Error al ingresar el detalle del ingreso, revise los datos del articulo");
     }
-    recalcularTotales
+    
 }
+
+function actualizarTotales(ele){
+    let row = ele.closest('tr');
+    let quantity = parseFloat(row.querySelector('input[name="quantities[]"]').value) || 0;
+    let purchase_price = parseFloat(row.querySelector('input[name="purchase_prices[]"]').value) || 0;
+    let sale_price = parseFloat(row.querySelector('input[name="sale_prices[]"]').value) || 0;
+
+    let subtotal_purchase = quantity * purchase_price;
+    let subtotal_sale = quantity * sale_price;
+    let subtotal_profit = subtotal_sale - subtotal_purchase;
+
+    row.querySelector('input[name="subtotal_purchases[]"]').value = subtotal_purchase.toFixed(2);
+    row.querySelector('input[name="subtotal_sales[]"]').value = subtotal_sale.toFixed(2);
+    row.querySelector('input[name="subtotal_profits[]"]').value = subtotal_profit.toFixed(2);
+
+    recalcularTotales();
+}
+
+
 
 function limpiar(){
     $('#quantity').val("");
@@ -335,7 +353,6 @@ function eliminar(index){
     recalcularTotales();
 }
 
-
 function recalcularTotales() {
     let total_purchase = 0;
     let total_sale = 0;
@@ -345,7 +362,7 @@ function recalcularTotales() {
         let quantity = parseFloat(row.querySelector('input[name="quantities[]"]').value) || 0;
         let purchase_price = parseFloat(row.querySelector('input[name="purchase_prices[]"]').value) || 0;
         let sale_price = parseFloat(row.querySelector('input[name="sale_prices[]"]').value) || 0;
-
+        console.log(quantity, purchase_price, sale_price);
         let subtotal_purchase = quantity * purchase_price;
         let subtotal_sale = quantity * sale_price;
         let subtotal_profit = subtotal_sale - subtotal_purchase;
@@ -362,8 +379,8 @@ function recalcularTotales() {
     document.getElementById('total_purchase').innerHTML = formatCurrency.format(total_purchase.toFixed(2));
     document.getElementById('total_sale').innerHTML = formatCurrency.format(total_sale.toFixed(2));
     document.getElementById('total_profit').innerHTML = formatCurrency.format(total_profit.toFixed(2));
-}
 
+}
 
 </script>
 @endpush
