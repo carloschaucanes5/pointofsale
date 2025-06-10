@@ -435,6 +435,7 @@
         integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx" crossorigin="anonymous">
     </script>
     <script src="/pointofsale/public/js/bootstrap-select.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     @stack('scripts')
 
     <!--end::Required Plugin(AdminLTE)--><!--begin::OverlayScrollbars Configure-->

@@ -76,6 +76,7 @@ class IncomeController extends Controller
     public function store(IncomeFormRequest $request)
     {
 
+        
         try{
             DB::beginTransaction();
             $income = new Income();
@@ -92,6 +93,7 @@ class IncomeController extends Controller
             $purchase_prices = $request->post('purchase_prices');
             $sale_prices = $request->post('sale_prices');
             $forms_sale = $request->post('forms_sale');
+            $expiration_dates = $request->post('expiration_dates');
             
             $cont = 0;
             while($cont < count($products)){
@@ -102,15 +104,24 @@ class IncomeController extends Controller
                 $detail->purchase_price = $purchase_prices[$cont];
                 $detail->sale_price = $sale_prices[$cont];
                 $detail->form_sale = $forms_sale[$cont];
+                $detail->expiration_date = Carbon::parse($expiration_dates[$cont])->format('Y-m-d');
                 $detail->save();
                 $cont = $cont + 1;
             }
             DB::commit();
+             return response()->json([
+            'message' => 'Factura registrada correctamente.',
+            'success' => true
+        ]);
             
         }catch(Exception $e){
             DB::rollBack();
+            return response()->json([
+                'message' => 'An error occurred while processing your request.',
+                'error' => $e->getMessage()
+            ]);
         }
-        return Redirect::to("purchase/income");
+        
     }
 
     /**
