@@ -9,9 +9,11 @@ use App\Http\Controllers\IncomeController;
 use App\Http\Controllers\LaboratoryController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\SaleController;
+use App\Http\Controllers\VoucherController;
 use App\Models\Laboratory;
 use App\http\Controllers\UserController;
 use App\Http\Controllers\HomeController;
+use App\Models\Voucher;
 
 /*
 |--------------------------------------------------------------------------
@@ -48,6 +50,7 @@ Route::resource('sale/customer', CustomerController::class);
 Route::resource('sale/sale', SaleController::class);
 Route::resource('purchase/supplier', SupplierController::class);
 Route::resource('purchase/income', IncomeController::class);
+Route::resource('purchase/voucher', VoucherController::class);
 Route::get('purchase/income/search_product/{codeOrName}', [IncomeController::class, 'search_product']);
 
 Route::resource('segurity/user', UserController::class);
