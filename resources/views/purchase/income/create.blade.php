@@ -211,7 +211,7 @@
                         document.getElementById('product_id').value = '';
                     }).finally(()=>{
                         hideSpinner();
-                    }) ;
+                    });
             }
         }
 
@@ -259,9 +259,6 @@
             updateSubtotales(line, quantity, purchase, sale);
         }
     });
-
-
-
 
     //enviar formulario incomeform tipo ajax con fetch a la ruta de store
     document.getElementById('incomeform').addEventListener('submit',function(e){

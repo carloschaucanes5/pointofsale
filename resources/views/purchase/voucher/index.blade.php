@@ -61,6 +61,7 @@
                             <th>Número de Factura</th>
                             <th>valor</th>
                             <th>Descripcion</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -75,6 +76,10 @@
                             <td>{{$vou->voucher_number}}</td>
                              <td>$ {{number_format($vou->total,2,',','.')}}</td>
                             <td>{{$vou->description}}</td>
+                            <td>
+                                <button type="button" class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#modal-view-{{$vou->id}}"><i class="bi bi-eye"></i></button>
+                            </td>        
+
                         </tr>
                         @include("purchase.voucher.modal")
                         @endforeach

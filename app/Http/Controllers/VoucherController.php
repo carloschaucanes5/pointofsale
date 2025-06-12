@@ -44,40 +44,59 @@ class VoucherController extends Controller
      * Store a newly created resource in storage.
      */
     public function store(VoucherFormRequest $request)
-    {
+    { 
+        try{
+        DB::beginTransaction();
         $voucher = new Voucher();
         $voucher->voucher_number = $request->get('voucher_number');
         $voucher->total = $request->get('total');
         $voucher->description = $request->get('description');
         $voucher->status = 1;
         $voucher->save();
-
-if ($request->hasFile('photo')) {
-    $photo = $request->file('photo');
-
-    $folder = public_path('images/purchase/voucher');
-
-    // Crea la carpeta si no existe
-    if (!file_exists($folder)) {
-        mkdir($folder, 0775, true);
-    }
-
-    $name = now()->format('Y-m-d') . '-' . $voucher->voucher_number . '.' . $photo->getClientOriginalExtension();
-
-    // Mueve el archivo al directorio público
-    $photo->move($folder, $name);
-
-    // (Opcional) Guardar la ruta en la base de datos
-    $voucher->photo = 'images/purchase/voucher/' . $name;
-    
-}
-        return response()->json([
-            'success' => true,
-            'message' => 'Factura Creada correctamente',
-            'voucher' => $voucher,
-            'photo' => $path ?? null
-        ]);
-        //return Redirect::to('purchase/voucher')->with('success', 'Factura creada correctamente');
+        if ($request->hasFile('photo') && $request->file('photo')->isValid()) {
+            $photo = $request->file('photo');
+            $folder = public_path('images/purchase/voucher');
+            // Crea la carpeta si no existe
+            if (!file_exists($folder)) {
+                mkdir($folder, 0775, true);
+            }
+            $id = $voucher->id?$voucher->id:$voucher->voucher_number;
+            $name = $id . '.' . $photo->getClientOriginalExtension();
+            // Mueve el archivo al directorio público
+            $movedFile = $photo->move($folder, $name);
+            if($movedFile && file_exists($movedFile->getPathname())){
+                $voucher->photo = 'images/purchase/voucher/' . $id;
+                $voucher->save();
+                DB::commit();
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Factura creada correctamente',
+                    'voucher' => $voucher
+                ], 201);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No existe la ruta de la imagen o no se ha podido mover el archivo.'
+                ], 500);
+              
+            }       
+        }
+        else
+        {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'No se ha subido la imagen correctamente. Por favor, inténtelo de nuevo.'
+            ], 500);
+            
+        }
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al crear la factura: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
