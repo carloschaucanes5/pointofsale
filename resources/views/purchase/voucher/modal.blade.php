@@ -1,9 +1,29 @@
+
+
+<style>
+  .custom-modal-dialog {
+      max-width: 90vw; /* Adjust the width as needed */
+      margin: 0 auto; /* Center the modal */
+  }
+  .custom-modal-dialog .modal-content {
+      width: 100%; /* Ensure the content takes full width */
+  }
+  /*responsive adjustments*/
+  @media (max-width: 768px) {
+      .custom-modal-dialog {
+          max-width: 100vw; /* Full width on smaller screens */
+      }
+      .custom-modal-dialog .modal-content {
+          width: 100%; /* Ensure the content takes full width */
+      }
+  }
+</style>
 <div class="modal fade" id="modal-delete-{{$vou->id}}">
     <div class="modal-dialog">
         <form action="{{route('voucher.destroy',$vou->id)}}" method="POST">
         @csrf
         @method("DELETE")
-        <div class="modal-content bg-danger">
+        <div id="modal_contenido" class="modal-content bg-danger">
             <div class="modal-header">
                 <h4 class="modal-title">Eliminar Factura</h4>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
@@ -33,7 +53,7 @@
         <img src="{{ asset($vou->photo) }}" style="max-width: 100vw; height: auto;" />
       </div>
       <div class="modal-footer justify-content-between">
-        <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cerrar</button>
+        <button type="button" class="btn btn-outline-info" data-bs-dismiss="modal">Cerrar</button>
       </div>
     </div>
   </div>

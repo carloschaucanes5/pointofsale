@@ -56,12 +56,12 @@
                     <thead>
                         <tr>
                             <th>Opciones</th>
-                            <th>Id</th>
-                            <th>Fecha</th>
                             <th>Número de Factura</th>
+                            <th>Proveedor</th>
+                            <th>Fecha</th>
                             <th>valor</th>
-                            <th>Descripcion</th>
-                            <th>Acciones</th>
+                            <th>Responsable</th>
+                            <th>Estado</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -70,15 +70,14 @@
                             <td>
                                 <a href="{{route('voucher.edit',$vou->id)}}" class="btn btn-warning btn-sm"><i class="bi bi-pen"></i></a>
                                 <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#modal-delete-{{$vou->id}}"><i class="bi bi-trash"></i></button>
-                            </td>
-                            <td>{{$vou->id}}</td>
-                            <td>{{$vou->updated_at}}</td>
-                            <td>{{$vou->voucher_number}}</td>
-                             <td>$ {{number_format($vou->total,2,',','.')}}</td>
-                            <td>{{$vou->description}}</td>
-                            <td>
                                 <button type="button" class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#modal-view-{{$vou->id}}"><i class="bi bi-eye"></i></button>
-                            </td>        
+                            </td>
+                            <td>{{$vou->voucher_number}}</td>
+                            <td>{{$vou->supplier_name}}</td>
+                            <td>{{ \Carbon\Carbon::parse($vou->updated_at)->format('d/m/Y g:i A') }}</td>
+                            <td>$ {{number_format($vou->total,2,',','.')}}</td>
+                            <td>{{$vou->user_name}}</td>
+                            <td>{{$vou->status_payment}}</td>
 
                         </tr>
                         @include("purchase.voucher.modal")

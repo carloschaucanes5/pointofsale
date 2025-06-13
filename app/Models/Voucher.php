@@ -17,7 +17,10 @@ class Voucher extends Model
     'description',
     'total',
     'status',
-    'photo'
+    'photo',
+    'supplier_id',
+    'users_id',
+    'status_payment'
     ];
 
     protected $guarded = [];

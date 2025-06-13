@@ -13,6 +13,22 @@
             @csrf
             <div class="card-body">
                 <div class="form-group">
+                    <label for="supplier_id">Proveedor</label>
+                    <select name="supplier_id" id="supplier_id" class="form-control">
+                        @foreach ($suppliers as $per)
+                        <option value="{{$per->id}}">{{$per->name}}</option>   
+                        @endforeach
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="status_payment">Estado Pago</label>
+                    <select name="status_payment" id="status_payment" class="form-control">
+                        @foreach ($status_payment as $pay)
+                        <option value="{{$pay}}">{{$pay}}</option>   
+                        @endforeach
+                    </select>
+                </div>
+                <div class="form-group">
                     <label for="voucher_number">Numero de Factura</label>
                     <input type="text" class="form-control" name="voucher_number" id="voucher_number" required>
                 </div>
@@ -83,7 +99,8 @@
         formData.append('voucher_number', document.getElementById('voucher_number').value);
         formData.append('total', document.getElementById('total').value);
         formData.append('description', document.getElementById('description').value);
-
+        formData.append('supplier_id', document.getElementById('supplier_id').value);
+        formData.append('status_payment', document.getElementById('status_payment').value);
         // Convertir canvas a blob
         canvas.toBlob(function(blob) {
             const photoInput = document.getElementById('photo');
