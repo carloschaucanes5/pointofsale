@@ -21,20 +21,33 @@ class VoucherController extends Controller
 
     public function index(Request $request)
     {
-        if ($request) {
-            $query = trim($request->get('searchText'));
-            $vouchers = DB::table("voucher")
-                ->join('person', 'voucher.supplier_id', '=', 'person.id')
-                ->join('users', 'voucher.users_id', '=', 'users.id')
-                ->select('voucher.id', 'voucher.voucher_number', 'voucher.description', 'voucher.total', 'voucher.photo', 'voucher.status', 'person.name as supplier_name','voucher.status_payment','person.name as supplier_name','voucher.updated_at','users.name as user_name')
-                ->where('voucher.status', '=', 1)
-                ->where('voucher_number', 'like', '%' . $query . '%')
-                ->orWhere('description', 'like', '%' . $query . '%')
-                ->orderBy('id', 'desc')
-                ->paginate(5);
+if ($request) {
+    $query = trim($request->get('searchText'));
+    $vouchers = DB::table("voucher")
+        ->join('person', 'voucher.supplier_id', '=', 'person.id')
+        ->join('users', 'voucher.users_id', '=', 'users.id')
+        ->select(
+            'voucher.id',
+            'voucher.voucher_number',
+            'voucher.description',
+            'voucher.total',
+            'voucher.photo',
+            'voucher.status',
+            'person.name as supplier_name',
+            'voucher.status_payment',
+            'voucher.updated_at',
+            'users.name as user_name'
+        )
+        ->where('voucher.status', '=', 1)
+        ->where(function ($q) use ($query) {
+            $q->where('voucher_number', 'like', '%' . $query . '%')
+              ->orWhere('description', 'like', '%' . $query . '%');
+        })
+        ->orderBy('voucher.id', 'desc')
+        ->paginate(5);
 
-            return view('purchase.voucher.index', ['vouchers' => $vouchers, 'searchText' => $query]);
-        }
+    return view('purchase.voucher.index', ['vouchers' => $vouchers, 'searchText' => $query]);
+}
     }
 
     /**

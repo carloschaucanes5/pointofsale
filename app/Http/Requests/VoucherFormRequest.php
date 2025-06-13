@@ -24,7 +24,7 @@ class VoucherFormRequest extends FormRequest
         return [
             'voucher_number' => 'required',
             'description' => 'max:256',
-            'total' => 'required|numeric|min:0'
+            'total' => 'required'
         ];
     }
 }

@@ -51,7 +51,7 @@
                     <input type="hidden" name="photo" id="photo" value="0">
                     <p>
                         <button type="button" class="btn btn-sm btn-info mt-2" id="capture"><i class="bi bi-camera"></i></button>
-                        <button type="button" class="btn btn-sm btn-danger mt-2" id="capture"><i class="bi bi-trash"></i></button>
+                        <button type="button" class="btn btn-sm btn-danger mt-2" id="clear_capture"><i class="bi bi-trash"></i></button>
                     </p>
                 </div>
             </div>
@@ -80,6 +80,14 @@
             console.error("No se pudo acceder a la cámara", err);
         });
 
+    // Limpiar captura
+    document.getElementById('clear_capture').addEventListener('click', () => {
+        const context = canvas.getContext('2d');
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        preview.src = '';
+        preview.style.display = 'none';
+        document.getElementById('photo').value = 0; // Resetear valor de foto
+    });
     // Capturar foto
     captureButton.addEventListener('click', () => {
         const context = canvas.getContext('2d');
@@ -94,7 +102,6 @@
     // Enviar formulario con imagen
     form.addEventListener('submit', function (e) {
         e.preventDefault();
-
         const formData = new FormData();
         formData.append('voucher_number', document.getElementById('voucher_number').value);
         formData.append('total', document.getElementById('total').value);

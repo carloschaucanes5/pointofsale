@@ -8,7 +8,6 @@
         <div class="card-header">
             <h3 class="card-title">Editar Factura {{$voucher->voucher_number}}</h3>
         </div>
-
         <form  id="voucherForm" method="POST" class="form">
              @csrf
             <div class="card-body">
@@ -56,7 +55,7 @@
                     @endif 
                     <p>
                         <button type="button" class="btn btn-sm btn-info mt-2" id="capture"><i class="bi bi-camera"></i></button>
-                        <button type="button" class="btn btn-sm btn-danger mt-2" id="capture"><i class="bi bi-trash"></i></button>
+                        <button type="button" class="btn btn-sm btn-danger mt-2" id="clear_capture"><i class="bi bi-trash"></i></button>
                     </p>
                 </div>
             </div>
@@ -83,6 +82,15 @@
         .catch(err => {
             console.error("No se pudo acceder a la cámara", err);
         });
+
+    // Limpiar captura
+    document.getElementById('clear_capture').addEventListener('click', () => {
+        const context = canvas.getContext('2d');
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        preview.src = '';
+        preview.style.display = 'none';
+        document.getElementById('photo').value = 0; // Resetear valor de foto
+    });
     // Capturar foto
     captureButton.addEventListener('click', () => {
         const context = canvas.getContext('2d');
@@ -102,6 +110,8 @@
         formData.append('voucher_number', document.getElementById('voucher_number').value);
         formData.append('total', document.getElementById('total').value);
         formData.append('description', document.getElementById('description').value);
+        formData.append('supplier_id', document.getElementById('supplier_id').value);
+        formData.append('status_payment', document.getElementById('status_payment').value);
         // Convertir canvas a blob
         canvas.toBlob(function(blob) {
             const photoInput = document.getElementById('photo');

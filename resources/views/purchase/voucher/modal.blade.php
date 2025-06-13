@@ -50,7 +50,7 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body text-center">
-        <img src="{{ asset($vou->photo) }}" style="max-width: 100vw; height: auto;" />
+        <img id="voucher-photo-{{$vou->id}}" src="{{ asset($vou->photo) }}" style="max-width: 100vw; height: auto;" />
       </div>
       <div class="modal-footer justify-content-between">
         <button type="button" class="btn btn-outline-info" data-bs-dismiss="modal">Cerrar</button>
@@ -59,5 +59,17 @@
   </div>
 </div>
 
-  
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+      @foreach ($vouchers as $vou)
+          const modal = document.getElementById('modal-view-{{$vou->id}}');
+          modal.addEventListener('show.bs.modal', function () {
+              const img = document.getElementById('voucher-photo-{{$vou->id}}');
+              const originalSrc = img.getAttribute('src').split('?')[0]; // evitar duplicar ?t=
+              const timestamp = new Date().getTime();
+              img.src = originalSrc + '?t=' + timestamp;
+          });
+      @endforeach
+  });
+</script>
  
