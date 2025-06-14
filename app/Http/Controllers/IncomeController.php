@@ -60,6 +60,25 @@ class IncomeController extends Controller
      */
     public function create()
     {
+         $vouchers = DB::table("voucher")
+        ->join('person', 'voucher.supplier_id', '=', 'person.id')
+        ->join('users', 'voucher.users_id', '=', 'users.id')
+        ->select(
+            'voucher.id',
+            'voucher.voucher_number',
+            'voucher.description',
+            'voucher.total',
+            'voucher.photo',
+            'voucher.status',
+            'person.name as supplier_name',
+            'voucher.status_payment',
+            'voucher.updated_at',
+            'users.name as user_name'
+        )
+        ->where('voucher.status', '=', 1)
+        ->orderBy('voucher.id', 'desc')
+        ->get();
+
         $forms = DB::table("formsale")->get();
         $persons = DB::table("person")->where('person_type','=','supplier')->get();
         $incomes = Income::all();
@@ -67,7 +86,7 @@ class IncomeController extends Controller
                     ->select(DB::raw('CONCAT(p.code," ",p.name) as article'),'p.stock','p.id')
                     ->where('p.status','=',1)
                     ->get();
-        return view('purchase.income.create',['persons'=>$persons,'incomes'=>$incomes,'products'=>$products, 'forms'=>$forms]);            
+        return view('purchase.income.create',['persons'=>$persons,'incomes'=>$incomes,'products'=>$products, 'forms'=>$forms, 'vouchers'=>$vouchers]);            
     }
 
     /**
