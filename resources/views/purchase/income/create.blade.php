@@ -20,8 +20,26 @@
                         </div>
                     </div>
                     <div class="row">
+                        <div class="col-md-5">
+                            <div class="form-group">
+                                <label for="voucher_id">Factura</label>
+                                <select name="voucher_id" id="voucher_id" class="form-control">
+                                    @foreach ($vouchers as $voucher)
+                                    <option value="{{$voucher->id}}">Proveedor({{$voucher->supplier_name }}) Factura({{$voucher->voucher_number }}) Valor({{$voucher->total}})</option>   
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <br/>
+                                <button type="button" class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#modal-view-"><i class="bi bi-eye"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
                         <div class="col-md-6">
-                            <div class="row">
+                            <div class="row" style="display: none">
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="supplier_id">Proveedor</label>
