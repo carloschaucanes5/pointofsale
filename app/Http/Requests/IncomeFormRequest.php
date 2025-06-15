@@ -22,9 +22,7 @@ class IncomeFormRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'supplier_id'=>'required',
-            'voucher_type'=>'required|max:20',
-            'voucher_number'=>'max:8',
+            'voucher_id'=>'required|integer|exists:voucher,id',
             'products' => ['required', 'array'],
             'products.*' => ['nullable', 'integer', 'exists:product,id'],
             'quantities' => ['required', 'array'],

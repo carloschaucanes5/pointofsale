@@ -34,6 +34,7 @@ if ($request) {
             'voucher.photo',
             'voucher.status',
             'person.name as supplier_name',
+            'person.id as supplier_id',
             'voucher.status_payment',
             'voucher.updated_at',
             'users.name as user_name'

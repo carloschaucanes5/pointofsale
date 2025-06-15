@@ -12,11 +12,10 @@ class Income extends Model
     protected $primaryKey = "id";
     public $timestamps = true;
     protected $fillable = [
-    'voucher_type',
-    'voucher_number',
+    'users_id',
+    'voucher_id',
     'tax',
     'status',
-    'supplier_id'
     ];
 
     protected $guarded = [];

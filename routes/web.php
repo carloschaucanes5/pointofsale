@@ -52,6 +52,7 @@ Route::resource('purchase/supplier', SupplierController::class);
 Route::resource('purchase/income', IncomeController::class);
 Route::resource('purchase/voucher', VoucherController::class);
 Route::get('purchase/income/search_product/{codeOrName}', [IncomeController::class, 'search_product']);
+Route::get('purchase/income/view_voucher/{voucherId}', [IncomeController::class, 'view_voucher']);
 
 Route::resource('segurity/user', UserController::class);
 

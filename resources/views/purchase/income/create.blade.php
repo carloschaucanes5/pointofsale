@@ -8,52 +8,30 @@
             <div class="card-header">
                 <h3 class="card-title">Nuevo Ingreso</h3>
             </div>
-            <form id="incomeform" action="{{route('income.store')}}" method="POST" class="form">
+            <form id="incomeform"  class="form">
                 @csrf
                 <div class="card-body">
-                    <div style="display: none">
-                        <div class="form-group">
-                            <label for="voucher_type">Tipo de comprobante</label>
-                            <select name="voucher_type" id="voucher_type" class="form-control">
-                                <option value="RFC">RFC</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-5">
-                            <div class="form-group">
-                                <label for="voucher_id">Factura</label>
-                                <select name="voucher_id" id="voucher_id" class="form-control">
-                                    @foreach ($vouchers as $voucher)
-                                    <option value="{{$voucher->id}}">Proveedor({{$voucher->supplier_name }}) Factura({{$voucher->voucher_number }}) Valor({{$voucher->total}})</option>   
-                                    @endforeach
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <br/>
-                                <button type="button" class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#modal-view-"><i class="bi bi-eye"></i></button>
-                            </div>
-                        </div>
-                    </div>
                     <div class="row">
                         <div class="col-md-6">
-                            <div class="row" style="display: none">
-                                <div class="col-md-6">
+                            <div class="row">
+                                <div class="col-md-11">
                                     <div class="form-group">
-                                        <label for="supplier_id">Proveedor</label>
-                                        <select name="supplier_id" id="supplier_id" class="form-control">
-                                            @foreach ($persons as $per)
-                                            <option value="{{$per->id}}">{{$per->name}}</option>   
+                                        <label for="voucher_id">Factura</label>
+                                        <select name="voucher_id" id="voucher_id" class="form-control">
+                                            @foreach ($vouchers as $voucher)
+                                            <option value="{{$voucher->id}}">Proveedor({{$voucher->supplier_name }}) Factura({{$voucher->voucher_number }}) Valor({{$voucher->total}})</option>   
                                             @endforeach
                                         </select>
                                     </div>
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-1">
                                     <div class="form-group">
-                                        <label for="voucher_number">Número de comprobante</label>
-                                        <input type="text" class="form-control" name="voucher_number" id="voucher_number" placeholder="Número comprobante">
+                                        <br/>
+                                        <button type="button"
+                                        class="btn btn-outline-info btn-sm btn-view-voucher"
+                                        data-id="{{ isset($vouchers[0])? $vouchers[0]->id : ''}}">
+                                        <i class="bi bi-eye"></i>
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -72,7 +50,7 @@
                         </div>
                     </div>
                     <div class="row" id="row_add" style="display: none">
-                        <div class="col-md-1">
+                        <div class="col-md-2">
                             <div class="form-group">
                                 <label for="quantity">Cantidad</label>
                                 <input type="number" class="form-control" name="quantity" id="quantity" placeholder="Cantidad">
@@ -106,7 +84,7 @@
                                 </select>
                             </div>
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-md-1">
                             <div class="form-group">
                                 <label for="btn_add"></label><br/>
                                 <button type="button" id="btn_add" onclick="add()" class="btn btn-success me-1 mb-1">Agregar</button>
@@ -149,7 +127,7 @@
                 </div>
                 <input type="hidden" name="_token" value="{{csrf_token()}}">
                 <div class="card-footer">
-                    <button type="submit" id="save" class="btn btn-success me-1 mb-1">Guardar</button>
+                    <button type="button" id="save" onclick="saveIncome()" class="btn btn-success me-1 mb-1">Guardar</button>
                     <button type="reset" class="btn btn-danger me-1 mb-1">Cancelar</button>
                 </div>
             </form>
@@ -159,6 +137,7 @@
             </div>
         </div>
     </div>
+    @include('purchase.income.modal')
     @if ($errors->any())
     <div class="alert alert-danger">
         <ul>
@@ -232,6 +211,8 @@
                     });
             }
         }
+        
+
 
     });
     //evento para calcular el precio sugerido
@@ -253,6 +234,7 @@
     //funcion para recalcular los totales
     var detalles = document.getElementById('detalles');
     detalles.addEventListener('input', function(e) {
+
         if (e.target.name === 'quantities[]'){
             let line = e.target.id.split('_')[1];
             let quantity = parseInt(e.target.value) || 0;
@@ -278,58 +260,101 @@
         }
     });
 
-    //enviar formulario incomeform tipo ajax con fetch a la ruta de store
-    document.getElementById('incomeform').addEventListener('submit',function(e){
-        e.preventDefault();
-        let formData = new FormData(this);
-        fetch(this.action, {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-            }
-        }).then(response => {
-            if (response.ok) {
-                return response.json();
-            } else {
-                throw new Error('Error en la solicitud');
-            }
-        }).then(data => {
-            if (data.success) {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Éxito',
-                    text: data.message,
-                    timer: 3000,
-                }).then(() => {
-                    window.location.href = "{{route('income.index')}}";
-                });
-            } else {
-                let errors = data.errors || [];
-                let errorList = document.getElementById('errorsList');
-                errorList.innerHTML = '';
-                errors.forEach(error => {
-                    let li = document.createElement('li');
-                    li.textContent = error;
-                    errorList.appendChild(li);
-                });
-                document.getElementById('errors').style.display = 'block';
-            }
-        }).catch(error => {
-            console.error('Error:', error);
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'Ocurrió un error al procesar la solicitud.',
-            });
-        });
 
+
+ //codigo para cambiar el data-id del boton cuando cambie el voucher_id
+    document.getElementById('voucher_id').addEventListener('change', function() {
+        let voucherId = this.value;
+        let btnViewVoucher = document.querySelector('.btn-view-voucher');
+        if (btnViewVoucher) {
+            btnViewVoucher.setAttribute('data-id', voucherId);
+
+        }
     });
 
+});
+
+
+//con el data-id del boton btn-view-voucher, mostrar el modal con la imagen del voucher
+document.querySelector('.btn-view-voucher').addEventListener('click', function() {
+    if(this.getAttribute('data-id') === ''){
+        Swal.fire({icon: 'warning',title: 'Advertencia',text: 'Debe seleccionar una factura para ver su contenido.'});
+        return;
+    }
+    let voucherId = this.getAttribute('data-id');
+    showSpinner();
+    fetch("{{url('purchase/income/view_voucher')}}/" + encodeURIComponent(voucherId))
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                hideSpinner();
+                let modalBody = document.getElementById('modal-body');
+                let modalTitle = document.getElementById('modal-title');
+                modalTitle.textContent = `Factura: ${data.voucher_number}`;
+                modalBody.innerHTML = `<img src="${data.photo_url}" class="img-fluid" alt="Voucher">`;
+                $('#modal-voucher').modal('show');
+            } else {
+                hideSpinner();
+                Swal.fire({icon: 'error',title: 'Error',text: data.message,});
+            }
+        })
+        .catch(error => {
+            Swal.fire({icon: 'error',title: 'Error',text: 'Ocurrió un error al cargar el voucher.',});
+        });
 
 
 });
 
+
+function saveIncome(){
+            let form = document.getElementById('incomeform');
+            let formData = new FormData(form);
+            let voucher_id = document.getElementById('voucher_id').value;
+            if (voucher_id === '') {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Debe seleccionar una factura.',
+                });
+                return;
+            }
+            showSpinner();
+            fetch("{{route('income.store')}}", {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                hideSpinner();
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Éxito',
+                        text: data.message,
+                    }).then(() => {
+                        window.location.href = "{{route('income.index')}}";
+                    });
+                } else {
+                    let errorsList = document.getElementById('errorsList');
+                    errorsList.innerHTML = '';
+                    data.errors.forEach(error => {
+                        let li = document.createElement('li');
+                        li.textContent = error;
+                        errorsList.appendChild(li);
+                    });
+                    document.getElementById('errors').style.display = 'block';
+                }
+            })
+            .catch(error => {
+                hideSpinner();
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Ocurrió un error al guardar el ingreso.',
+                });
+            });
+       
+}
 
 function updateSubtotales($line,quantity,purchase,sale){
     let subtotal_purchase = quantity * purchase;
@@ -348,6 +373,15 @@ function showValues(){
 }
 
 function add(){
+    //validar si hay voucher seleccionado
+    if(document.getElementById('voucher_id').value == ""){
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Debe seleccionar una factura.',
+        });
+        return;
+    }
     if(!validateExist()){
     var dataArticle = document.getElementById('product_id').value.split('_');
     var product_id = dataArticle[0];
@@ -360,6 +394,16 @@ function add(){
     var form_sale = $('#form_sale').val();
     var profit = 0;
     var expiration_date = $('#expiration_date').val();
+    //validar que la fecha de experacion no sea menor a la fecha actual asi viene el formato 2025-06-15
+    if(expiration_date != "" && new Date(expiration_date) <= new Date()){
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'La fecha de expiración debe ser mayor a la fecha actual. Almenos dos días de diferencia.',
+        });
+        return;
+    }
+ 
     if(product_id!="" && quantity!="" && quantity > 0 && purchase_price !="" && sale_price!="" && expiration_date!=""){
             subtotal_purchase[cont] = quantity * purchase_price;
             subtotal_sale[cont] = quantity * sale_price;
@@ -384,7 +428,7 @@ function add(){
                 <td><input class="form-control"  id="sale_`+cont+`¿"  type="number"  name="sale_prices[]" value="`+sale_price+`"></td>
                 <td><input class="form-control" readonly id="subtotalsale_`+cont+`" type="number" name="subtotal_sales[]" value="`+subtotal_sale[cont]+`"></td>
                 <td><input class="form-control" readonly id="subtotalprofit_`+cont+`" type="number"  name="subtotal_profits[]" value="`+(subtotal_profit[cont]).toFixed(2)+`"></td>
-                <td><input class="form-control"  id="expirationdate_`+cont+`" type="date"  name="expiration_dates[]" value="`+expiration_date+`"></td>
+                <td><input class="form-control" readonly id="expirationdate_`+cont+`" type="date"  name="expiration_dates[]" value="`+expiration_date+`"></td>
             </tr>
             `;
             cont++;

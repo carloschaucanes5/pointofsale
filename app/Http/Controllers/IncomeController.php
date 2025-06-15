@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Redirect;
 use App\Models\Income;
 use App\Models\Product;
 use App\Models\IncomeDetail;
+use App\Models\Voucher;
 use App\Http\Requests\IncomeFormRequest;
 use Exception;
 use Symfony\Component\Console\Input\Input;
@@ -30,14 +31,30 @@ class IncomeController extends Controller
     {
         if($request){
             $query = trim($request->get('searchText'));
-            $incomes = DB::table("income as inc")
-                       ->join('person as pe','pe.id','=','inc.supplier_id')
-                       ->join('income_detail as ide','ide.income_id','=','inc.id')
-                       ->select('inc.id','inc.created_at','pe.name','inc.voucher_type','inc.voucher_number','inc.tax','inc.status',DB::raw('sum(ide.quantity * ide.purchase_price) as total'))
-                       ->where('inc.voucher_number','like','%'.$query.'%')
-                       ->groupBy('inc.id','inc.created_at','pe.name','inc.voucher_type','inc.voucher_number','inc.tax','inc.status')
-                       ->orderBy('inc.id','desc')
-                       ->paginate(8);
+            $incomes = DB::table("income as i")
+                ->join("voucher as v", "i.voucher_id", "=", "v.id")
+                ->join("person as p", "v.supplier_id", "=", "p.id")
+                ->join("users as u", "i.users_id", "=", "u.id")
+                ->select(
+                    'i.id',
+                    'i.created_at',
+                    'i.updated_at',
+                    'p.name as supplier_name',
+                    'v.id as voucher_id',
+                    'v.voucher_number',
+                    DB::raw('SUM(ide.quantity * ide.purchase_price) as total'),
+                    'u.name as user_name'
+                )
+                ->join('income_detail as ide', 'i.id', '=', 'ide.income_id')
+                ->where('i.status', '=', 1)
+                ->where(function($q) use ($query) {
+                    $q->where('v.voucher_number', 'like', '%' . $query . '%')
+                      ->orWhere('p.name', 'like', '%' . $query . '%');
+                })
+                ->groupBy('i.id', 'i.created_at', 'i.updated_at', 'p.name', 'v.voucher_number', 'v.id', 'u.name')
+                ->orderBy('i.id', 'desc')
+                ->paginate(5);
+
             return view('purchase.income.index',['incomes'=>$incomes,'texto'=>$query]);
         }
     }
@@ -94,18 +111,14 @@ class IncomeController extends Controller
      */
     public function store(IncomeFormRequest $request)
     {
-
-        
         try{
             DB::beginTransaction();
             $income = new Income();
-            $income->supplier_id = $request->post('supplier_id');
-            $income->voucher_type = $request->post('voucher_type');
-            $income->voucher_number = $request->post('voucher_number');
-            $income->tax = 16;
+            $income->voucher_id = $request->post('voucher_id');
+            $income->users_id = auth()->user()->id; // Assuming you want to set the current authenticated user
+            $income->tax = 0;
             $income->status = 1;
             $income->save();
-            
             
             $products = $request->post('products');
             $quantities = $request->post('quantities');
@@ -127,6 +140,17 @@ class IncomeController extends Controller
                 $detail->save();
                 $cont = $cont + 1;
             }
+                // Update the voucher status to 'A' (active)
+                $voucher = Voucher::findOrFail($request->post('voucher_id'));
+                $voucher->status = 0;
+                $voucher->save();
+    
+                // Update the product stock
+                foreach ($products as $index => $productId) {
+                    $product = Product::findOrFail($productId);
+                    $product->stock += $quantities[$index];
+                    $product->save();
+                }
             DB::commit();
              return response()->json([
             'message' => 'Factura registrada correctamente.',
@@ -136,6 +160,7 @@ class IncomeController extends Controller
         }catch(Exception $e){
             DB::rollBack();
             return response()->json([
+                'success' => false,
                 'message' => 'An error occurred while processing your request.',
                 'error' => $e->getMessage()
             ]);
@@ -192,5 +217,14 @@ class IncomeController extends Controller
         $income->status = "C";
         $income->update();
         return Redirect::to("purchase/income");
+    }
+    public function view_voucher($id)
+    {
+        $voucher = Voucher::findOrFail($id);
+        return response()->json([
+            'success' => true,
+            'voucher_number' => $voucher->voucher_number,
+            'photo_url' => asset($voucher->photo),
+        ]);
     }
 }

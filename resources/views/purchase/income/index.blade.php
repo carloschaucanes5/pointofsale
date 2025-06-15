@@ -59,9 +59,8 @@
                             <th>Fecha</th>
                             <th>Proveedor</th>
                             <th>Comprobante</th>
-                            <th>Impuesto</th>
                             <th>Total</th>
-                            <th>Estado</th>
+                            <th>Responsable</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -70,21 +69,71 @@
                             <td>
                                 <a href="{{route('income.show',$inc->id)}}" class="btn btn-warning btn-sm"><i class="bi bi-pen"></i></a>
                                 <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="#"><i class="bi bi-trash"></i></button>
+                                <button type="button"
+                                class="btn btn-outline-info btn-sm btn-view-voucher"
+                                data-id="{{ $inc->voucher_id}}">
+                                <i class="bi bi-eye"></i>
+                                </button>
                             </td>
-                            <td>{{$inc->created_at}}</td>
-                            <td>{{$inc->name}}</td>
-                            <td>{{$inc->voucher_type." ".$inc->voucher_number}}</td>
-                            <td>{{$inc->tax}}</td>
-                            <td>{{$inc->total}}</td>
-                            <td>{{$inc->status}}</td>
+                            <td>{{$inc->updated_at}}</td>
+                            <td>{{$inc->supplier_name}}</td>
+                            <td>{{$inc->voucher_number}}</td>
+                            <td>$ {{number_format($inc->total,2,',','.')}}</td>
+                            <td>{{$inc->user_name}}</td>
                         </tr>
+                        
                         @endforeach
                     </tbody> 
                 </table>
                     {{$incomes->links('pagination::bootstrap-5')}}
             </div>
         </div>
+        @include('purchase.income.modal')
     </section>
 @endsection
+@push('scripts')
+
+<script>
+         //con el data-id del boton btn-view-voucher, mostrar el modal con la imagen del voucher
+        document.querySelectorAll('.btn-view-voucher').forEach(element => {
+            let voucherId = element.getAttribute('data-id');
+            element.addEventListener('click', function() {
+                showSpinner();
+                fetch("{{url('purchase/income/view_voucher')}}/" + encodeURIComponent(voucherId))
+                    .then(response => response.json())
+                    .then(data => {
+                        hideSpinner();
+                        if (data.success) {
+                            let modalBody = document.getElementById('modal-body');
+                            let modalTitle = document.getElementById('modal-title');
+                            modalTitle.textContent = `Factura: ${data.voucher_number}`;
+                            modalBody.innerHTML = `<img src="${data.photo_url}" class="img-fluid" alt="Voucher">`;
+                            $('#modal-voucher').modal('show');
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: data.message,
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        hideSpinner();
+                        console.error('Error:', error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Ocurrió un error al cargar el voucher.',
+                        });
+                    });
+            });
+        });
+    
+
+</script>
+
+@endpush
+
+
 
 
