@@ -114,7 +114,7 @@ class IncomeController extends Controller
         try{
             DB::beginTransaction();
             $income = new Income();
-            $income->voucher_id = $request->post('voucher_id');
+            $income->voucher_id = explode("-",$request->post('voucher_id')[0]);
             $income->users_id = auth()->user()->id; // Assuming you want to set the current authenticated user
             $income->tax = 0;
             $income->status = 1;
@@ -211,6 +211,7 @@ class IncomeController extends Controller
     /**
      * Remove the specified resource from storage.
      */
+
     public function destroy(string $id)
     {
         $income = Income::findOrFail($id);
@@ -218,6 +219,7 @@ class IncomeController extends Controller
         $income->update();
         return Redirect::to("purchase/income");
     }
+
     public function view_voucher($id)
     {
         $voucher = Voucher::findOrFail($id);

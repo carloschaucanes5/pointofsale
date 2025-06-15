@@ -19,9 +19,10 @@
                                         <label for="voucher_id">Factura</label>
                                         <select name="voucher_id" id="voucher_id" class="form-control">
                                             @foreach ($vouchers as $voucher)
-                                            <option value="{{$voucher->id}}">Proveedor({{$voucher->supplier_name }}) Factura({{$voucher->voucher_number }}) Valor({{$voucher->total}})</option>   
+                                            <option value="{{$voucher->id."-".$voucher->total}}">Proveedor({{$voucher->supplier_name }}) Factura({{$voucher->voucher_number }}) Valor({{$voucher->total}})</option>   
                                             @endforeach
                                         </select>
+                                        <input type="hidden" name="voucher_total" id="voucher_total" value="{{$vouchers[0]->total}}"/>
                                     </div>
                                 </div>
                                 <div class="col-md-1">
@@ -186,8 +187,7 @@
                             <div class="alert alert-info">
                                 <h5>Información del Producto</h5>
                                 <b>Código:</b> ${product.code} <b>Stock:</b> ${product.stock}<br/>
-                                <b>Producto:</b> ${product.name} ${product.concentration} ${product.concentration}
-                                
+                                <b>Producto:</b> ${product.name} ${product.concentration} ${product.concentration}    
                             </div>
                                 `;
                             document.getElementById('row_add').style.display = '';
@@ -211,9 +211,6 @@
                     });
             }
         }
-        
-
-
     });
     //evento para calcular el precio sugerido
    document.getElementById('purchase_price').addEventListener('blur', function() {
@@ -236,39 +233,39 @@
     detalles.addEventListener('input', function(e) {
 
         if (e.target.name === 'quantities[]'){
+            //console.log(e.target.id);
             let line = e.target.id.split('_')[1];
-            let quantity = parseInt(e.target.value) || 0;
-            let purchase = parseFloat(document.getElementById('purchase_' + line).value) || 0;
-            let sale = parseFloat(document.getElementById('sale_' + line).value) || 0;
+            let quantity = parseInt(e.target.value);
+            let purchase = parseFloat(document.getElementById('purchase_' + line).value);
+            let sale = parseFloat(document.getElementById('sale_' + line).value);
             updateSubtotales(line, quantity, purchase, sale);
         }
 
         if (e.target.name === 'purchase_prices[]'){
             let line = e.target.id.split('_')[1];
-            let purchase = parseInt(e.target.value) || 0;
-            let quantity = parseFloat(document.getElementById('quantity_' + line).value) || 0;
-            let sale = parseFloat(document.getElementById('sale_' + line).value) || 0;
+            let purchase = parseInt(e.target.value);
+            let quantity = parseFloat(document.getElementById('quantity_' + line).value);
+            let sale = parseFloat(document.getElementById('sale_' + line).value);
             updateSubtotales(line, quantity, purchase, sale);
         }
 
         if (e.target.name === 'sale_prices[]'){
             let line = e.target.id.split('_')[1];
             let sale = parseInt(e.target.value) || 0;
-            let quantity = parseFloat(document.getElementById('quantity_' + line).value) || 0;
-            let purchase = parseFloat(document.getElementById('purchase_' + line).value) || 0;
+            let quantity = parseFloat(document.getElementById('quantity_' + line).value);
+            let purchase = parseFloat(document.getElementById('purchase_' + line).value);
             updateSubtotales(line, quantity, purchase, sale);
         }
     });
 
 
-
  //codigo para cambiar el data-id del boton cuando cambie el voucher_id
     document.getElementById('voucher_id').addEventListener('change', function() {
-        let voucherId = this.value;
+        let voucherId = this.value.split('-')[0];
+        document.getElementById('voucher_total').value = this.value.split('-')[1];
         let btnViewVoucher = document.querySelector('.btn-view-voucher');
         if (btnViewVoucher) {
             btnViewVoucher.setAttribute('data-id', voucherId);
-
         }
     });
 
@@ -282,31 +279,74 @@ document.querySelector('.btn-view-voucher').addEventListener('click', function()
         return;
     }
     let voucherId = this.getAttribute('data-id');
+    document.getElementById('modal-body').innerHTML = "";
     showSpinner();
     fetch("{{url('purchase/income/view_voucher')}}/" + encodeURIComponent(voucherId))
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                hideSpinner();
                 let modalBody = document.getElementById('modal-body');
                 let modalTitle = document.getElementById('modal-title');
                 modalTitle.textContent = `Factura: ${data.voucher_number}`;
                 modalBody.innerHTML = `<img src="${data.photo_url}" class="img-fluid" alt="Voucher">`;
                 $('#modal-voucher').modal('show');
             } else {
-                hideSpinner();
                 Swal.fire({icon: 'error',title: 'Error',text: data.message,});
             }
         })
         .catch(error => {
             Swal.fire({icon: 'error',title: 'Error',text: 'Ocurrió un error al cargar el voucher.',});
+        }).finally(()=>{
+            hideSpinner();  
         });
 
 
 });
 
 
+function parseAmount(value) {
+    // Elimina espacios y símbolos de moneda
+    value = value.trim().replace(/[^\d.,-]/g, '');
+
+    // Si contiene coma y punto, decidir cuál es decimal
+    const hasComma = value.includes(',');
+    const hasDot = value.includes('.');
+
+    if (hasComma && hasDot) {
+        // Si el punto está antes de la coma, el punto es separador de miles: "600.000,00"
+        if (value.indexOf('.') < value.indexOf(',')) {
+            value = value.replace(/\./g, '').replace(',', '.');
+        } else {
+            // Caso raro: "600,000.00"
+            value = value.replace(/,/g, '');
+        }
+    } else if (hasComma && !hasDot) {
+        // Sólo tiene coma: asume que es decimal
+        value = value.replace(',', '.');
+    } else {
+        // Sólo tiene punto o ninguno: deja como está
+        value = value.replace(/,/g, '');
+    }
+
+    return parseFloat(value);
+}
+
 function saveIncome(){
+    //validar que el voucher_total sea igual al purchase_total
+    let voucherTotal = parseAmount(document.getElementById('voucher_total').value);
+    let totalPurchase = parseAmount(document.getElementById('total_purchase').textContent);
+    console.log("Voucher Total: ", voucherTotal);
+    console.log("Total Purchase: ", totalPurchase);
+
+    if (voucherTotal !== totalPurchase) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'El total de la factura debe ser igual al total de compra.',
+        });
+        return;
+    }
+
             let form = document.getElementById('incomeform');
             let formData = new FormData(form);
             let voucher_id = document.getElementById('voucher_id').value;
@@ -425,7 +465,7 @@ function add(){
                 <td><input class="form-control"  id="purchase_`+cont+`" type="number"   name="purchase_prices[]" value="`+purchase_price+`"></td>
                 <td><input class="form-control" readonly id="subtotalpurchase_`+cont+`" type="number"  name="subtotal_purchases[]" value="`+subtotal_purchase[cont]+`"></td>
                 <td><input class="form-control"  type="text"  name="forms_sale[]" value="`+forms_sale[cont]+`"></td>
-                <td><input class="form-control"  id="sale_`+cont+`¿"  type="number"  name="sale_prices[]" value="`+sale_price+`"></td>
+                <td><input class="form-control"  id="sale_`+cont+`"  type="number"  name="sale_prices[]" value="`+sale_price+`"></td>
                 <td><input class="form-control" readonly id="subtotalsale_`+cont+`" type="number" name="subtotal_sales[]" value="`+subtotal_sale[cont]+`"></td>
                 <td><input class="form-control" readonly id="subtotalprofit_`+cont+`" type="number"  name="subtotal_profits[]" value="`+(subtotal_profit[cont]).toFixed(2)+`"></td>
                 <td><input class="form-control" readonly id="expirationdate_`+cont+`" type="date"  name="expiration_dates[]" value="`+expiration_date+`"></td>
