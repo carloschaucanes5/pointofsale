@@ -114,7 +114,7 @@ class IncomeController extends Controller
         try{
             DB::beginTransaction();
             $income = new Income();
-            $income->voucher_id = explode("-",$request->post('voucher_id')[0]);
+            $income->voucher_id = $request->post('voucher_id');
             $income->users_id = auth()->user()->id; // Assuming you want to set the current authenticated user
             $income->tax = 0;
             $income->status = 1;
@@ -174,17 +174,16 @@ class IncomeController extends Controller
     public function show(string $id)
     {
         $income = DB::table("income as i")
-                 ->join("person as p","i.supplier_id","=","p.id")
-                 ->join("income_detail as ide","i.id","=","ide.income_id")
-                 ->select("i.id","i.created_at","i.updated_at","p.name","i.voucher_type","i.voucher_number","i.tax","i.status",DB::raw('sum(ide.quantity*ide.purchase_price) as total'))
+                 ->join("voucher as v","v.id","=","i.voucher_id")
+                 ->join("person as p","p.id","=","v.supplier_id")
+                 ->select("i.id","i.created_at","i.updated_at","p.name","i.tax","i.status","v.voucher_number","v.total")
                  ->where("i.id","=",$id)
-                 ->groupBy("i.id","i.created_at","i.updated_at","p.name","i.voucher_type","i.voucher_number","i.tax","i.status")
                  ->orderBy("i.id","desc")
                  ->first();
 
         $details = DB::table("income_detail as d")
                 ->join("product as pro","pro.id","=","d.product_id")
-                ->select("pro.name as article","d.quantity","d.purchase_price","d.sale_price")
+                ->select("pro.name as article","d.quantity","d.purchase_price","d.sale_price","d.form_sale")
                 ->where("d.income_id","=",$id)
                 ->get();
 

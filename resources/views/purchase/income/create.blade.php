@@ -19,10 +19,10 @@
                                         <label for="voucher_id">Factura</label>
                                         <select name="voucher_id" id="voucher_id" class="form-control">
                                             @foreach ($vouchers as $voucher)
-                                            <option value="{{$voucher->id."-".$voucher->total}}">Proveedor({{$voucher->supplier_name }}) Factura({{$voucher->voucher_number }}) Valor({{$voucher->total}})</option>   
+                                            <option value="{{$voucher->id}}">Proveedor({{$voucher->supplier_name }}) Factura({{$voucher->voucher_number }}) Valor({{$voucher->total}})</option>   
                                             @endforeach
                                         </select>
-                                        <input type="hidden" name="voucher_total" id="voucher_total" value="{{$vouchers[0]->total}}"/>
+                                        <input type="hidden" name="voucher_total" id="voucher_total" value="{{isset($vouchers[0]->total)?$vouchers[0]->total:0}}"/>
                                     </div>
                                 </div>
                                 <div class="col-md-1">
@@ -335,8 +335,8 @@ function saveIncome(){
     //validar que el voucher_total sea igual al purchase_total
     let voucherTotal = parseAmount(document.getElementById('voucher_total').value);
     let totalPurchase = parseAmount(document.getElementById('total_purchase').textContent);
-    console.log("Voucher Total: ", voucherTotal);
-    console.log("Total Purchase: ", totalPurchase);
+    console.log(voucherTotal);
+    console.log(totalPurchase);
 
     if (voucherTotal !== totalPurchase) {
         Swal.fire({
@@ -500,9 +500,10 @@ function add(){
 function validateExist(){
     let b = 0;
     var products =document.querySelectorAll('input[name="products[]"]');
+    var forms = document.querySelectorAll('input[name="forms_sale[]"]');
     for (let index = 0; index < products.length; index++) {
         const input = products[index];
-        if (input.value === document.getElementById('product_id').value.split('_')[0]) {
+        if (input.value === document.getElementById('product_id').value.split('_')[0] && forms[index].value === document.getElementById('form_sale').value) {
             b=1;
         }
     }

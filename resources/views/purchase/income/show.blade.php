@@ -18,8 +18,8 @@
                         </div>
                         <div class="col-md-3">
                             <div class="form-group">
-                                <label for="voucher_type">Tipo de comprobante</label>
-                                <p>{{$income->voucher_type}}</p>
+                                <label for="supplier_id">Proveedor</label>
+                                <p>{{$income->name}}</p>
                             </div>
                         </div>
                         <div class="col-md-3">
@@ -37,26 +37,27 @@
                                         <th>Producto</th>
                                         <th>Cantidad</th>
                                         <th>Precio Compra</th>
-                                        <th>Precio Venta</th>
                                         <th>Subtotal</th>
+                                        <th>Precio Venta</th>
+                                        <th>F. Venta</th>
                                     </tr>
                                 </thead>
                                 <tfoot>
                                     <th></th>
                                     <th></th>
-                                    <th></th>
                                     <th>Total:</th>
                                     <th id="total">$ {{number_format($income->total,2)}}</th>
+                                    <th></th>
                                 </tfoot>
                                 <tbody>
                                   @foreach($details as $det)
                                     <tr>
                                         <td>{{$det->article}}</td>
                                         <td>{{$det->quantity}}</td>
-                                        <td>{{$det->purchase_price}}</td>
-                                        <td>{{$det->sale_price}}</td>
-                                        <td>{{number_format($det->quantity * $det->purchase_price,2)}}</td>
-                                        <td></td>
+                                        <td>$ {{number_format($det->purchase_price,2,",",".")}}</td>
+                                        <td>$ {{number_format($det->quantity * $det->purchase_price,2,",",".")}}</td>
+                                        <td>$ {{number_format($det->sale_price,0,",",".")}}</td>
+                                        <td>{{$det->form_sale}}</td>
                                     </tr>
                                   @endforeach
                                 </tbody> 
