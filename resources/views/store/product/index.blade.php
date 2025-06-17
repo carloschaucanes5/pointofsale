@@ -56,11 +56,9 @@
                     <thead>
                         <tr>
                             <th>Opciones</th>
-                            <th>Codigo</th>
+                            <th>Codigo Barras</th>
                             <th>Nombre</th>
-                            <th>Descripcion</th>
-                            <th>Stock</th>
-                            <th>Imagen</th>
+                            <th>Laboratorio</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -72,11 +70,11 @@
                             </td>
                             <td>{{$pro->code}}</td>
                             <td>{{$pro->name}} {{$pro->concentration}} {{$pro->presentation}}</td>
-                            <td>{{$pro->description}}</td>
-                            <td>{{$pro->stock}}</td>
-                            <td><img src="{{asset('images/products/'.$pro->image)}}" alt="imagen producto" class="img-thumbnail" width="70px" height="70px"/></td>
+                            <td>{{$pro->laboratory}}</td>
+                            <td><button type="button" class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#modal-detail-{{$pro->id}}"><i class="bi bi-eye"></i></button></td>
                         </tr>
                         @include('store.product.modal')
+                        @include('store.product.detail')
                         @endforeach
                     </tbody>
                 </table>

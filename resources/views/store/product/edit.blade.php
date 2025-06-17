@@ -95,7 +95,7 @@
                             </div>
                         </div>
 
-                        <div class="col-md-6 col-12">
+                        <div class="col-md-6 col-12" style="display: none">
                             <div class="form-group">
                                 <label for="stock">Stock</label>
                                 <input type="number" class="form-control" name="stock" id="stock" value="{{$product->stock}}" placeholder="Ingresar la cantidad del producto">

@@ -21,7 +21,7 @@ class ProductController extends Controller
         $searchText = trim($request->get("searchText"));
         $products = DB::table('product as p')
                     ->join('category as c','p.category_id','=','c.id')
-                    ->select('p.id','p.code','p.name','p.stock','p.description','p.image','p.status','c.category','p.presentation','p.concentration')
+                    ->select('p.id','p.code','p.name','p.stock','p.description','p.image','p.status','c.category','p.presentation','p.concentration','p.laboratory')
                     ->where('p.name','like','%'.$searchText.'%')
                     ->orwhere('p.code','like','%'.$searchText.'%')
                     ->orderBy('p.id')
@@ -54,6 +54,7 @@ class ProductController extends Controller
     public function store(ProductFormRequest $request)
      {
         // Creamos una nueva instancia del producto
+        
         $product = new Product();
 
         $laboratories = Laboratory::all();
@@ -72,7 +73,7 @@ class ProductController extends Controller
         $product->concentration = $request->input('concentration');
         $product->description = $request->input('description');
         $product->laboratory = $request->input('laboratory');
-        $product->stock = $request->input('stock');
+        $product->stock = 0;
         $product->name = $request->input('name');
         $product->status = 1;  // Asumimos que por defecto el producto está activo
         $ima = "";
