@@ -177,13 +177,19 @@ class IncomeController extends Controller
                  ->join("voucher as v","v.id","=","i.voucher_id")
                  ->join("person as p","p.id","=","v.supplier_id")
                  ->select("i.id","i.created_at","i.updated_at","p.name","i.tax","i.status","v.voucher_number","v.total")
+                ->selectSub(function($query){
+                    $query->from("users")
+                        ->select("name")
+                        ->whereColumn("users.id","i.users_id")
+                        ->limit(1);
+                        },"users_name")
                  ->where("i.id","=",$id)
                  ->orderBy("i.id","desc")
                  ->first();
 
         $details = DB::table("income_detail as d")
                 ->join("product as pro","pro.id","=","d.product_id")
-                ->select("pro.name as article","d.quantity","d.purchase_price","d.sale_price","d.form_sale")
+                ->select("pro.name as article","d.quantity","d.purchase_price","d.sale_price","d.form_sale","d.expiration_date","pro.concentration","pro.presentation")
                 ->where("d.income_id","=",$id)
                 ->get();
 
