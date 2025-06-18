@@ -13,6 +13,7 @@ use App\Http\Controllers\VoucherController;
 use App\Models\Laboratory;
 use App\http\Controllers\UserController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\InventoryController;
 use App\Models\Voucher;
 
 /*
@@ -46,11 +47,13 @@ Route::post('/logout',[LoginController::class,"logout"])->name("logout");
 Route::resource('store/category',CategoryController::class);
 Route::resource('store/product', ProductController::class);
 Route::resource('store/laboratory', LaboratoryController::class);
+Route::resource('store/inventory', InventoryController::class);
 Route::resource('sale/customer', CustomerController::class);
 Route::resource('sale/sale', SaleController::class);
 Route::resource('purchase/supplier', SupplierController::class);
 Route::resource('purchase/income', IncomeController::class);
 Route::resource('purchase/voucher', VoucherController::class);
+
 Route::get('purchase/income/search_product/{codeOrName}', [IncomeController::class, 'search_product']);
 Route::get('purchase/income/view_voucher/{voucherId}', [IncomeController::class, 'view_voucher']);
 
