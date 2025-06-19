@@ -56,6 +56,8 @@ Route::resource('purchase/voucher', VoucherController::class);
 
 Route::get('purchase/income/search_product/{codeOrName}', [IncomeController::class, 'search_product']);
 Route::get('purchase/income/view_voucher/{voucherId}', [IncomeController::class, 'view_voucher']);
+Route::post('store/inventory/proccess_out/{income_detail_id}', [InventoryController::class, 'proccess_out'])
+    ->name('store.inventory.proccess_out');
 
 Route::resource('segurity/user', UserController::class);
 

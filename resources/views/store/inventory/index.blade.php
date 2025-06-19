@@ -65,25 +65,23 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @forEach($products as $pro)
+                        @forEach($incomes_detail as $incd)
                         <tr>
                             <td>
-                                <a href="{{route('product.edit',$pro->id)}}" class="btn btn-warning btn-sm"><i class="bi bi-box-arrow-up"></i></a>
-                                <button type="button" class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#modal-detail-{{$pro->id}}"><i class="bi bi-eye"></i></button>
+                                <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#modal-output-{{$incd->id}}"><i class="bi bi-arrow-up-circle"></i></button>
                             </td>
-                            <td>{{$pro->code}}</td>
-                            <td>{{$pro->name}} {{$pro->concentration}} {{$pro->presentation}} Lab:{{$pro->laboratory}}</td>
-                            <td>{{$pro->quantity}}</td>
-                            <td>${{number_format($pro->purchase_price,2,",",".")}}</td>
-                            <td>{{$pro->sale_price}}</td>
-                            <td>{{$pro->form_sale}}</td>
+                            <td>{{$incd->code}}</td>
+                            <td>{{$incd->name}} {{$incd->concentration}} {{$incd->presentation}} Lab:{{$incd->laboratory}}</td>
+                            <td>{{$incd->quantity}}</td>
+                            <td>${{number_format($incd->purchase_price,2,",",".")}}</td>
+                            <td>{{$incd->sale_price}}</td>
+                            <td>{{$incd->form_sale}}</td>
                         </tr>
-                        @include('store.product.modal')
-                        @include('store.product.detail')
+                        @include('store.inventory.output')
                         @endforeach
                     </tbody>
                 </table>
-                    {{$products->links('pagination::bootstrap-5')}}
+                    {{$incomes_detail->links('pagination::bootstrap-5')}}
             </div>
         </div>
     </section>
