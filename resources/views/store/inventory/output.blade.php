@@ -61,7 +61,6 @@
     document.addEventListener('DOMContentLoaded', function () {
         // Evento click para el botón de cada formulario
         document.getElementById('btn_save_out_{{$incd->id}}').addEventListener('click', async function () {
-            
             try {
                 showSpinner();
                 let form = document.getElementById("form-out-{{$incd->id}}");
@@ -76,19 +75,39 @@
                     }
                 });
                 const result = await response.json(); // Asegura que la respuesta es JSON
-
                 if (response.ok) {
-                    Swal.fire({
-                        "success":true,
-                        "text":result.message,
-                        "title":"Actualizacion correcta",
-                        "icon":"success",
-                        "timer":2000
-                    });
-
+                    if(result.success){
+                        Swal.fire({
+                            "success":true,
+                            "text":result.message,
+                            "title":"Actualizacion correcta",
+                            "icon":"success",
+                            "timer":4000
+                        });
+                        window.location.reload();
+                    }
+                    else
+                    {
+                        Swal.fire({
+                            "success":false,
+                            "text":result.message,
+                            "title":"Error de Validación",
+                            "icon":"error",
+                            "timer":4000
+                        });
+                    }
                     // Aquí podrías mostrar Swal o actualizar parte del HTML
                 } else {
-                    console.warn("Error de validación:", result);
+                    Swal.fire(
+                        {
+                            "success":false,
+                            "text":"Error de validación",
+                            "title":"Error de actualización",
+                            "icon":"warning",
+                            "timer":4000
+                        }
+                    )
+                    console.log(result);
                     // Muestra los mensajes de error si los hay
                 }
             } catch (err) {

@@ -5,18 +5,16 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class IncomeDetail extends Model
+class Output extends Model
 {
     use HasFactory;
-    protected $table = "income_detail";
+    protected $table = "output";
     protected $primaryKey = "id";
     public $timestamps = true;
     protected $fillable = [
-    'quantity',
-    'purchase_price',
-    'sale_price',
-    'income_id',
-    'product_id',
-    'form_sale'
+    'quantity_out',
+    'income_detail_id',
+    'description',
+    'status'
     ];
 }

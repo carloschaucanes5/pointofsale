@@ -7,6 +7,7 @@ use App\Models\Category;
 use App\Models\Laboratory;
 use App\Http\Requests\ProductFormRequest;
 use App\Models\Income;
+use App\Models\Output;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redirect;
@@ -26,8 +27,11 @@ class InventoryController extends Controller
                     ->join('category as c','p.category_id','=','c.id')
                     ->join('income_detail as ide','p.id','=','ide.product_id')
                     ->select('ide.id','p.code','p.name','p.stock','p.description','p.image','p.status','c.category','p.presentation','p.concentration','p.laboratory','ide.purchase_price','ide.sale_price','ide.form_sale','ide.expiration_date','ide.quantity')
-                    ->where('p.name','like','%'.$searchText.'%')
-                    ->orwhere('p.code','like','%'.$searchText.'%')
+                    ->where(function($query) use ($searchText){
+                        $query->where('p.name','like','%'.$searchText.'%')
+                              ->orwhere('p.code','like','%'.$searchText.'%');
+                    })
+                    ->where('ide.quantity','!=',0)
                     ->orderBy('p.name','asc')
                     ->paginate(5);
         return view('store.inventory.index',compact('incomes_detail','searchText'));
@@ -55,28 +59,38 @@ class InventoryController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-public function proccess_out(Request $request, $income_detail_id)
-{
-    try
+    public function proccess_out(Request $request, $income_detail_id)
     {
-        $income_detail = IncomeDetail::findOrFail($income_detail_id);
-        $quantity_out = $request->post('quantity-out-'.$income_detail_id);
-        if ($income_detail->quantity < $quantity_out) {
-            return response()->json(['success'=>false,'message'=>'La cantidad ingresada supera a la existente']);
+        try
+        {
+            DB::beginTransaction();
+            $income_detail = IncomeDetail::findOrFail($income_detail_id);
+            $quantity_out = $request->post('quantity-out-'.$income_detail_id);
+            $description_out =trim($request->post('description-out-'.$income_detail_id));
+            if (intval($quantity_out)>$income_detail->quantity || intval($quantity_out) === 0) {
+                return response()->json(['success'=>false,'message'=>'La cantidad debe ser diferente de cero y menor o igual a la disponible']);
+            }
+            if($description_out==""){
+                return response()->json(['success'=>false,'message'=>'Es obligatorio describir el motivo de la salida']);
+            }
+            $income_detail->quantity = $income_detail->quantity-$quantity_out;
+            $income_detail->save();
+            $output = new Output();
+            $output->income_detail_id = $income_detail_id;
+            $output->description = $description_out;
+            $output->status="1";
+            $output->quantity_out = $quantity_out;
+            $output->save();
+            DB::commit();
+            return response()->json(['success'=>true,'message'=>'La salida se ha ejecutado correctamente']);
+        } catch (\Exception $err) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ocurrió un error: ' . $err->getMessage()
+            ], 500);
+            DB::rollBack();
         }
-        $income_detail->quantity = $income_detail->quantity-$quantity_out;
-        $income_detail->save();
-        return response()->json(['success'=>true,'message'=>'La salida se ha ejecutado correctamente']);
-    } catch (\Exception $err) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Ocurrió un error: ' . $err->getMessage()
-        ], 500);
-        
     }
-
-
-}
 
 
     public function store(ProductFormRequest $request)

@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Models\IncomeDetail;
 use App\Models\Voucher;
 use App\Http\Requests\IncomeFormRequest;
+use App\Models\IncomeDetailHistorical;
 use Exception;
 use Symfony\Component\Console\Input\Input;
 use Illuminate\Support\Carbon;
@@ -45,7 +46,7 @@ class IncomeController extends Controller
                     DB::raw('SUM(ide.quantity * ide.purchase_price) as total'),
                     'u.name as user_name'
                 )
-                ->join('income_detail as ide', 'i.id', '=', 'ide.income_id')
+                ->join('income_detail_historical as ide', 'i.id', '=', 'ide.income_id')
                 ->where('i.status', '=', 1)
                 ->where(function($q) use ($query) {
                     $q->where('v.voucher_number', 'like', '%' . $query . '%')
@@ -138,6 +139,19 @@ class IncomeController extends Controller
                 $detail->form_sale = $forms_sale[$cont];
                 $detail->expiration_date = Carbon::parse($expiration_dates[$cont])->format('Y-m-d');
                 $detail->save();
+
+                $detailhistorical = new IncomeDetailHistorical();
+                $detailhistorical->income_id = $income->id;
+                $detailhistorical->income_detail_id = $detail->id;
+                $detailhistorical->product_id = $products[$cont];
+                $detailhistorical->quantity = $quantities[$cont];
+                $detailhistorical->purchase_price = $purchase_prices[$cont];
+                $detailhistorical->sale_price = $sale_prices[$cont];
+                $detailhistorical->form_sale = $forms_sale[$cont];
+                $detailhistorical->expiration_date = Carbon::parse($expiration_dates[$cont])->format('Y-m-d');
+
+                $detailhistorical->save();
+
                 $cont = $cont + 1;
             }
                 // Update the voucher status to 'A' (active)
