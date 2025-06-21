@@ -9,6 +9,7 @@ use App\Http\Requests\ProductFormRequest;
 use App\Models\Income;
 use App\Models\Output;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Str;
@@ -80,6 +81,7 @@ class InventoryController extends Controller
             $output->description = $description_out;
             $output->status="1";
             $output->quantity_out = $quantity_out;
+            $output->users_id = auth()->user()->id;
             $output->save();
             DB::commit();
             return response()->json(['success'=>true,'message'=>'La salida se ha ejecutado correctamente']);

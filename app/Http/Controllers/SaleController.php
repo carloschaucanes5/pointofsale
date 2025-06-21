@@ -33,10 +33,36 @@ class SaleController extends Controller
     }
 
     /**
+     * Buscar el producto en inventario sea por nombre o codigo de barras
+     */
+
+     public function search_product(string $textSearch){
+        $searchText = trim($textSearch);
+        $incomes_detail = DB::table('product as p')
+            ->join('category as c','p.category_id','=','c.id')
+            ->join('income_detail as ide','p.id','=','ide.product_id')
+            ->select('ide.id','p.code','p.name','p.stock','p.description','p.image','p.status','c.category','p.presentation','p.concentration','p.laboratory','ide.purchase_price','ide.sale_price','ide.form_sale','ide.expiration_date','ide.quantity')
+            ->where(function($query) use ($searchText){
+                $query->where('p.name','like','%'.$searchText.'%')
+                        ->orwhere('p.code','like','%'.$searchText.'%');
+            })
+            ->where('ide.quantity','!=',0)
+            ->orderBy('p.name','asc')
+            ->paginate(3);
+            return response()->json(['incomes_detail'=>$incomes_detail]); 
+     }
+
+
+    /**
      * Show the form for creating a new resource.
      */
     public function create()
     {
+        $payment_methods =DB::table('config')
+                          ->where("key","=","payment_methods")
+                          ->get()
+                          ->first();
+
         $persons = DB::table("person")->where('person_type','=','customer')->get();
         $sales = Sale::all();
         $products = DB::table("product as p")
@@ -46,7 +72,7 @@ class SaleController extends Controller
                     ->where('p.stock','>','0')
                     ->groupBy('article','p.id','p.stock')
                     ->get();
-        return view('sale.sale.create',['persons'=>$persons,'products'=>$products]);            
+        return view('sale.sale.create',['persons'=>$persons,'products'=>$products,'payment_methods'=>explode(",",$payment_methods->value)]);            
     }
 
     /**
@@ -95,6 +121,8 @@ class SaleController extends Controller
      */
     public function show(string $id)
     {
+        
+
         $sale = DB::table("sale as s")
                  ->join("person as p","s.customer_id","=","p.id")
                  ->join("sale_detail as sde","s.id","=","sde.sale_id")

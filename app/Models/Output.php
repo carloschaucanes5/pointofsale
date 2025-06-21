@@ -15,6 +15,7 @@ class Output extends Model
     'quantity_out',
     'income_detail_id',
     'description',
-    'status'
+    'status',
+    'users_id'
     ];
 }

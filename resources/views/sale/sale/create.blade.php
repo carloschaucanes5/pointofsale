@@ -12,39 +12,41 @@
                 @csrf
                 <div class="card-body">
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-9">
                             <div class="form-group">
-                            <label for="supplier_id">Cliente</label>
-                            <select name="customer_id" id="customer_id" class="form-control">
-                                @foreach ($persons as $per)
-                                <option value="{{$per->id}}">{{$per->name}}</option>   
-                                @endforeach
-                                
-                            </select>
+                                <label for="product_search">Producto</label>
+                                <input type="text" class="form-control" id="product_search"  placeholder="Introduce el codigo de barras o el nombre del producto"/>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-1 table-striped table-hover table-bordered align-middle" id="incomes_detail">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>CB</th>
+                                            <th>Producto</th>
+                                            <th>Stock</th>
+                                            <th>Precio/U</th>
+                                            <th>M/V</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    </tbody> 
+                                </table>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="form-group">
-                                <label for="voucher_type">Tipo de comprobante</label>
-                                <select name="voucher_type" id="voucher_type" class="form-control">
-                                    <option value="RFC">RFC</option>
+                                <label for="customer_id">Cliente</label>
+                                <select name="customer_id" id="customer_id" class="form-control selectpicker" data-live-search="true">
+                                    @foreach ($persons as $per)
+                                    <option value="{{$per->id}}" data-tokens="{{$per->id}}">{{$per->name}}</option>   
+                                    @endforeach
                                 </select>
                             </div>
-                        </div>
-                        <div class="col-md-3">
                             <div class="form-group">
-                                <label for="voucher_number">Número de comprobante</label>
-                                <input type="text" class="form-control" name="voucher_number" id="voucher_number" placeholder="Número comprobante">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-12">
-                            <div class="form-group">
-                                <label for="product_id">Producto</label>
-                                <select name="product_id" id="product_id" class="form-control selectpicker" data-live-search="true">
-                                    @foreach ($products as $pro)
-                                    <option value="{{$pro->id}}_{{$pro->stock}}_{{$pro->average}}" data-tokens="{{$pro->id}}">{{$pro->article}}</option>   
+                                <label for="payment_method">Tipo de comprobante</label>
+                                <select name="payment_method" id="payment_method" class="form-control">
+                                    @foreach($payment_methods as $method)
+                                        <option value="{{$method}}">{{$method}}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -115,7 +117,7 @@
                 <div class="form-group">
                     <div class="card-footer">
                         <input type="hidden" name="_token" value="{{csrf_token()}}">
-                        <button type="submit" id="save" class="btn btn-success me-1 mb-1">Guardar</button>
+                        <button type="button" id="save" class="btn btn-success me-1 mb-1">Guardar</button>
                         <button type="reset" class="btn btn-danger me-1 mb-1">Cancelar</button>
                     </div>
                 </div>
@@ -134,7 +136,117 @@
 
 @push("scripts")
     <script>
+        document.addEventListener('DOMContentLoaded',function(){
+            //llamar tipo ajax hacia el controlador para la busqueda de entradas o inventario
+            document.getElementById("product_search").addEventListener("keyup",function(e){
+                e.preventDefault();
+                if(e.key == 'Enter'){
+                    showSpinner();
+                    const codeName = this.value;
+                   fetch("{{url('sale/sale/search_product')}}/" + encodeURIComponent(codeName))
+                    .then(response => response.json())
+                    .then(data => {
+                        // Limpiar la tabla antes de agregar nuevos resultados
+                        const tbody = document.querySelector("#incomes_detail tbody");
+                        tbody.innerHTML = "";
 
+                        // Verifica si hay resultados
+                        if (data.incomes_detail && data.incomes_detail.data.length > 0) {
+                            data.incomes_detail.data.forEach(item => {
+                                const tr = document.createElement("tr");
+                                tr.innerHTML = `
+                                    <td>${item.code}</td>
+                                    <td>${item.name}</td>
+                                    <td>${item.stock}</td>
+                                    <td>${item.sale_price}</td>
+                                    <td>${item.form_sale}</td>
+                                `;
+                                tbody.appendChild(tr);
+                            });
+                        } else {
+                            // Si no hay resultados, muestra un mensaje
+                            const tr = document.createElement("tr");
+                            tr.innerHTML = `<td colspan="5" class="text-center">No se encontraron productos</td>`;
+                            tbody.appendChild(tr);
+                        }
+
+                        // Paginación
+                        const paginationContainerId = "incomes_detail_pagination";
+                        let paginationContainer = document.getElementById(paginationContainerId);
+                        if (!paginationContainer) {
+                            paginationContainer = document.createElement("div");
+                            paginationContainer.id = paginationContainerId;
+                            document.querySelector("#incomes_detail").after(paginationContainer);
+                        }
+                        paginationContainer.innerHTML = "";
+
+                        if (data.incomes_detail && data.incomes_detail.last_page > 1) {
+                            let paginationHtml = `<nav><ul class="pagination justify-content-center">`;
+                            for (let page = 1; page <= data.incomes_detail.last_page; page++) {
+                                paginationHtml += `
+                                    <li class="page-item${page === data.incomes_detail.current_page ? ' active' : ''}">
+                                        <a href="#" class="page-link" data-page="${page}">${page}</a>
+                                    </li>
+                                `;
+                            }
+                            paginationHtml += `</ul></nav>`;
+                            paginationContainer.innerHTML = paginationHtml;
+
+                            // Evento click para paginación
+                            paginationContainer.querySelectorAll(".page-link").forEach(link => {
+                                link.addEventListener("click", function(e) {
+                                    e.preventDefault();
+                                    const page = this.getAttribute("data-page");
+                                    showSpinner();
+                                    fetch("{{url('sale/sale/search_product')}}/" + encodeURIComponent(document.getElementById("product_search").value) + "?page=" + page)
+                                        .then(response => response.json())
+                                        .then(data => {
+                                            // Recursivamente vuelve a ejecutar este bloque para actualizar la tabla y paginación
+                                            // Puedes extraer este bloque a una función para evitar duplicación si lo deseas
+                                            // --- INICIO BLOQUE RECURSIVO ---
+                                            const tbody = document.querySelector("#incomes_detail tbody");
+                                            tbody.innerHTML = "";
+                                            if (data.incomes_detail && data.incomes_detail.data.length > 0) {
+                                                data.incomes_detail.data.forEach(item => {
+                                                    const tr = document.createElement("tr");
+                                                    tr.innerHTML = `
+                                                        <td>${item.code}</td>
+                                                        <td>${item.name}</td>
+                                                        <td>${item.stock}</td>
+                                                        <td>${item.sale_price}</td>
+                                                        <td>${item.form_sale}</td>
+                                                    `;
+                                                    tbody.appendChild(tr);
+                                                });
+                                            } else {
+                                                const tr = document.createElement("tr");
+                                                tr.innerHTML = `<td colspan="5" class="text-center">No se encontraron productos</td>`;
+                                                tbody.appendChild(tr);
+                                            }
+                                            // Actualizar paginación
+                                            // (puedes llamar a una función aquí si extraes el código)
+                                            // --- FIN BLOQUE RECURSIVO ---
+                                            // Para evitar duplicación, puedes extraer el renderizado de tabla y paginación a funciones.
+                                        })
+                                        .catch(error => {
+                                            console.error('Error:', error);
+                                        }).finally(()=>{
+                                            hideSpinner();
+                                        });
+                                });
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    }).finally(()=>{
+                        hideSpinner();
+                    });
+                }
+            })
+        });
+
+        /*
         $(document).ready(function(){
             $('#btn_add').click(function(){
                 add();
@@ -228,7 +340,7 @@
             $('#fila'+index).remove();
             evaluate();
         }
-
+    */
     
     </script>
 @endpush
