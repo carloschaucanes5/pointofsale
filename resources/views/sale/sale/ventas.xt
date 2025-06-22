@@ -1,0 +1,100 @@
+
+
+
+
+
+        /*
+        $(document).ready(function(){
+            $('#btn_add').click(function(){
+                add();
+            });
+        });
+
+        $('#bt_save').click(function(){
+            swal({
+                title:"Su cambio es!",
+                text:"Gracias por su compra",
+                type:"success"
+            })
+        });
+
+
+        var cont = 0; 
+        var total = 0;
+        var subtotal = [];
+        $('#save').hide();
+        $('#product_id').change(showValues());
+
+        function showValues(){
+            var dataArticle = document.getElementById('product_id').value.split('_');
+            console.log(dataArticle);
+            $('#stock').val(dataArticle[1]);
+            $('#sale_price').val(dataArticle[2]);
+        }
+
+        function add(){
+            var dataArticle = document.getElementById('product_id').value.split('_');
+            var product_id = dataArticle[0];
+            var product = $('#product_id option:selected').text();
+            var quantity = parseInt($('#quantity').val());
+            var discount = parseInt($('#discount').val());
+            var sale_price =parseFloat($('#sale_price').val());
+            var stock = $('#stock').val();
+            if(product_id!="" && quantity!="" && quantity > 0 && sale_price !=""){
+                if(parseInt(quantity) < parseInt(stock)){
+                    subtotal[cont] = quantity * sale_price;
+                    total = total + subtotal[cont];
+                        var row = `
+                        <tr class="selected" id="fila`+cont+`">
+                        <td>
+                            <button type="button" class="btn btn-warning" onclick="eliminar(`+cont+`)">x</button>
+                        </td>
+                        <td><input type="hidden" name="products[]" value="`+product_id+`">`+product_id+`</td>
+                        <td><input class="form-control" type="number" name="quantities[]" value="`+quantity+`"></td>
+                        <td><input class="form-control" type="number" name="discounts[]" value="`+discount+`"></td>
+                        <td><input class="form-control" type="number" name="sale_prices[]" value="`+sale_price+`"></td>
+                        <td>`+subtotal[cont]+`</td>
+                    </tr>
+                    `;
+                    cont++;
+                    limpiar();
+                    $('#total').html("$ "+total);
+                    $('#sale_total').val(total);
+                    evaluate();
+                    $('#detalles').append(row);
+                }
+                else
+                {
+                    alert("la cantidad vendida supera el Stock");
+                }
+                
+            }
+            else
+            {
+                alert("Error al ingresar el detalle del ingreso, revise los datos del articulo");
+            }
+        }
+
+        function limpiar(){
+            $('#quantity').val(1);
+            $('#discount').val(0); 
+        }
+
+        function evaluate(){
+            if(total > 0){
+                $('#save').show();
+            }
+            else
+            {
+                $('#save').hide();
+            }
+        }
+
+        function eliminar(index){
+            total = total -subtotal[index];
+            $('#total').html('$ '+ total);
+            $('#total_sale').val(total);
+            $('#fila'+index).remove();
+            evaluate();
+        }
+    */

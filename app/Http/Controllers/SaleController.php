@@ -48,7 +48,7 @@ class SaleController extends Controller
             })
             ->where('ide.quantity','!=',0)
             ->orderBy('p.name','asc')
-            ->paginate(3);
+            ->paginate(2);
             return response()->json(['incomes_detail'=>$incomes_detail]); 
      }
 
