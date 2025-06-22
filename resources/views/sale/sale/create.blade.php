@@ -5,8 +5,8 @@
 @section('content')
     <div class="col-md-12">
         <div class="card card-primary">
-            <div class="card-header">
-                <h3 class="card-title">Nueva Venta</h3>
+            <div class="card-header py-1 px-2">
+                <h5 class="card-title m-0">Nueva Venta</h5>
             </div>
             <form action="{{route('sale.store')}}" method="POST" class="form" id="form-sale">
                 @csrf
@@ -32,6 +32,7 @@
                                                 <th>Producto</th>
                                                 <th>Precio/U</th>
                                                 <th>M/V</th>
+                                                <th>F.V</th>
                                                 <th></th>
                                             </tr>
                                         </thead>
@@ -42,16 +43,17 @@
                             </div>
                             <div class="row">
                                 <div class="col-md-12 table-responsive">
-                                    <b>Resultados</b>
+                                    <p style="text-align:center"><b>Carrito de compras</b></p>
                                     <table class="table table-hover mb-1 table-sm table-striped table-hover table-bordered align-middle" id="detalles">
                                         <thead class="table-warning" >
                                             <tr>
-                                                <th>Opciones</th>
+                                                <th>CB</th>
                                                 <th>Producto</th>
                                                 <th>Cantidad</th>
                                                 <th>Precio Venta</th>
                                                 <th>Descuento</th>
                                                 <th>Subtotal</th>
+                                                <th></th>
                                             </tr>
                                         </thead>
                                         <tfoot>
@@ -61,6 +63,7 @@
                                             <th></th>
                                             <th></th>
                                             <th><h4 id="total">$ 0.00</h4><input type="hidden"  name="sale_total" id="sale_total"/></th>
+                                            <th></th>
                                         </tfoot>
                                         <tbody>
                                         </tbody> 
@@ -131,10 +134,11 @@
                                 const tr = document.createElement("tr");
                                 tr.innerHTML = `
                                     <td>${item.code}</td>
-                                    <td>${item.name}</td>
-                                    <td>${item.sale_price}</td>
+                                    <td>${item.name} ${item.concentration} ${item.presentation}</td>
+                                    <td>${formatCurrency.format(parseFloat(item.sale_price).toFixed(0))}</td>
                                     <td>${item.form_sale}</td>
-                                    <td><button class="btn btn-warning" onclick="add_item(\'${item.id},${item.name},${item.sale_price},${item.form_sale}\')"> <i class="bi bi-cart"></i></button></td>
+                                    <td>${item.expiration_date}</td>
+                                    <td><button class="btn btn-warning" onclick="add_item(\'${item.id},${item.code},${item.name} ${item.concentration} ${item.presentation},${item.sale_price},${item.form_sale}\')"> <i class="bi bi-cart"></i></button></td>
                                 `;
                                 tbody.appendChild(tr);
                             });
@@ -150,6 +154,7 @@
                         console.error('Error:', error);
                     }).finally(()=>{
                         hideSpinner();
+                        
                     });
                 }
             })
@@ -161,6 +166,9 @@
 
         });
     
+
+        //una funcion que me permita 
+
         //function para crear paginacion
         function create_pagination(data){
                 // Paginación
@@ -178,7 +186,7 @@
                     for (let page = 1; page <= data.incomes_detail.last_page; page++) {
                         paginationHtml += `
                             <li class="page-item${page === data.incomes_detail.current_page ? ' active' : ''}">
-                                <a href="#" class="page-link" data-page="${page}">${page}</a>
+                                <a href="#" class="page-link btn-sm py-0 px-1 fs-6" data-page="${page}">${page}</a>
                             </li>
                         `;
                     }
@@ -207,8 +215,7 @@
                                                 <td>${item.name}</td>
                                                 <td>${item.sale_price}</td>
                                                 <td>${item.form_sale}</td>
-                                                <td><button  onclick="add_item(\'${item.id},${item.name},${item.sale_price},${item.form_sale}\')"> <i class="bi bi-cart"></i></button></td>
-
+                                                <td><button class="btn btn-warning" onclick="add_item(\'${item.id},${item.code},${item.name} ${item.concentration} ${item.presentation},${item.sale_price},${item.form_sale}\')"> <i class="bi bi-cart"></i></button></td>
                                             `;
                                             tbody.appendChild(tr);
                                         });
@@ -231,7 +238,7 @@
         //function para adicionar un item al carrito de compras
         function add_item(item)
         {
-            const [id, name, sale_price, form_sale] = item.split(",");
+            const [id, code, name, sale_price, form_sale] = item.split(",");
             const quantity = 0;
             const discount = 0
             const subtotal = ((quantity * sale_price) - discount).toFixed(2);
@@ -241,8 +248,9 @@
 
             row.innerHTML = `
                 <td>
-                    <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('tr').remove(); updateTotal();">Eliminar</button>
+                    
                     <input type="hidden" name="product_id[]" value="${id}">
+                    ${code}
                 </td>
                 <td>${name}</td>
                 <td>
@@ -255,6 +263,9 @@
                     <input type="number" name="discount[]" class="form-control form-control-sm" value="${discount}" min="0" step="0.01" style="width:80px;" onchange="updateSubtotal(this)">
                 </td>
                 <td class="subtotal">${subtotal}</td>
+                <td>
+                    <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('tr').remove(); updateTotal();"><li class='bi bi-trash'></li></button>
+                </td>
             `;
 
             updateTotal();
@@ -283,6 +294,7 @@
             row.querySelector('.subtotal').textContent = subtotal;
             updateTotal();
         }
+
 
 
     </script>
