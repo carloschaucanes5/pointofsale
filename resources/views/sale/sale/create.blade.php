@@ -92,24 +92,47 @@
                             </div>
                             <div class="row form-group">
                                 <div class="col-md-9">
-                                    <input type="number" class="form-control" id="payment_value" placeholder="Ingrese valor" />
+                                    <input type="number" class="form-control" value="0" min="0" id="payment_value" placeholder="Ingrese valor" />
                                 </div>
                                 <div class="col-md-3">
                                     <button type="button" class="btn btn-primary"><i class="bi bi-plus-circle" onclick="add_payment()"></i></button>
                                 </div>
                             </div>
+                            <hr/>
                             <div class="row form-group" >
-                                    <table id="table_payments" class=" form-control table table-hover mb-1 table-sm table-striped table-hover table-bordered align-middle">
+                                    <table id="table_payments" class=" table table-hover mb-1 table-sm table-striped table-hover table-bordered align-middle">
                                         <thead>
                                             <th>Medio</th><th>Valor</th><th></th>
                                         </thead>
                                         <tbody>
                                         </tbody>
                                     </table>
-                                <input type="hidden" id="sale_total_1" />
-                                <input type="hidden" id="sale_change_1" />
-                                <h3 class="text-warning">TOTAL: <b><span id="totalPayment">0</span></h3>
-                                <h3 class="text-warning">CAMBIO: <b><span id="totalChange">0</span></h3>
+                                    <table id="table_totals" class=" table table-hover mb-1 table-sm">
+                                        <tbody>
+                                            <tr>
+                                                <td><h4 class="text-primary">Total</h4></td><td><h4><span class="text-success" id="totalPayment">0</span></h4></td>
+                                            </tr>
+                                            <tr>
+                                                <td><h4 class="text-primary">Cambio</h4></td><td><h4><span class="text-success" id="totalChange">0</span></h4></td>
+                                            </tr>
+                                        </tbody>
+                                        <tfoot>
+                                            <tr>
+                                              <td> 
+                                                <div style="display: flex;flex-direction: row;justify-content: center"> 
+                                                    <input type="hidden" name="_token" value="{{csrf_token()}}">
+                                                    <button type="reset" class="btn btn-danger me-1 mb-1">Cancelar</button>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div style="display: flex;flex-direction: row;justify-content: center">
+                                                    <button type="button" id="invoice" class="btn btn-success me-1 mb-1">FACTURAR</button>
+                                                </div>
+                                                
+                                            </td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
                             </div>
 
                     </div>
@@ -117,9 +140,8 @@
                 </div>
                 <div class="form-group">
                     <div class="card-footer">
-                        <input type="hidden" name="_token" value="{{csrf_token()}}">
-                        <button type="button" id="save" class="btn btn-success me-1 mb-1">Guardar</button>
-                        <button type="reset" class="btn btn-danger me-1 mb-1">Cancelar</button>
+                        
+                        
                     </div>
                 </div>
             </form>
@@ -343,8 +365,7 @@
             });
             document.getElementById("total").textContent = formatCurrency.format(total.toFixed(0)) ;
             document.getElementById("sale_total").value = total.toFixed(2);
-            document.getElementById("sale_total_1").value = total.toFixed(2);
-            document.getElementById("sale_change_1").value = 0;
+
             if(total > 0){
                 const table_payments_tbody = document.querySelector('#table_payments tbody');
                 table_payments_tbody.innerHTML = "";
@@ -373,12 +394,13 @@
         function deletePayment(ele){
             const tr = ele.closest("tr");
             tr.remove();
+            updateTotalChange();
         } 
         //funcion que me permita adicionar un nuevo metodo de pago
         function add_payment(){
             const method = document.getElementById('payment_method').value;
             const value = document.getElementById('payment_value').value;
-            if(value.trim()!=""){
+            if(value.trim()!="" && value!=0){
                 const table_payments = document.querySelector("#table_payments tbody");
                 const tr = document.createElement("tr");
                 const td1 = document.createElement("td");
@@ -391,6 +413,9 @@
                 tr.appendChild(td2);
                 tr.appendChild(td3);
                 table_payments.appendChild(tr);
+                updateTotalChange();
+                document.getElementById('payment_method').value="{{$payment_methods[0]}}";
+                document.getElementById('payment_value').value=0;
             }
             else
             {
@@ -401,6 +426,33 @@
                 })
             }          
         }
+        //Actualizar el total a pagar y el cambio
+function updateTotalChange() {
+    const btn_invoice = document.getElementById("invoice");
+    const table_payments = document.querySelectorAll("#table_payments tbody tr");
+    const sale_total = parseFloat(document.getElementById("sale_total").value) || 0;
+    let sum_total = 0;
+    let change = 0;
+    if(table_payments.length > 0){
+        for (let i = 0; i < table_payments.length; i++) {
+            const valorPayment = parseFloat(table_payments[i].children[1].textContent) || 0;
+            sum_total += valorPayment;
+        }
+         change = sum_total - sale_total;
+         if(change < 0){
+            btn_invoice.style.display="none";
+         }else{
+            btn_invoice.style.display="";
+         }
+         
+         
+    }
+    else
+    {
+        btn_invoice.style.display="none";
+    }
+    document.getElementById("totalChange").textContent = formatCurrency.format(change);
+}
 
     </script>
 @endpush
