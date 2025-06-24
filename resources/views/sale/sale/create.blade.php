@@ -15,7 +15,7 @@
                         <div class="col-md-9">
                             <div class="row">
                                 <div class="col-md-12">
-                                    <label for="product_search">Producto</label>
+                                    <label for="product_search"><b>Producto</b></label>
                                     <div class="input-group">
                                         <span class="input-group-text"><i class="bi bi-search"></i></span>
                                         <input type="text" class="form-control" id="product_search"  placeholder="Introduce el codigo de barras o el nombre del producto"/>
@@ -30,6 +30,7 @@
                                             <tr>
                                                 <th>CB</th>
                                                 <th>Producto</th>
+                                                <th>Stock</th>
                                                 <th>Precio/U</th>
                                                 <th>M/V</th>
                                                 <th>F.V</th>
@@ -53,7 +54,7 @@
                                                 <th>Precio Venta</th>
                                                 <th>Descuento</th>
                                                 <th>Subtotal</th>
-                                                <th></th>
+                                                <th>F/V</th>
                                             </tr>
                                         </thead>
                                         <tfoot>
@@ -73,7 +74,7 @@
                         </div>
                         <div class="col-md-3">
                             <div class="form-group">
-                                <label for="customer_id">Cliente</label>
+                                <label for="customer_id"><b>Cliente</b></label>
                                 <select name="customer_id" id="customer_id" class="form-control selectpicker" data-live-search="true">
                                     @foreach ($persons as $per)
                                     <option value="{{$per->id}}" data-tokens="{{$per->id}}">{{$per->name}}</option>   
@@ -81,14 +82,36 @@
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label for="payment_method">Tipo de comprobante</label>
+                                <hr/>
+                                <label for="payment_method"><b>Medio de Pago</b></label>
                                 <select name="payment_method" id="payment_method" class="form-control">
                                     @foreach($payment_methods as $method)
                                         <option value="{{$method}}">{{$method}}</option>
                                     @endforeach
-                                </select>
+                                </select>                
                             </div>
-                        </div>
+                            <div class="row form-group">
+                                <div class="col-md-9">
+                                    <input type="number" class="form-control" id="payment_value" placeholder="Ingrese valor" />
+                                </div>
+                                <div class="col-md-3">
+                                    <button type="button" class="btn btn-primary"><i class="bi bi-plus-circle" onclick="add_payment()"></i></button>
+                                </div>
+                            </div>
+                            <div class="row form-group" >
+                                    <table id="table_payments" class=" form-control table table-hover mb-1 table-sm table-striped table-hover table-bordered align-middle">
+                                        <thead>
+                                            <th>Medio</th><th>Valor</th><th></th>
+                                        </thead>
+                                        <tbody>
+                                        </tbody>
+                                    </table>
+                                <input type="hidden" id="sale_total_1" />
+                                <input type="hidden" id="sale_change_1" />
+                                <h3 class="text-warning">TOTAL: <b><span id="totalPayment">0</span></h3>
+                                <h3 class="text-warning">CAMBIO: <b><span id="totalChange">0</span></h3>
+                            </div>
+
                     </div>
                     <hr/>
                 </div>
@@ -135,10 +158,11 @@
                                 tr.innerHTML = `
                                     <td>${item.code}</td>
                                     <td>${item.name} ${item.concentration} ${item.presentation}</td>
+                                    <td>${item.quantity}</td>
                                     <td>${formatCurrency.format(parseFloat(item.sale_price).toFixed(0))}</td>
                                     <td>${item.form_sale}</td>
                                     <td>${item.expiration_date}</td>
-                                    <td><button class="btn btn-warning" onclick="add_item(\'${item.id},${item.code},${item.name} ${item.concentration} ${item.presentation},${item.sale_price},${item.form_sale}\')"> <i class="bi bi-cart"></i></button></td>
+                                    <td><button class="btn btn-warning" type="button" onclick="add_item(\'${item.id},${item.code},${item.name} ${item.concentration} ${item.presentation},${item.sale_price},${item.form_sale}\')"> <span class="bi bi-cart"></span></button></td>
                                 `;
                                 tbody.appendChild(tr);
                             });
@@ -213,9 +237,9 @@
                                             tr.innerHTML = `
                                                 <td>${item.code}</td>
                                                 <td>${item.name}</td>
-                                                <td>${item.sale_price}</td>
+                                               <td>${formatCurrency.format(parseFloat(item.sale_price).toFixed(0))}</td>
                                                 <td>${item.form_sale}</td>
-                                                <td><button class="btn btn-warning" onclick="add_item(\'${item.id},${item.code},${item.name} ${item.concentration} ${item.presentation},${item.sale_price},${item.form_sale}\')"> <i class="bi bi-cart"></i></button></td>
+                                                <td><button class="btn btn-warning" type="button" onclick="add_item(\'${item.id},${item.code},${item.name} ${item.concentration} ${item.presentation},${item.sale_price},${item.form_sale}\')"> <span class="bi bi-cart"></span></button></td>
                                             `;
                                             tbody.appendChild(tr);
                                         });
@@ -235,40 +259,76 @@
                     });
                 }
         }
+
+        //verificar si el item se encuentra en el carrito de compras
+        function verifyExist(code,sale_price,form_sale){
+            const codes = document.querySelectorAll("input[name='code[]']");
+            const sale_prices = document.querySelectorAll("input[name='sale_price[]']");
+            const form_sales = document.querySelectorAll("input[name='form_sale[]']");
+            let b = 0;
+            for(let i = 0;i<codes.length;i++){
+                if(codes[i].value == code && sale_prices[i].value == sale_price && form_sales[i].value == form_sale){
+                    b = 1;
+                }
+                
+            }
+            if(b==1){
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
         //function para adicionar un item al carrito de compras
         function add_item(item)
         {
             const [id, code, name, sale_price, form_sale] = item.split(",");
-            const quantity = 0;
-            const discount = 0
-            const subtotal = ((quantity * sale_price) - discount).toFixed(2);
-
-            const table = document.getElementById("detalles").getElementsByTagName('tbody')[0];
-            const row = table.insertRow();
-
-            row.innerHTML = `
-                <td>
-                    
-                    <input type="hidden" name="product_id[]" value="${id}">
-                    ${code}
-                </td>
-                <td>${name}</td>
-                <td>
-                    <input type="number" name="quantity[]" class="form-control form-control-sm" value="${quantity}" min="1" style="width:80px;" onchange="updateSubtotal(this)">
-                </td>
-                <td>
-                    <input type="number" name="sale_price[]" class="form-control form-control-sm" value="${sale_price}" min="0" step="0.01" style="width:100px;" onchange="updateSubtotal(this)">
-                </td>
-                <td>
-                    <input type="number" name="discount[]" class="form-control form-control-sm" value="${discount}" min="0" step="0.01" style="width:80px;" onchange="updateSubtotal(this)">
-                </td>
-                <td class="subtotal">${subtotal}</td>
-                <td>
-                    <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('tr').remove(); updateTotal();"><li class='bi bi-trash'></li></button>
-                </td>
-            `;
-
+            if(!verifyExist(code,sale_price,form_sale)){
+                const quantity = 1;
+                const discount = 0
+                const subtotal = ((quantity * sale_price) - discount).toFixed(2);
+                const table = document.getElementById("detalles").getElementsByTagName('tbody')[0];
+                const row = table.insertRow();
+                row.innerHTML = `
+                    <td>
+                        
+                        <input type="hidden" name="income_detail_id[]" value="${id}">
+                        <input type="hidden" name="code[]" value="${code}">
+                        ${code}
+                    </td>
+                    <td>${name}</td>
+                    <td>
+                        <input type="number" name="quantity[]" class="form-control form-control-sm" value="${quantity}" min="1" style="width:80px;" onchange="updateSubtotal(this)">
+                    </td>
+                    <td>
+                        <input type="hidden" name="sale_price[]" readonly class="form-control form-control-sm" value="${sale_price}" min="0" step="0.01" style="width:100px;" onchange="updateSubtotal(this)">
+                         ${formatCurrency.format(parseFloat(sale_price).toFixed(0))}
+                        
+                    <td>
+                        <input type="number" name="discount[]" class="form-control form-control-sm" value="${discount}" min="0" step="0.01" style="width:80px;" onchange="updateSubtotal(this)">
+                    </td>
+                    <td class="subtotal">${formatCurrency.format(parseFloat(subtotal).toFixed(0))}</td>
+                    <td class="form_sale">
+                        <input type="hidden" name="form_sale[]" value="${form_sale}">
+                        ${form_sale}
+                    </td>
+                    <td>
+                        <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('tr').remove(); updateTotal();"><li class='bi bi-trash'></li></button>
+                    </td>
+                `;
+            }
+            else
+            {
+                    Swal.fire({
+                    icon:"warning",
+                    text:"El producto ya se encuentra en la lista, modifica la cantidad si deseas agragar un nuevo",
+                    timer:4000
+                });
+            }
             updateTotal();
+            
         }
         //function para actualizar el total
         function updateTotal() {
@@ -278,11 +338,26 @@
             const sale_price = parseFloat(row.querySelector('input[name="sale_price[]"]').value) || 0;
             const discount = parseFloat(row.querySelector('input[name="discount[]"]').value) || 0;
             const subtotal = ((quantity * sale_price) - discount).toFixed(2);
-            row.querySelector('.subtotal').textContent = subtotal;
+            row.querySelector('.subtotal').textContent = formatCurrency.format(parseFloat(subtotal).toFixed(0));
             total += parseFloat(subtotal);
             });
-            document.getElementById("total").textContent = "$ " + total.toFixed(2);
+            document.getElementById("total").textContent = formatCurrency.format(total.toFixed(0)) ;
             document.getElementById("sale_total").value = total.toFixed(2);
+            document.getElementById("sale_total_1").value = total.toFixed(2);
+            document.getElementById("sale_change_1").value = 0;
+            if(total > 0){
+                const table_payments_tbody = document.querySelector('#table_payments tbody');
+                table_payments_tbody.innerHTML = "";
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                <td>{{$payment_methods[0]}}</td>
+                <td>${total.toFixed(2)}</td>
+                <td><a href="#" onclick="deletePayment(this)" class="text-danger"><i class="bi bi-trash"></i></a></td>
+                `;
+                const totalPayment = document.querySelector('#totalPayment');
+                totalPayment.textContent = formatCurrency.format(total.toFixed(0));
+                table_payments_tbody.appendChild(tr);
+            }
         }
         //funcion para actualizar el subtotal
         function updateSubtotal(input) {
@@ -291,11 +366,41 @@
             const sale_price = parseFloat(row.querySelector('input[name="sale_price[]"]').value) || 0;
             const discount = parseFloat(row.querySelector('input[name="discount[]"]').value) || 0;
             const subtotal = ((quantity * sale_price) - discount).toFixed(2);
-            row.querySelector('.subtotal').textContent = subtotal;
+            row.querySelector('.subtotal').textContent = formatCurrency.format(parseFloat(subtotal).toFixed(0));
             updateTotal();
         }
-
-
+        //funcion para eliminar un medio de pago
+        function deletePayment(ele){
+            const tr = ele.closest("tr");
+            tr.remove();
+        } 
+        //funcion que me permita adicionar un nuevo metodo de pago
+        function add_payment(){
+            const method = document.getElementById('payment_method').value;
+            const value = document.getElementById('payment_value').value;
+            if(value.trim()!=""){
+                const table_payments = document.querySelector("#table_payments tbody");
+                const tr = document.createElement("tr");
+                const td1 = document.createElement("td");
+                td1.textContent = method;
+                const td2 = document.createElement("td");
+                td2.textContent = value;
+                const td3 = document.createElement("td");
+                td3.innerHTML = `<a href="#" onclick="deletePayment(this)" class="text-danger"><i class="bi bi-trash"></i></a>`;
+                tr.appendChild(td1);
+                tr.appendChild(td2);
+                tr.appendChild(td3);
+                table_payments.appendChild(tr);
+            }
+            else
+            {
+                Swal.fire({
+                    title:"Mensaje",
+                    text:"se debe ingresar el valor del pago",
+                    icon:"warning"
+                })
+            }          
+        }
 
     </script>
 @endpush
