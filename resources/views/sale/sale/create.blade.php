@@ -8,7 +8,7 @@
             <div class="card-header py-1 px-2">
                 <h5 class="card-title m-0">Nueva Venta</h5>
             </div>
-            <form action="{{route('sale.store')}}" method="POST" class="form" id="form-sale">
+            <form  method="POST" class="form" id="form-sale">
                 @csrf
                 <div class="card-body">
                     <div class="row">
@@ -109,27 +109,29 @@
                                     </table>
                                     <table id="table_totals" class=" table table-hover mb-1 table-sm">
                                         <tbody>
-                                            <tr>
-                                                <td><h4 class="text-primary">Total</h4></td><td><h4><span class="text-success" id="totalPayment">0</span></h4></td>
+                                            <tr>    
+                                                <td><h4 class="text-primary" id="totalPaymentTitle">Total</h4></td><td><h4><span class="text-success" id="totalPayment">0</span></h4></td>
                                             </tr>
                                             <tr>
-                                                <td><h4 class="text-primary">Cambio</h4></td><td><h4><span class="text-success" id="totalChange">0</span></h4></td>
+                                                <td>
+                                                    <input type="hidden" id="totalChangeHidden" name="totalChangeHidden" value="0" />
+                                                    <h4 class="text-primary" id="totalChangeTitle">Cambio</h4></td><td><h4><span class="text-success" id="totalChange">0</span></h4>
+                                                </td>
                                             </tr>
                                         </tbody>
                                         <tfoot>
                                             <tr>
-                                              <td> 
-                                                <div style="display: flex;flex-direction: row;justify-content: center"> 
-                                                    <input type="hidden" name="_token" value="{{csrf_token()}}">
-                                                    <button type="reset" class="btn btn-danger me-1 mb-1">Cancelar</button>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div style="display: flex;flex-direction: row;justify-content: center">
-                                                    <button type="button" id="invoice" class="btn btn-success me-1 mb-1">FACTURAR</button>
-                                                </div>
-                                                
-                                            </td>
+                                                <td>
+                                                    <div style="display: flex;flex-direction: row;justify-content: center">
+                                                        <button type="button" id="invoice" onclick="toinvoice()" class="btn btn-success me-1 mb-1">FACTURAR</button>
+                                                    </div>
+                                                </td>
+                                                <td> 
+                                                    <div style="display: flex;flex-direction: row;justify-content: center"> 
+                                                        <input type="hidden" name="_token" value="{{csrf_token()}}">
+                                                        <button type="reset" class="btn btn-danger me-1 mb-1">Cancelar</button>
+                                                    </div>
+                                                </td>
                                             </tr>
                                         </tfoot>
                                     </table>
@@ -160,6 +162,7 @@
 @push("scripts")
     <script>
         document.addEventListener('DOMContentLoaded',function(){
+
             //llamar tipo ajax hacia el controlador para la busqueda de entradas o inventario
             document.getElementById("product_search").addEventListener("keyup",function(e){
                 e.preventDefault();
@@ -429,6 +432,10 @@
         //Actualizar el total a pagar y el cambio
 function updateTotalChange() {
     const btn_invoice = document.getElementById("invoice");
+    
+    const titleChange = document.getElementById('totalChangeTitle');
+    const valueChange = document.getElementById('totalChange');
+
     const table_payments = document.querySelectorAll("#table_payments tbody tr");
     const sale_total = parseFloat(document.getElementById("sale_total").value) || 0;
     let sum_total = 0;
@@ -440,8 +447,12 @@ function updateTotalChange() {
         }
          change = sum_total - sale_total;
          if(change < 0){
+            titleChange.textContent="Faltan";
+            valueChange.className = "text-danger";
             btn_invoice.style.display="none";
          }else{
+            titleChange.textContent="Cambio";
+            valueChange.className = "text-success";
             btn_invoice.style.display="";
          }
          
@@ -452,7 +463,62 @@ function updateTotalChange() {
         btn_invoice.style.display="none";
     }
     document.getElementById("totalChange").textContent = formatCurrency.format(change);
+    document.getElementById("totalChangeHidden").value =change;
 }
+
+function toinvoice(){
+            showSpinner();
+            let form = document.getElementById('form-sale');
+            //--------------------------------------------
+            const table_payments = document.querySelectorAll("#table_payments tbody tr");
+            let methods = [];
+            for (let i = 0; i < table_payments.length; i++) {
+                let valorPayment = parseFloat(table_payments[i].children[1].textContent);
+                let methodPayment = table_payments[i].children[0].textContent;
+                const obj = {method:methodPayment,value:valorPayment};
+                methods.push(obj);
+            }
+
+            //-------------------------------------------
+            let formData = new FormData(form);
+                formData.append("methods",JSON.stringify(methods));
+                fetch("{{ route('sale.store') }}", {
+                    method: "POST",
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    hideSpinner();
+                    if(data.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Éxito',
+                            text: data.message,
+                            timer: 3000,
+                        }).then(() => {
+                            window.location.href = "{{route('sale.index')}}";
+                        });
+                    }else {
+                        Swal.fire({
+                            title: 'Error',
+                            text: 'No se pudo facturar, intentalo nuevamente',
+                            icon: 'error',
+                            buttons: true,
+                            dangerMode: true,
+                            timer: 3000
+                        });
+                    }
+                    //location.reload();
+                })
+                .catch(error => {
+                    hideSpinner();
+                    console.log(error);
+                    alert('Error al guardar');
+                });
+        }
 
     </script>
 @endpush

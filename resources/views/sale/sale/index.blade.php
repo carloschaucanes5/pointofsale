@@ -58,7 +58,6 @@
                             <th>Opciones</th>
                             <th>Fecha</th>
                             <th>Cliente</th>
-                            <th>Comprobante</th>
                             <th>Impuesto</th>
                             <th>Total</th>
                             <th>Estado</th>
@@ -73,7 +72,6 @@
                             </td>
                             <td>{{$sale->created_at}}</td>
                             <td>{{$sale->name}}</td>
-                            <td>{{$sale->voucher_type." ".$sale->voucher_number}}</td>
                             <td>{{$sale->tax}}</td>
                             <td>{{$sale->sale_total}}</td>
                             <td>{{$sale->status}}</td>

@@ -10,9 +10,10 @@ use Illuminate\Support\Facades\DB;
 use PhpParser\Node\Stmt\TryCatch;
 use App\Models\Sale;
 use App\Models\SaleDetail;
-use Response;
+
 use Illuminate\Support\Collection;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class SaleController extends Controller
 {
@@ -23,9 +24,8 @@ class SaleController extends Controller
             $sales = DB::table("sale as sal")
                        ->join('person as pe','pe.id','=','sal.customer_id')
                        ->join('sale_detail as sde','sde.sale_id','=','sal.id')
-                       ->select('sal.id','sal.created_at','pe.name','sal.voucher_type','sal.voucher_number','sal.tax','sal.status','sal.sale_total')
-                       ->where('sal.voucher_number','like','%'.$query.'%')
-                       ->groupBy('sal.id','sal.created_at','pe.name','sal.voucher_type','sal.voucher_number','sal.tax','sal.status','sal.sale_total')
+                       ->select('sal.id','sal.created_at','pe.name','sal.tax','sal.status','sal.sale_total')
+                       ->groupBy('sal.id','sal.created_at','pe.name','sal.tax','sal.status','sal.sale_total')
                        ->orderBy('sal.id','desc')
                        ->paginate(15);
             return view('sale.sale.index',['sales'=>$sales,'texto'=>$query]);
@@ -78,24 +78,27 @@ class SaleController extends Controller
     /**
      * Store a newly createds resource in storage.
      */
-    public function store(SaleFormRequest $request)
+    public function store(Request $request)
     {
 
+        $re = $request;
+        return response()->json(["success"=>true],201);
+        
         try{
             DB::beginTransaction();
             $sale = new Sale();
             $sale->customer_id = $request->post('customer_id');
-            $sale->voucher_type = $request->post('voucher_type');
-            $sale->voucher_number = $request->post('voucher_number');
             $sale->tax = 16;
             $sale->status = 1;
+            $sale->change = $request->post('totalChangeHidden');
             $sale->sale_total = $request->post('sale_total');
             $sale->save();
             
-            $products = $request->post('products');
-            $quantities = $request->post('quantities');
-            $discounts= $request->post('discounts');
-            $sale_prices = $request->post('sale_prices');
+            $products = $request->post('income_detail_id');
+            $quantities = $request->post('quantity');
+            $discounts= $request->post('discount');
+            $sale_prices = $request->post('sale_price');
+            $sale_forms = $request->post('sale_form');
             
             $cont = 0; 
             while($cont < count($products)){
@@ -114,6 +117,7 @@ class SaleController extends Controller
             DB::rollBack();
         }
         return Redirect::to("sale/sale");
+        */
     }
 
     /**
