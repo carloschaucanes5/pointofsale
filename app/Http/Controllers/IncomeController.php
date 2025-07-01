@@ -110,72 +110,83 @@ class IncomeController extends Controller
     /**
      * Store a newly createds resource in storage.
      */
-    public function store(IncomeFormRequest $request)
+    public function store(Request $request)
     {
         try{
-            DB::beginTransaction();
-            $income = new Income();
-            $income->voucher_id = $request->post('voucher_id');
-            $income->users_id = auth()->user()->id; // Assuming you want to set the current authenticated user
-            $income->tax = 0;
-            $income->status = 1;
-            $income->save();
-            
-            $products = $request->post('products');
-            $quantities = $request->post('quantities');
-            $purchase_prices = $request->post('purchase_prices');
-            $sale_prices = $request->post('sale_prices');
-            $forms_sale = $request->post('forms_sale');
-            $expiration_dates = $request->post('expiration_dates');
-            
-            $cont = 0;
-            while($cont < count($products)){
-                $detail = new IncomeDetail();
-                $detail->income_id = $income->id;
-                $detail->product_id = $products[$cont];
-                $detail->quantity = $quantities[$cont];
-                $detail->purchase_price = $purchase_prices[$cont];
-                $detail->sale_price = $sale_prices[$cont];
-                $detail->form_sale = $forms_sale[$cont];
-                $detail->expiration_date = Carbon::parse($expiration_dates[$cont])->format('Y-m-d');
-                $detail->save();
+            if(auth()->user()->id){
+                 DB::beginTransaction();
+                $income = new Income();
+                $income->voucher_id = $request->post('voucher_id');
+                $income->users_id = auth()->user()->id; // Assuming you want to set the current authenticated user
+                $income->tax = 0;
+                $income->status = 1;
+                $income->save();
+                
+                $products = $request->post('products');
+                $quantities = $request->post('quantities');
+                $purchase_prices = $request->post('purchase_prices');
+                $sale_prices = $request->post('sale_prices');
+                $forms_sale = $request->post('forms_sale');
+                $expiration_dates = $request->post('expiration_dates');
+                
+                $cont = 0;
+                while($cont < count($products)){
+                    $detail = new IncomeDetail();
+                    $detail->income_id = $income->id;
+                    $detail->product_id = $products[$cont];
+                    $detail->quantity = $quantities[$cont];
+                    $detail->purchase_price = $purchase_prices[$cont];
+                    $detail->sale_price = $sale_prices[$cont];
+                    $detail->form_sale = $forms_sale[$cont];
+                    $detail->expiration_date = Carbon::parse($expiration_dates[$cont])->format('Y-m-d');
+                    $detail->save();
 
-                $detailhistorical = new IncomeDetailHistorical();
-                $detailhistorical->income_id = $income->id;
-                $detailhistorical->income_detail_id = $detail->id;
-                $detailhistorical->product_id = $products[$cont];
-                $detailhistorical->quantity = $quantities[$cont];
-                $detailhistorical->purchase_price = $purchase_prices[$cont];
-                $detailhistorical->sale_price = $sale_prices[$cont];
-                $detailhistorical->form_sale = $forms_sale[$cont];
-                $detailhistorical->expiration_date = Carbon::parse($expiration_dates[$cont])->format('Y-m-d');
+                    $detailhistorical = new IncomeDetailHistorical();
+                    $detailhistorical->income_id = $income->id;
+                    $detailhistorical->income_detail_id = $detail->id;
+                    $detailhistorical->product_id = $products[$cont];
+                    $detailhistorical->quantity = $quantities[$cont];
+                    $detailhistorical->purchase_price = $purchase_prices[$cont];
+                    $detailhistorical->sale_price = $sale_prices[$cont];
+                    $detailhistorical->form_sale = $forms_sale[$cont];
+                    $detailhistorical->expiration_date = Carbon::parse($expiration_dates[$cont])->format('Y-m-d');
 
-                $detailhistorical->save();
+                    $detailhistorical->save();
 
-                $cont = $cont + 1;
-            }
-                // Update the voucher status to 'A' (active)
-                $voucher = Voucher::findOrFail($request->post('voucher_id'));
-                $voucher->status = 0;
-                $voucher->save();
-    
-                // Update the product stock
-                foreach ($products as $index => $productId) {
-                    $product = Product::findOrFail($productId);
-                    $product->stock += $quantities[$index];
-                    $product->save();
+                    $cont = $cont + 1;
                 }
-            DB::commit();
-             return response()->json([
-            'message' => 'Factura registrada correctamente.',
-            'success' => true
-        ]);
+                    // Update the voucher status to 'A' (active)
+                    $voucher = Voucher::findOrFail($request->post('voucher_id'));
+                    $voucher->status = 0;
+                    $voucher->save();
+        
+                    // Update the product stock
+                    foreach ($products as $index => $productId){
+                        $product = Product::findOrFail($productId);
+                        $product->stock += $quantities[$index];
+                        $product->save();
+                    }
+                DB::commit();
+                return response()->json([
+                'message' => 'Factura registrada correctamente.',
+                'success' => true
+            ]);
             
+            }
+            else
+            {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No se ha iniciado sesión, intentalo mas tarde',
+                    'error' => ''
+                ]);
+            }
+           
         }catch(Exception $e){
             DB::rollBack();
             return response()->json([
                 'success' => false,
-                'message' => 'An error occurred while processing your request.',
+                'message' => 'Hay un error en el procesamiento de la solicitud.',
                 'error' => $e->getMessage()
             ]);
         }

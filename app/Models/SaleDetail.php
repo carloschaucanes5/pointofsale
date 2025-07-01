@@ -16,6 +16,6 @@ class SaleDetail extends Model
     'sale_price',
     'discount',
     'sale_id',
-    'product_id'
+    'income_detail_id'
     ];
 }

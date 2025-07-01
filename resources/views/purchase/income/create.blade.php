@@ -123,12 +123,13 @@
                                 <tbody>
                                 </tbody> 
                             </table>
+                            <input type="hidden" id="total_purchase_hidden" value="0"/>
                         </div>
                     </div>
                 </div>
                 <input type="hidden" name="_token" value="{{csrf_token()}}">
                 <div class="card-footer">
-                    <button type="button" id="save" onclick="saveIncome()" class="btn btn-success me-1 mb-1">Guardar</button>
+                    <button type="button"  style="display: none" id="save" onclick="saveIncome()" class="btn btn-success me-1 mb-1">Guardar</button>
                     <button type="reset" class="btn btn-danger me-1 mb-1">Cancelar</button>
                 </div>
             </form>
@@ -151,16 +152,6 @@
 
 @push("scripts")
 <script>
-    //inicializacion de variables
-    var cont = 0; 
-    var total_sale = 0;
-    var total_purchase = 0;
-    var total_profit = 0;
-
-    var subtotal_sale = [];
-    var subtotal_purchase = [];
-    var subtotal_profit = [];
-    var forms_sale = [];
     document.addEventListener('DOMContentLoaded', function() {
         //evento buscar producto
         document.getElementById('product_search').focus();
@@ -197,21 +188,15 @@
                         }
                     })
                     .catch(() => {
-                        let productInfo = document.getElementById('product_info');
-                        if (!productInfo) {
-                            productInfo = document.createElement('div');
-                            productInfo.id = 'product_info';
-                            productInfo.classList.add('mt-2');
-                            this.parentNode.parentNode.parentNode.appendChild(productInfo);
-                        }
-                        productInfo.innerHTML = '<span class="text-danger">Error en la búsqueda.</span>';
-                        document.getElementById('product_id').value = '';
+
                     }).finally(()=>{
                         hideSpinner();
                     });
             }
         }
     });
+
+
     //evento para calcular el precio sugerido
    document.getElementById('purchase_price').addEventListener('blur', function() {
         let purchasePrice = parseFloat(this.value);
@@ -223,40 +208,6 @@
         }
     });
 
-
-    //ocultar el boton de guardar y mostrar los detalles de cada producto
-    $('#save').hide();
-    $('#product_id').change(showValues());
-
-    //funcion para recalcular los totales
-    var detalles = document.getElementById('detalles');
-    detalles.addEventListener('input', function(e) {
-
-        if (e.target.name === 'quantities[]'){
-            //console.log(e.target.id);
-            let line = e.target.id.split('_')[1];
-            let quantity = parseInt(e.target.value);
-            let purchase = parseFloat(document.getElementById('purchase_' + line).value);
-            let sale = parseFloat(document.getElementById('sale_' + line).value);
-            updateSubtotales(line, quantity, purchase, sale);
-        }
-
-        if (e.target.name === 'purchase_prices[]'){
-            let line = e.target.id.split('_')[1];
-            let purchase = parseInt(e.target.value);
-            let quantity = parseFloat(document.getElementById('quantity_' + line).value);
-            let sale = parseFloat(document.getElementById('sale_' + line).value);
-            updateSubtotales(line, quantity, purchase, sale);
-        }
-
-        if (e.target.name === 'sale_prices[]'){
-            let line = e.target.id.split('_')[1];
-            let sale = parseInt(e.target.value) || 0;
-            let quantity = parseFloat(document.getElementById('quantity_' + line).value);
-            let purchase = parseFloat(document.getElementById('purchase_' + line).value);
-            updateSubtotales(line, quantity, purchase, sale);
-        }
-    });
 
 
  //codigo para cambiar el data-id del boton cuando cambie el voucher_id
@@ -305,47 +256,25 @@ document.querySelector('.btn-view-voucher').addEventListener('click', function()
 
 
 function parseAmount(value) {
-    // Elimina espacios y símbolos de moneda
     value = value.trim().replace(/[^\d.,-]/g, '');
-
-    // Si contiene coma y punto, decidir cuál es decimal
     const hasComma = value.includes(',');
     const hasDot = value.includes('.');
 
     if (hasComma && hasDot) {
-        // Si el punto está antes de la coma, el punto es separador de miles: "600.000,00"
         if (value.indexOf('.') < value.indexOf(',')) {
             value = value.replace(/\./g, '').replace(',', '.');
         } else {
-            // Caso raro: "600,000.00"
             value = value.replace(/,/g, '');
         }
     } else if (hasComma && !hasDot) {
-        // Sólo tiene coma: asume que es decimal
         value = value.replace(',', '.');
     } else {
-        // Sólo tiene punto o ninguno: deja como está
         value = value.replace(/,/g, '');
     }
-
     return parseFloat(value);
 }
 
 function saveIncome(){
-    //validar que el voucher_total sea igual al purchase_total
-    let voucherTotal = parseAmount(document.getElementById('voucher_total').value);
-    let totalPurchase = parseAmount(document.getElementById('total_purchase').textContent);
-    console.log(voucherTotal);
-    console.log(totalPurchase);
-
-    if (voucherTotal !== totalPurchase) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'El total de la factura debe ser igual al total de compra.',
-        });
-        return;
-    }
 
             let form = document.getElementById('incomeform');
             let formData = new FormData(form);
@@ -396,15 +325,7 @@ function saveIncome(){
        
 }
 
-function updateSubtotales($line,quantity,purchase,sale){
-    let subtotal_purchase = quantity * purchase;
-    let subtotal_sale = quantity * sale;
-    let subtotal_profit = subtotal_sale - subtotal_purchase;
-    document.getElementById('subtotalpurchase_' + $line).value = subtotal_purchase.toFixed(2);
-    document.getElementById('subtotalsale_' + $line).value = subtotal_sale.toFixed(2);
-    document.getElementById('subtotalprofit_' + $line).value = subtotal_profit.toFixed(2);
-    recalcularTotales();
-}
+
 
 function showValues(){
     var dataArticle = document.getElementById('product_id').value.split('_');
@@ -427,13 +348,13 @@ function add(){
     var product_id = dataArticle[0];
     var code = dataArticle[1];
     var product_name = dataArticle[2];
-    var product = $('#product_id option:selected').text();
-    var quantity = $('#quantity').val();
-    var purchase_price = $('#purchase_price').val();
-    var sale_price = $('#sale_price').val();
-    var form_sale = $('#form_sale').val();
+
+    var quantity = document.getElementById('quantity').value;
+    var purchase_price = document.getElementById('purchase_price').value;
+    var sale_price = document.getElementById('sale_price').value;
+    var form_sale = document.getElementById('form_sale').value;
     var profit = 0;
-    var expiration_date = $('#expiration_date').val();
+    var expiration_date = document.getElementById('expiration_date').value;
     //validar que la fecha de experacion no sea menor a la fecha actual asi viene el formato 2025-06-15
     if(expiration_date != "" && new Date(expiration_date) <= new Date()){
         Swal.fire({
@@ -445,47 +366,37 @@ function add(){
     }
  
     if(product_id!="" && quantity!="" && quantity > 0 && purchase_price !="" && sale_price!="" && expiration_date!=""){
-            subtotal_purchase[cont] = quantity * purchase_price;
-            subtotal_sale[cont] = quantity * sale_price;
-            subtotal_profit[cont] = subtotal_sale[cont] - subtotal_purchase[cont];
-            forms_sale[cont] = form_sale;
-
-            total_purchase = total_purchase + subtotal_purchase[cont];
-            total_sale = total_sale + subtotal_sale[cont];
-            total_profit = total_profit + subtotal_profit[cont];
-            var row = `
-            <tr class="selected" id="fila`+cont+`">
-                <td>
-                    <button type="button" class="btn btn-warning" onclick="eliminar(`+cont+`)">x</button>
-                </td>
-                <input type="hidden" name="products[]" value="`+product_id+`">`+product_id+`
-                <td>`+code+`</td>
-                <td>`+product_name+`</td>
-                <td><input class="form-control"  id="quantity_`+cont+`" type="number"  class="w-10" name="quantities[]" value="`+quantity+`"></td>
-                <td><input class="form-control"  id="purchase_`+cont+`" type="number"   name="purchase_prices[]" value="`+purchase_price+`"></td>
-                <td><input class="form-control" readonly id="subtotalpurchase_`+cont+`" type="number"  name="subtotal_purchases[]" value="`+subtotal_purchase[cont]+`"></td>
-                <td><input class="form-control"  type="text"  name="forms_sale[]" value="`+forms_sale[cont]+`"></td>
-                <td><input class="form-control"  id="sale_`+cont+`"  type="number"  name="sale_prices[]" value="`+sale_price+`"></td>
-                <td><input class="form-control" readonly id="subtotalsale_`+cont+`" type="number" name="subtotal_sales[]" value="`+subtotal_sale[cont]+`"></td>
-                <td><input class="form-control" readonly id="subtotalprofit_`+cont+`" type="number"  name="subtotal_profits[]" value="`+(subtotal_profit[cont]).toFixed(2)+`"></td>
-                <td><input class="form-control" readonly id="expirationdate_`+cont+`" type="date"  name="expiration_dates[]" value="`+expiration_date+`"></td>
-            </tr>
+            let subtotal_purchase = quantity * purchase_price;
+            let subtotal_sale = quantity * sale_price;
+            let subtotal_profit = subtotal_sale - subtotal_purchase;
+           var row = `
+                <tr>
+                    <td>
+                        <input type="hidden" name="products[]" value="${product_id}">
+                        <button type="button" class="btn btn-warning" onclick="eliminar(this)">x</button>
+                    </td>
+                    <td>${code}</td>
+                    <td>${product_name}</td>
+                    <td><input class="form-control w-10" type="number" min="1" name="quantities[]" onchange="updateSubtotal(event)" value="${quantity}"></td>
+                    <td><input class="form-control" type="number" min="1" name="purchase_prices[]" onchange="updateSubtotal(event)" value="${purchase_price}"></td>
+                    <td><input class="form-control" readonly type="number" name="subtotal_purchases[]" value="${subtotal_purchase}"></td>
+                    <td><input class="form-control" readonly type="text"  name="forms_sale[]" value="${form_sale}"></td>
+                    <td><input class="form-control" type="number" min="1" name="sale_prices[]" onchange="updateSubtotal(event)" value="${sale_price}"></td>
+                    <td><input class="form-control" readonly type="number" name="subtotal_sales[]" value="${subtotal_sale}"></td>
+                    <td><input class="form-control" readonly type="number" name="subtotal_profits[]" value="${subtotal_profit}"></td>
+                    <td><input class="form-control" readonly type="date" name="expiration_dates[]" value="${expiration_date}"></td>
+                </tr>
             `;
-            cont++;
+
             limpiar();
-            $('#total_purchase').html(formatCurrency.format(total_purchase.toFixed(2)));
-            $('#total_sale').html(formatCurrency.format(total_sale));
-            $('#total_profit').html(formatCurrency.format(total_profit.toFixed(2)));
-            evaluate();
-            $('#detalles').append(row);
-            // Agrega eventos para recalcular totales al cambiar valores en la fila recién agregada
-            $('#fila'+(cont-1)).find('input[name="quantities[]"], input[name="purchase_prices[]"], input[name="sale_prices[]"]').on('input', function() {
-                recalcularTotales();
-            });
-            $('#product_search').val("");
-            $('#product_search').focus();
-            $('#product_info').html('');
-            document.getElementById('row_add').style.display = 'none';
+            const detalles = document.querySelector("#detalles tbody");
+            detalles.insertAdjacentHTML('afterbegin', row);
+
+            const product_search =  document.getElementById('product_search');
+            product_search.value = "";
+            product_search.focus();
+            document.getElementById('product_info').innerHTML = "";
+            updateTotal();
         }
         else
         {
@@ -495,6 +406,64 @@ function add(){
         alert("El producto ya ha sido agregado");
     }
     
+}
+
+function updateSubtotal(event){
+    const row = event.target.closest('tr');
+    const quantityInput = row.querySelector('input[name="quantities[]"]');
+    const priceInput = row.querySelector('input[name="purchase_prices[]"]');
+    const subtotalInput = row.querySelector('input[name="subtotal_purchases[]"]');
+    const quantity = parseFloat(quantityInput.value) || 0;
+    const price = parseFloat(priceInput.value) || 0;
+    const subtotal = quantity * price;
+    subtotalInput.value = subtotal.toFixed(2);
+
+    const salePriceInput = row.querySelector('input[name="sale_prices[]"]');
+    const subtotalSaleInput = row.querySelector('input[name="subtotal_sales[]"]');
+    const subtotalProfitInput = row.querySelector('input[name="subtotal_profits[]"]');
+
+    const salePrice = parseFloat(salePriceInput.value) || 0;
+    const subtotalSale = quantity * salePrice;
+    const profit = subtotalSale - subtotal;
+
+    subtotalSaleInput.value = subtotalSale.toFixed(2);
+    subtotalProfitInput.value = profit.toFixed(2);
+    updateTotal();
+}
+
+function updateTotal(){
+    let total_purchase = 0;
+    let total_sale = 0;
+    let total_profit = 0;
+
+    var subtotal_purchases = document.querySelectorAll('input[name="subtotal_purchases[]"]');
+    var subtotal_sales = document.querySelectorAll('input[name="subtotal_sales[]"]');
+    var subtotal_profits = document.querySelectorAll('input[name="subtotal_profits[]"]');
+
+    subtotal_purchases.forEach(function(input) {
+        total_purchase += parseFloat(input.value) || 0;
+    });
+
+    subtotal_profits.forEach(function(input) {
+        total_profit += parseFloat(input.value) || 0;
+    });
+
+    subtotal_sales.forEach(function(input) {
+        total_sale += parseFloat(input.value) || 0;
+    });
+
+    document.getElementById('total_purchase_hidden').value = total_purchase; 
+    document.getElementById('total_purchase').innerHTML = formatCurrency.format(total_purchase.toFixed(2));
+    document.getElementById('total_sale').innerHTML = formatCurrency.format(total_sale.toFixed(2));
+    document.getElementById('total_profit').innerHTML = formatCurrency.format(total_profit.toFixed(2));
+
+    const voucherTotal = document.getElementById('voucher_total').value;
+    const totalPurchase = document.getElementById('total_purchase_hidden').value;
+    if (parseFloat(voucherTotal) === parseFloat(totalPurchase)) {
+        document.getElementById('save').style.display = "";
+    } else {
+        document.getElementById('save').style.display = "none";
+    }
 }
 
 function validateExist(){
@@ -514,77 +483,23 @@ function validateExist(){
     }
 }
 
-function actualizarTotales(ele){
-    let row = ele.closest('tr');
-    let quantity = parseFloat(row.querySelector('input[name="quantities[]"]').value) || 0;
-    let purchase_price = parseFloat(row.querySelector('input[name="purchase_prices[]"]').value) || 0;
-    let sale_price = parseFloat(row.querySelector('input[name="sale_prices[]"]').value) || 0;
-    let subtotal_purchase = quantity * purchase_price;
-    let subtotal_sale = quantity * sale_price;
-    let subtotal_profit = subtotal_sale - subtotal_purchase;
-    row.querySelector('input[name="subtotal_purchases[]"]').value = subtotal_purchase.toFixed(2);
-    row.querySelector('input[name="subtotal_sales[]"]').value = subtotal_sale.toFixed(2);
-    row.querySelector('input[name="subtotal_profits[]"]').value = subtotal_profit.toFixed(2);
-    recalcularTotales();
-}
+
 
 
 function limpiar(){
-    $('#quantity').val("");
-    $('#purchase_price').val("");
-    $('#sale_price').val("");
+    document.getElementById('quantity').value = "";
+    document.getElementById('purchase_price').value = "";
+    document.getElementById('sale_price').value = "";
 }
 
-function evaluate(){
-    if(total_purchase > 0){
-        $('#save').show();
-    }
-    else
-    {
-        $('#save').hide();
-    }
+
+
+function eliminar(item){
+    const tr = item.closest("tr");
+    tr.remove();
+    updateTotal();
 }
 
-function eliminar(index){
-    total_purchase = total_purchase - subtotal_purchase[index];
-    $('#total_purchase').html('$ '+ total_purchase.toFixed(2));
-
-    total_sale = total_sale -subtotal_sale[index];
-    $('#total_sale').html('$ '+ total_sale);
-
-    total_profit = total_profit -subtotal_profit[index];
-    $('#total_profit').html('$ '+ total_profit);
-
-    $('#fila'+index).remove();
-    evaluate();
-    recalcularTotales();
-}
-
-function recalcularTotales() {
-    let total_purchase = 0;
-    let total_sale = 0;
-    let total_profit = 0;
-
-    var subtotal_purchases = document.querySelectorAll('input[name="subtotal_purchases[]"]');
-    var subtotal_sales = document.querySelectorAll('input[name="subtotal_sales[]"]');
-    var subtotal_profits = document.querySelectorAll('input[name="subtotal_profits[]"]');
-    subtotal_purchases.forEach(function(input) {
-        total_purchase += parseFloat(input.value) || 0;
-    });
-
-    subtotal_profits.forEach(function(input) {
-        total_profit += parseFloat(input.value) || 0;
-    });
-
-    subtotal_sales.forEach(function(input) {
-        total_sale += parseFloat(input.value) || 0;
-    });
-
-    document.getElementById('total_purchase').innerHTML = formatCurrency.format(total_purchase.toFixed(2));
-    document.getElementById('total_sale').innerHTML = formatCurrency.format(total_sale.toFixed(2));
-    document.getElementById('total_profit').innerHTML = formatCurrency.format(total_profit.toFixed(2));
-
-}
 
 </script>
 @endpush

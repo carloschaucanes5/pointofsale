@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 use Illuminate\Support\Facades\Redirect;
 use App\Http\Requests\SaleFormRequest;
+use App\Models\Payment;
 use Exception;
 use Symfony\Component\Console\Input\Input;
 use Illuminate\Support\Carbon;
@@ -13,6 +14,7 @@ use App\Models\SaleDetail;
 
 use Illuminate\Support\Collection;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
 class SaleController extends Controller
@@ -46,7 +48,7 @@ class SaleController extends Controller
                 $query->where('p.name','like','%'.$searchText.'%')
                         ->orwhere('p.code','like','%'.$searchText.'%');
             })
-            ->where('ide.quantity','!=',0)
+            ->where('ide.quantity','>',0)
             ->orderBy('p.name','asc')
             ->paginate(2);
             return response()->json(['incomes_detail'=>$incomes_detail]); 
@@ -80,44 +82,55 @@ class SaleController extends Controller
      */
     public function store(Request $request)
     {
-
-        $re = $request;
-        return response()->json(["success"=>true],201);
-        
         try{
-            DB::beginTransaction();
-            $sale = new Sale();
-            $sale->customer_id = $request->post('customer_id');
-            $sale->tax = 16;
-            $sale->status = 1;
-            $sale->change = $request->post('totalChangeHidden');
-            $sale->sale_total = $request->post('sale_total');
-            $sale->save();
-            
-            $products = $request->post('income_detail_id');
-            $quantities = $request->post('quantity');
-            $discounts= $request->post('discount');
-            $sale_prices = $request->post('sale_price');
-            $sale_forms = $request->post('sale_form');
-            
-            $cont = 0; 
-            while($cont < count($products)){
-                $detail = new SaleDetail();
-                $detail->sale_id = $sale->id;
-                $detail->product_id = $products[$cont];
-                $detail->quantity = $quantities[$cont];
-                $detail->discount = $discounts[$cont];
-                $detail->sale_price = $sale_prices[$cont];
-                $detail->save();
-                $cont = $cont + 1;
-            }
-            DB::commit();
-            
+            if(auth()->user()->id){
+                 DB::beginTransaction();
+                $sale = new Sale();
+                $sale->customer_id = $request->post('customer_id');
+                $sale->tax = 16;
+                $sale->status = 1;
+                $sale->change = floatval($request->post('totalChangeHidden'));
+                $sale->sale_total = floatval($request->post('sale_total'));
+                $sale->users_id = auth()->user()->id;
+                $sale->save();
+                
+                $income_details = $request->post('income_detail_id');
+                $quantities = $request->post('quantity');
+                $discounts= $request->post('discount');
+                $sale_prices = $request->post('sale_price');
+                
+                $cont = 0; 
+                while($cont < count($income_details)){
+                    $detail = new SaleDetail();
+                    $detail->sale_id = $sale->id;
+                    $detail->income_detail_id = $income_details[$cont];
+                    $detail->quantity = $quantities[$cont];
+                    $detail->discount = $discounts[$cont];
+                    $detail->sale_price = $sale_prices[$cont];
+                    $detail->save();
+                    $cont = $cont + 1;
+                }
+                $paymemts = json_decode($request->post("methods"));
+                foreach($paymemts as $pay){
+                    $payment = new Payment();
+                    $payment->method = $pay->method;
+                    $payment->sale_id = $sale->id;
+                    $payment->value = $pay->value;
+                    $payment->status = 1;
+                    $payment->save();
+                }
+
+                DB::commit();
+                return response()->json(
+                    ["success"=>true,"message"=>"Venta efectuada con éxito"],201);
+            }else{
+                return response()->json(
+                ["success"=>false,"message"=>"Se debe iniciar sesión"],401);
+            } 
         }catch(Exception $e){
             DB::rollBack();
+            return response()->json(["success"=>false,"message"=>"Error:".$e],501);
         }
-        return Redirect::to("sale/sale");
-        */
     }
 
     /**

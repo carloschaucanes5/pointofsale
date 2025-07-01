@@ -95,7 +95,7 @@
                                     <input type="number" class="form-control" value="0" min="0" id="payment_value" placeholder="Ingrese valor" />
                                 </div>
                                 <div class="col-md-3">
-                                    <button type="button" class="btn btn-primary"><i class="bi bi-plus-circle" onclick="add_payment()"></i></button>
+                                    <button type="button" class="btn btn-primary" onclick="add_payment()"><i class="bi bi-plus-circle"></i></button>
                                 </div>
                             </div>
                             <hr/>
@@ -187,7 +187,7 @@
                                     <td>${formatCurrency.format(parseFloat(item.sale_price).toFixed(0))}</td>
                                     <td>${item.form_sale}</td>
                                     <td>${item.expiration_date}</td>
-                                    <td><button class="btn btn-warning" type="button" onclick="add_item(\'${item.id},${item.code},${item.name} ${item.concentration} ${item.presentation},${item.sale_price},${item.form_sale}\')"> <span class="bi bi-cart"></span></button></td>
+                                    <td><button class="btn btn-warning" type="button" onclick="add_item(\'${item.id},${item.code},${item.name} ${item.concentration} ${item.presentation},${item.sale_price},${item.form_sale},${item.quantity}\')"> <span class="bi bi-cart"></span></button></td>
                                 `;
                                 tbody.appendChild(tr);
                             });
@@ -309,9 +309,9 @@
         //function para adicionar un item al carrito de compras
         function add_item(item)
         {
-            const [id, code, name, sale_price, form_sale] = item.split(",");
+            const [id, code, name, sale_price, form_sale, quantity] = item.split(",");
             if(!verifyExist(code,sale_price,form_sale)){
-                const quantity = 1;
+                const quantity_min = 1;
                 const discount = 0
                 const subtotal = ((quantity * sale_price) - discount).toFixed(2);
                 const table = document.getElementById("detalles").getElementsByTagName('tbody')[0];
@@ -325,7 +325,7 @@
                     </td>
                     <td>${name}</td>
                     <td>
-                        <input type="number" name="quantity[]" class="form-control form-control-sm" value="${quantity}" min="1" style="width:80px;" onchange="updateSubtotal(this)">
+                        <input type="number" name="quantity[]" class="form-control form-control-sm" value="${quantity_min}" min="1" max="${quantity}"  style="width:80px;" onchange="updateSubtotal(this)">
                     </td>
                     <td>
                         <input type="hidden" name="sale_price[]" readonly class="form-control form-control-sm" value="${sale_price}" min="0" step="0.01" style="width:100px;" onchange="updateSubtotal(this)">
@@ -340,7 +340,7 @@
                         ${form_sale}
                     </td>
                     <td>
-                        <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('tr').remove(); updateTotal();"><li class='bi bi-trash'></li></button>
+                        <button type="button" class="btn btn-danger btn-sm" onclick="deleteItem(this)"><li class='bi bi-trash'></li></button>
                     </td>
                 `;
             }
@@ -382,9 +382,25 @@
                 totalPayment.textContent = formatCurrency.format(total.toFixed(0));
                 table_payments_tbody.appendChild(tr);
             }
+
         }
         //funcion para actualizar el subtotal
         function updateSubtotal(input) {
+            if(input.getAttribute('min') && input.getAttribute("max")){
+                  const min = parseFloat(input.getAttribute('min'));
+                  const max = parseFloat(input.getAttribute('max'));
+                  const valor = parseFloat(input.value);
+
+                    if (!isNaN(min) && !isNaN(max)) {
+                        if (!(valor >= min && valor <= max)) {
+                            input.value = min;
+                        } 
+                    }else{
+                        input.value = min;
+                    }
+            }else{
+                return;
+            }
             const row = input.closest('tr');
             const quantity = parseFloat(row.querySelector('input[name="quantity[]"]').value) || 0;
             const sale_price = parseFloat(row.querySelector('input[name="sale_price[]"]').value) || 0;
@@ -424,7 +440,7 @@
             {
                 Swal.fire({
                     title:"Mensaje",
-                    text:"se debe ingresar el valor del pago",
+                    text:"Valor inválido",
                     icon:"warning"
                 })
             }          
@@ -466,6 +482,23 @@ function updateTotalChange() {
     document.getElementById("totalChangeHidden").value =change;
 }
 
+function deleteItem(item){
+    
+    item.closest('tr').remove(); 
+     const table_detalles = document.querySelectorAll("#detalles tbody tr");
+     if(table_detalles.length == 0){
+        const btn_invoice = document.getElementById("invoice");
+        const table_payments = document.querySelector("#table_payments tbody");
+        const totalPayment = document.getElementById("totalPayment");
+        totalPayment.textContent = 0;
+        table_payments.innerHTML = "";
+        btn_invoice.style.display = "none";
+        
+
+     }
+    updateTotal();
+}
+
 function toinvoice(){
             showSpinner();
             let form = document.getElementById('form-sale');
@@ -478,7 +511,6 @@ function toinvoice(){
                 const obj = {method:methodPayment,value:valorPayment};
                 methods.push(obj);
             }
-
             //-------------------------------------------
             let formData = new FormData(form);
                 formData.append("methods",JSON.stringify(methods));
@@ -514,9 +546,17 @@ function toinvoice(){
                     //location.reload();
                 })
                 .catch(error => {
-                    hideSpinner();
-                    console.log(error);
-                    alert('Error al guardar');
+                   
+                            Swal.fire({
+                            title: 'Error',
+                            text: error,
+                            icon: 'error',
+                            buttons: true,
+                            dangerMode: true,
+                            timer: 3000
+                        });
+                }).finally(()=>{
+                     hideSpinner();
                 });
         }
 
