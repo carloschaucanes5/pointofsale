@@ -212,7 +212,7 @@ class IncomeController extends Controller
                  ->orderBy("i.id","desc")
                  ->first();
 
-        $details = DB::table("income_detail as d")
+        $details = DB::table("income_detail_historical as d")
                 ->join("product as pro","pro.id","=","d.product_id")
                 ->select("pro.name as article","d.quantity","d.purchase_price","d.sale_price","d.form_sale","d.expiration_date","pro.concentration","pro.presentation")
                 ->where("d.income_id","=",$id)

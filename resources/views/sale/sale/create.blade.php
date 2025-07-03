@@ -77,7 +77,7 @@
                                 <label for="customer_id"><b>Cliente</b></label>
                                 <select name="customer_id" id="customer_id" class="form-control selectpicker" data-live-search="true">
                                     @foreach ($persons as $per)
-                                    <option value="{{$per->id}}" data-tokens="{{$per->id}}">{{$per->name}}</option>   
+                                    <option value="{{$per->id}}-{{$per->name}}-{{$per->document_number}}-{{$per->address}}-{{$per->phone}}" data-tokens="{{$per->id}}">{{$per->name}}</option>   
                                     @endforeach
                                 </select>
                             </div>
@@ -123,7 +123,8 @@
                                             <tr>
                                                 <td>
                                                     <div style="display: flex;flex-direction: row;justify-content: center">
-                                                        <button type="button" id="invoice" onclick="toinvoice()" class="btn btn-success me-1 mb-1">FACTURAR</button>
+                                                        <button type="button" onclick="toinvoice()" id="invoice"   class="btn btn-success me-1 mb-1">FACTURAR</button>
+                                                        <!--button type="button" id="invoice" data-bs-toggle="modal" data-bs-target="#modal-receipt-invoice" class="btn btn-success me-1 mb-1">FACTURAR</button-->
                                                     </div>
                                                 </td>
                                                 <td> 
@@ -142,11 +143,11 @@
                 </div>
                 <div class="form-group">
                     <div class="card-footer">
-                        
-                        
                     </div>
                 </div>
+                
             </form>
+            @include('sale.sale.receipt')
         </div>
     </div>
     @if ($errors->any())
@@ -323,16 +324,19 @@
                         <input type="hidden" name="code[]" value="${code}">
                         ${code}
                     </td>
-                    <td>${name}</td>
+                    <td>
+                        ${name}
+                        <input type="hidden" value="${name}" name="description[]" />
+                        </td>
                     <td>
                         <input type="number" name="quantity[]" class="form-control form-control-sm" value="${quantity_min}" min="1" max="${quantity}"  style="width:80px;" onchange="updateSubtotal(this)">
                     </td>
                     <td>
-                        <input type="hidden" name="sale_price[]" readonly class="form-control form-control-sm" value="${sale_price}" min="0" step="0.01" style="width:100px;" onchange="updateSubtotal(this)">
+                        <input type="hidden" name="sale_price[]" readonly class="form-control form-control-sm" value="${sale_price}" min="0" step="0.01" style="width:100px;" onchange="updateSubtotalWithoutMaxMin(this)">
                          ${formatCurrency.format(parseFloat(sale_price).toFixed(0))}
                         
                     <td>
-                        <input type="number" name="discount[]" class="form-control form-control-sm" value="${discount}" min="0" step="0.01" style="width:80px;" onchange="updateSubtotal(this)">
+                        <input type="number" name="discount[]" class="form-control form-control-sm" value="${discount}" min="0" step="0.01" style="width:80px;" onchange="updateSubtotalWithoutMaxMin(this)">
                     </td>
                     <td class="subtotal">${formatCurrency.format(parseFloat(subtotal).toFixed(0))}</td>
                     <td class="form_sale">
@@ -399,6 +403,20 @@
                         input.value = min;
                     }
             }else{
+                return;
+            }
+            const row = input.closest('tr');
+            const quantity = parseFloat(row.querySelector('input[name="quantity[]"]').value) || 0;
+            const sale_price = parseFloat(row.querySelector('input[name="sale_price[]"]').value) || 0;
+            const discount = parseFloat(row.querySelector('input[name="discount[]"]').value) || 0;
+            const subtotal = ((quantity * sale_price) - discount).toFixed(2);
+            row.querySelector('.subtotal').textContent = formatCurrency.format(parseFloat(subtotal).toFixed(0));
+            updateTotal();
+        }
+
+        function updateSubtotalWithoutMaxMin(input) {
+            const valor = parseFloat(input.value);
+            if (isNaN(valor)) {
                 return;
             }
             const row = input.closest('tr');
@@ -523,16 +541,11 @@ function toinvoice(){
                 })
                 .then(response => response.json())
                 .then(data => {
-                    hideSpinner();
                     if(data.success) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Éxito',
-                            text: data.message,
-                            timer: 3000,
-                        }).then(() => {
-                            window.location.href = "{{route('sale.index')}}";
-                        });
+                        document.getElementById("sale_number").textContent = data.sale_id;  
+                        generateInvoice(data.info_sale,data.detail_sale, data.form_payment);
+                        const myModal = new bootstrap.Modal(document.getElementById('modal-receipt-invoice'));
+                        myModal.show();  
                     }else {
                         Swal.fire({
                             title: 'Error',
@@ -558,6 +571,80 @@ function toinvoice(){
                 }).finally(()=>{
                      hideSpinner();
                 });
+        }
+
+        function generateInvoice(info_sale,detail_sale,info_payment){
+            const information_customer = document.getElementById("information_customer");
+            information_customer.innerHTML = `<small class="text-muted mb-custom">Cliente: <b>${info_sale.customer_name}</b></small><br>
+                                                <small class="text-muted mb-custom">Documento: <b>${info_sale.document_type}:${info_sale.document_number}</b></small><br>
+                                                <small class="text-muted mb-custom">Dirección: <b>${info_sale.customer_address}</b></small><br>
+                                                <small class="text-muted mb-custom">Télefono:<b>${info_sale.customer_phone}</b></small><br>`;
+            document.getElementById("sale_number").textContent = info_sale.id;
+            document.getElementById("date_sale").textContent = `Fecha: ${info_sale.updated_at}`;
+            const body_details = document.querySelector("#details table tbody");
+            const foot_details = document.querySelector("#details table tfoot")
+            var discountTotals  = 0;
+            var subtotals = 0;
+            for(let i=0;i<detail_sale.length;i++){
+                const detail = detail_sale[i];
+                discountTotals += detail.discount; 
+                subtotals += (detail.sale_price * detail.quantity); 
+                const tr = document.createElement("tr");
+                tr.innerHTML = `<td>${detail.quantity}</td><td>${detail.article} ${detail.concentration} ${detail.presentation}</td><td>${detail.discount}</td><td>${formatCurrency.format(parseFloat(detail.sale_price * detail.quantity).toFixed(0))}</td>`;
+                body_details.appendChild(tr);
+            }
+            const trFoot = document.createElement("tr");
+            trFoot.style.borderTop = "2px solid #000";
+            trFoot.style.borderBottom = "2px solid #000";
+            trFoot.innerHTML = `
+                <td class="text-center">0</td>
+                <td class="text-center">${info_sale.sale_total}</td>
+                <td class="text-center">0</td>
+                <td class="text-center">${info_sale.sale_total}</td>
+            `; 
+            foot_details.appendChild(trFoot);
+            document.getElementById('receipt_subtotal').textContent = formatCurrency.format(subtotals);
+            document.getElementById('receipt_discount').textContent = formatCurrency.format(discountTotals);
+            document.getElementById('receipt_tax').textContent = 0;
+            document.getElementById('receipt_total').textContent = formatCurrency.format(info_sale.sale_total);
+            document.getElementById('receipt_change').textContent = formatCurrency.format(info_sale.change);
+
+            const table_form_payment = document.querySelector("#table_form_payment tbody");
+            var received = 0;
+            info_payment.forEach(ele=>{
+                    const tr_pay = document.createElement("tr");
+                    tr_pay.innerHTML = `
+                    <td>${ele.method}</td>
+                    <td>${ele.value}</td>
+                `;
+                received=received + ele.value;
+                table_form_payment.appendChild(tr_pay);
+            });
+            document.getElementById('receipt_received').textContent = formatCurrency.format(received);
+            document.getElementById("employee").textContent = info_sale.user_name;
+        }
+        
+        function closeModal(){
+            const myModal = new bootstrap.Modal(document.getElementById('modal-receipt-invoice'));
+            myModal.hide();
+
+        }
+
+        function printInvoice(divId){
+            let contenido = document.getElementById(divId).innerHTML;
+            let ventana = window.open('', '', 'height=600,width=800');
+            ventana.document.write('<html><head><title>Imprimir</title>');
+            ventana.document.write('<style>body{font-family:sans-serif; font-size:12px;}</style>');
+            ventana.document.write('</head><body>');
+            ventana.document.write(contenido);
+            ventana.document.write('</body></html>');
+            ventana.document.close();
+            ventana.focus();
+            ventana.print();
+            ventana.close();
+            setInterval(() => {
+                window.location.reload();
+            },4000);
         }
 
     </script>

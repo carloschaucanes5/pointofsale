@@ -65,6 +65,18 @@ class SaleController extends Controller
                           ->get()
                           ->first();
 
+        $logo = DB::table('config')
+                          ->where("key","=","logo")
+                          ->get()
+                          ->first();
+
+        //extraer la infomacion de compania donde el key tiene como base la palabra company_name
+        $company = DB::table('config')
+                    ->where("key","like","company%")
+                    ->select('key','value','alias')
+                    ->get()
+                    ->keyBy('key');
+
         $persons = DB::table("person")->where('person_type','=','customer')->get();
         $sales = Sale::all();
         $products = DB::table("product as p")
@@ -74,7 +86,14 @@ class SaleController extends Controller
                     ->where('p.stock','>','0')
                     ->groupBy('article','p.id','p.stock')
                     ->get();
-        return view('sale.sale.create',['persons'=>$persons,'products'=>$products,'payment_methods'=>explode(",",$payment_methods->value)]);            
+        return view('sale.sale.create',[
+        'persons'=>$persons,
+        'products'=>$products,
+        'payment_methods'=>explode(",",$payment_methods->value),
+        'logo'=>$logo,
+        'company'=>$company
+        ]
+    );            
     }
 
     /**
@@ -86,7 +105,7 @@ class SaleController extends Controller
             if(auth()->user()->id){
                  DB::beginTransaction();
                 $sale = new Sale();
-                $sale->customer_id = $request->post('customer_id');
+                $sale->customer_id = explode("-",$request->post('customer_id'))[0];
                 $sale->tax = 16;
                 $sale->status = 1;
                 $sale->change = floatval($request->post('totalChangeHidden'));
@@ -100,6 +119,7 @@ class SaleController extends Controller
                 $sale_prices = $request->post('sale_price');
                 
                 $cont = 0; 
+
                 while($cont < count($income_details)){
                     $detail = new SaleDetail();
                     $detail->sale_id = $sale->id;
@@ -110,6 +130,7 @@ class SaleController extends Controller
                     $detail->save();
                     $cont = $cont + 1;
                 }
+
                 $paymemts = json_decode($request->post("methods"));
                 foreach($paymemts as $pay){
                     $payment = new Payment();
@@ -121,8 +142,32 @@ class SaleController extends Controller
                 }
 
                 DB::commit();
+
+                 $sale = DB::table("sale as s")
+                 ->join("person as p","s.customer_id","=","p.id")
+                 ->join("users as u","u.id","=","s.users_id")
+                 ->select("s.id","s.change","s.updated_at","p.name as customer_name","p.address as customer_address","p.phone as customer_phone","p.email as customer_email","p.document_type","p.document_number","s.tax","s.sale_total","u.name as user_name")
+                 ->where("s.id","=",$sale->id)
+                 ->first();
+
+                $details = DB::table("sale_detail as d")
+                ->join("income_detail_historical as ide","ide.income_detail_id","=","d.income_detail_id")
+                ->join("product as pro","pro.id","=","ide.product_id")
+                ->select("pro.name as article","pro.concentration","pro.presentation","ide.form_sale","d.quantity","d.discount","d.sale_price")
+                ->where("d.sale_id","=",$sale->id)
+                ->get();
+
+                $form_payment = DB::table("payment as p")
+                    ->select("p.sale_id","p.method","p.value","p.status")
+                    ->where("p.sale_id","=",$sale->id)
+                    ->get();
+
                 return response()->json(
-                    ["success"=>true,"message"=>"Venta efectuada con éxito"],201);
+                    ["success"=>true,"message"=>"Venta efectuada con éxito",
+                    "info_sale"=>$sale,
+                    "detail_sale"=>$details,
+                    "form_payment"=>$form_payment
+                    ],201);
             }else{
                 return response()->json(
                 ["success"=>false,"message"=>"Se debe iniciar sesión"],401);
@@ -131,6 +176,24 @@ class SaleController extends Controller
             DB::rollBack();
             return response()->json(["success"=>false,"message"=>"Error:".$e],501);
         }
+    }
+
+    function getDataReceipt(string $id){
+        $sale = DB::table("sale as s")
+                 ->join("person as p","s.customer_id","=","p.id")
+                 ->join("users as u","u.id","=","s.users.id")
+                 ->select("s.id","s.updated_at","p.name","p.address","p.phone","p.email","s.tax","s.sale_total","u.name as user_name")
+                 ->where("s.id","=",$id)
+                 ->first();
+
+        $details = DB::table("sale_detail as d")
+                ->join("income_detail_historical as ide","ide.income_detail_id","=","d.income_detail_id")
+                ->join("product as pro","pro.product_id","=","ide.product_id")
+                ->select("pro.name as article","pro.concentration","pro.presentation","ide.form_sale","d.quantity","d.discount","d.sale_price")
+                ->where("d.sale_id","=",$id)
+                ->get();
+
+        return response()->json(["sale"=>$sale,"details"=>$details]);
     }
 
     /**
