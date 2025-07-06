@@ -8,7 +8,10 @@
         justify-content: center;
         align-items: center;
         width: 70%;
+        height: 50vh;
         margin: 0 auto;
+        overflow-x:hidden;
+        overflow-y: auto
     }
 
     .noprint {
@@ -16,10 +19,15 @@
     }
 
 </style>
-<div class="modal fade" id="modal-receipt-invoice">
+<div class="modal fade" id="modal-receipt-invoice" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content ">
-            <div class="modal-body " id="content-receipt">
+            <div class="modal-header">
+                <h5 class="modal-title">Factura de Venta</h5>
+                <!-- Botón con X para cerrar -->
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body" id="content-receipt">
                 <div class="row ">
                     <div class="col-md-12">
                             <div class="justify-content-center text-center">
@@ -98,8 +106,8 @@
                         <small class="text-muted mb-custom text-center">{{$company["company_timetable"]->alias}}:{{$company["company_timetable"]->value}}</small><br>
                         <small class="text-muted mb-custom text-center">{{$company["company_information"]->value}}</small><br> 
             </div>
-            <div class="modal-footer justify-content-between">
-                <button type="button" onclick="closeModal()" class="btn btn-success" >Imprimir</button>
+            <div class="modal-footer justify-content-center">
+                <button type="button" onclick="closeModal()" class="btn btn-warning" >Cerrar</button>
                 <button type="button" onclick="printInvoice('content-receipt')" class="btn btn-success" >Imprimir</button>
             </div>
         </div>

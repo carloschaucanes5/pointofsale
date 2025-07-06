@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 
 @section('title', 'Crear Venta')
-
+@include('sale.sale.quantity')
 @section('content')
     <div class="col-md-12">
         <div class="card card-primary">
@@ -145,9 +145,10 @@
                     <div class="card-footer">
                     </div>
                 </div>
-                
+               
             </form>
-            @include('sale.sale.receipt')
+             @include('sale.sale.receipt')
+
         </div>
     </div>
     @if ($errors->any())
@@ -163,7 +164,8 @@
 @push("scripts")
     <script>
         document.addEventListener('DOMContentLoaded',function(){
-
+            //focalizar el input de busqueda
+            document.getElementById("product_search").focus();
             //llamar tipo ajax hacia el controlador para la busqueda de entradas o inventario
             document.getElementById("product_search").addEventListener("keyup",function(e){
                 e.preventDefault();
@@ -176,11 +178,11 @@
                         // Limpiar la tabla antes de agregar nuevos resultados
                         const tbody = document.querySelector("#incomes_detail tbody");
                         tbody.innerHTML = "";
-
                         // Verifica si hay resultados
                         if (data.incomes_detail && data.incomes_detail.data.length > 0) {
                             data.incomes_detail.data.forEach(item => {
                                 const tr = document.createElement("tr");
+                                const itemSelected = `'${item.id},${item.code},${item.name} ${item.concentration} ${item.presentation},${item.sale_price},${item.form_sale},${item.quantity}'`; 
                                 tr.innerHTML = `
                                     <td>${item.code}</td>
                                     <td>${item.name} ${item.concentration} ${item.presentation}</td>
@@ -188,11 +190,16 @@
                                     <td>${formatCurrency.format(parseFloat(item.sale_price).toFixed(0))}</td>
                                     <td>${item.form_sale}</td>
                                     <td>${item.expiration_date}</td>
-                                    <td><button class="btn btn-warning" type="button" onclick="add_item(\'${item.id},${item.code},${item.name} ${item.concentration} ${item.presentation},${item.sale_price},${item.form_sale},${item.quantity}\')"> <span class="bi bi-cart"></span></button></td>
+                                    <td><button class="btn btn-warning" type="button" onclick="add_quantity_Discount(${itemSelected})"> <span class="bi bi-cart"></span></button></td>
                                 `;
-                                tbody.appendChild(tr);
-                            });
-                        } else {
+                                tbody.appendChild(tr); 
+                                });
+                                //enfoca en el primer boton de la tabla income:details
+                                const firstButton = tbody.querySelector("button");
+                                if (firstButton) {
+                                    firstButton.focus();
+                                }
+                        }else{
                             // Si no hay resultados, muestra un mensaje
                             const tr = document.createElement("tr");
                             tr.innerHTML = `<td colspan="5" class="text-center">No se encontraron productos</td>`;
@@ -207,7 +214,36 @@
                         
                     });
                 }
-            })
+            })  
+
+        
+            document.getElementById("invoice").addEventListener("keydown", function(e) {
+                if (e.key === "F") {
+                    e.preventDefault(); // Evita el comportamiento por defecto de la barra espaciadora
+                    this.focus(); // Enfoca el botón
+                }
+            });
+
+            //desplazamiento con las flechas del teclado sobre cada boton de la tabla incomes_detail pasar enfocando boton por boton
+            const tbody = document.querySelector("#incomes_detail tbody");
+            tbody.addEventListener("keydown", function(e) {
+                if (e.key === "ArrowDown") {
+                    e.preventDefault();
+                    const currentButton = document.activeElement;
+                    const nextButton = currentButton.closest("tr").nextElementSibling?.querySelector("button");
+                    if (nextButton) {
+                        nextButton.focus();
+                    }
+                } else if (e.key === "ArrowUp") {
+                    e.preventDefault();
+                    const currentButton = document.activeElement;
+                    const previousButton = currentButton.closest("tr").previousElementSibling?.querySelector("button");
+                    if (previousButton) {
+                        previousButton.focus();
+                    }
+                }   
+            });
+
 
             //evitar que se vaya en submit
             document.querySelector('form').addEventListener('submit', function(e) {
@@ -257,26 +293,28 @@
                                     // --- INICIO BLOQUE RECURSIVO ---
                                     const tbody = document.querySelector("#incomes_detail tbody");
                                     tbody.innerHTML = "";
+                                    const itemSelected = `'${item.id},${item.code},${item.name} ${item.concentration} ${item.presentation},${item.sale_price},${item.form_sale},${item.quantity}'`;
                                     if (data.incomes_detail && data.incomes_detail.data.length > 0) {
+                                        //si solo hay un resultado de la consulta de producto agregar directamente al carrito de compras
                                         data.incomes_detail.data.forEach(item => {
                                             const tr = document.createElement("tr");
                                             tr.innerHTML = `
                                                 <td>${item.code}</td>
                                                 <td>${item.name}</td>
-                                               <td>${formatCurrency.format(parseFloat(item.sale_price).toFixed(0))}</td>
+                                                <td>${formatCurrency.format(parseFloat(item.sale_price).toFixed(0))}</td>
                                                 <td>${item.form_sale}</td>
-                                                <td><button class="btn btn-warning" type="button" onclick="add_item(\'${item.id},${item.code},${item.name} ${item.concentration} ${item.presentation},${item.sale_price},${item.form_sale}\')"> <span class="bi bi-cart"></span></button></td>
+                                                <td>${item.expiration_date}</td>
+                                                <td><button class="btn btn-warning" type="button" onclick="add_quantity_Discount('${itemSelected}')"> <span class="bi bi-cart"></span></button></td>
                                             `;
                                             tbody.appendChild(tr);
                                         });
-                                    } else {
+                                    }else{
                                         const tr = document.createElement("tr");
                                         tr.innerHTML = `<td colspan="5" class="text-center">No se encontraron productos</td>`;
                                         tbody.appendChild(tr);
                                     }
 
-                                })
-                                .catch(error => {
+                                }).catch(error => {
                                     console.error('Error:', error);
                                 }).finally(()=>{
                                     hideSpinner();
@@ -287,39 +325,48 @@
         }
 
         //verificar si el item se encuentra en el carrito de compras
-        function verifyExist(code,sale_price,form_sale){
-            const codes = document.querySelectorAll("input[name='code[]']");
-            const sale_prices = document.querySelectorAll("input[name='sale_price[]']");
-            const form_sales = document.querySelectorAll("input[name='form_sale[]']");
-            let b = 0;
-            for(let i = 0;i<codes.length;i++){
+        function verifyExist(code,sale_price,form_sale,quantity){
+            const codes = document.querySelectorAll("#detalles tbody tr input[name='code[]']");
+            const sale_prices = document.querySelectorAll("#detalles tbody tr input[name='sale_price[]']");
+            const form_sales = document.querySelectorAll("#detalles tbody tr input[name='form_sale[]']");
+            const quantities = document.querySelectorAll("#detalles tbody tr input[name='quantity[]']");
+            for(let i=0;i<codes.length;i++){
                 if(codes[i].value == code && sale_prices[i].value == sale_price && form_sales[i].value == form_sale){
-                    b = 1;
+                    if(quantities[i].value <=quantity){
+                        quantities[i].value = parseFloat(quantities[i].value) + 1;
+                    }
+                    //enfocar el input de cantidad
+                    return true;
+                   
                 }
-                
             }
-            if(b==1){
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+            return false;
         }
 
+        //
         //function para adicionar un item al carrito de compras
-        function add_item(item)
-        {
-            const [id, code, name, sale_price, form_sale, quantity] = item.split(",");
-            if(!verifyExist(code,sale_price,form_sale)){
+        function add_item_selected(){
+            const id = document.getElementById("productId").value;
+            const code = document.getElementById("productCode").value;
+            const name = document.getElementById("productName").value;
+            const stock = document.getElementById("productStock").value;
+            const sale_price = document.getElementById("productSalePrice").value;
+            const form_sale = document.getElementById("productFormSale").value;
+            const quantityItem = document.getElementById("quantityItem").value;
+            const totalDiscount = document.getElementById("totalDiscount").value;
+
+            const subtotal = (parseFloat(sale_price) * parseFloat(quantityItem)) - (parseFloat(totalDiscount));
+                //verificar si el item ya existe en el carrito de compras
+                if(verifyExist(code,sale_price,form_sale,stock)){
+                    updateTotal();
+                    return;
+                }
                 const quantity_min = 1;
-                const discount = 0
-                const subtotal = ((quantity * sale_price) - discount).toFixed(2);
+       
                 const table = document.getElementById("detalles").getElementsByTagName('tbody')[0];
                 const row = table.insertRow();
                 row.innerHTML = `
                     <td>
-                        
                         <input type="hidden" name="income_detail_id[]" value="${id}">
                         <input type="hidden" name="code[]" value="${code}">
                         ${code}
@@ -329,14 +376,13 @@
                         <input type="hidden" value="${name}" name="description[]" />
                         </td>
                     <td>
-                        <input type="number" name="quantity[]" class="form-control form-control-sm" value="${quantity_min}" min="1" max="${quantity}"  style="width:80px;" onchange="updateSubtotal(this)">
+                        <input type="number" name="quantity[]" readonly class="form-control form-control-sm" value="${quantityItem}" min="1" max="${stock}"  style="width:80px;" onchange="updateSubtotal(this)">
                     </td>
                     <td>
                         <input type="hidden" name="sale_price[]" readonly class="form-control form-control-sm" value="${sale_price}" min="0" step="0.01" style="width:100px;" onchange="updateSubtotalWithoutMaxMin(this)">
                          ${formatCurrency.format(parseFloat(sale_price).toFixed(0))}
-                        
                     <td>
-                        <input type="number" name="discount[]" class="form-control form-control-sm" value="${discount}" min="0" step="0.01" style="width:80px;" onchange="updateSubtotalWithoutMaxMin(this)">
+                        <input type="number" name="discount[]" readonly class="form-control form-control-sm" value="${totalDiscount}" min="0" step="0.01" style="width:80px;" onchange="updateSubtotalWithoutMaxMin(this)">
                     </td>
                     <td class="subtotal">${formatCurrency.format(parseFloat(subtotal).toFixed(0))}</td>
                     <td class="form_sale">
@@ -347,19 +393,96 @@
                         <button type="button" class="btn btn-danger btn-sm" onclick="deleteItem(this)"><li class='bi bi-trash'></li></button>
                     </td>
                 `;
-            }
-            else
-            {
-                    Swal.fire({
-                    icon:"warning",
-                    text:"El producto ya se encuentra en la lista, modifica la cantidad si deseas agragar un nuevo",
-                    timer:4000
-                });
-            }
+
+            //enfocar el input de buscar producto
+            document.getElementById("product_search").value = "";
+            document.getElementById("product_search").focus();
+            //eliminar el enter por defecto que se genera
             updateTotal();
-            
+        }
+        //adicionar cantidad al item seleccionado
+        function add_quantity_Discount(item)
+        {
+            const [id, code, name, sale_price, form_sale, quantity] = item.split(",");
+            if(verifyExist(code,sale_price,form_sale,quantity)){
+                updateTotal();
+                return;
+            }
+            //colocar la informacion en el body del modal la informacion del producto, nombre, codigo, precio de venta, forma de venta y cantidad
+            document.getElementById("modal-set-quantity").querySelector(".modal-header").innerHTML = `
+                <div class="row">
+                    <div class="form-group">
+                        <div class="card text-dark bg-light mb-3">
+                            <div class="card-header">
+                                <h5 class="card-title">${name}</h5></div>
+                            <div class="card-body">
+                            <table with="100%" class="table table-bordered">
+                                <tr>
+                                    <td><b>Codigo:</b><br>${code}</td>
+                                    <td><b>Precio:</b><br>${formatCurrency.format(parseFloat(sale_price).toFixed(0))}</td>
+                                </tr>
+                                <tr>
+                                    <td><b>Forma Venta:</b><br>${form_sale}</td>
+                                    <td><b>Stock:</b><br>${quantity}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <input type="hidden" id="productId" name="productId" class="form-control" value="${id}"  />
+                    <input type="hidden" id="productName" name="productName" class="form-control" value="${name}"  />
+                    <input type="hidden" id="productCode" name="productCode" class="form-control" value="${code}" />
+                    <input type="hidden" id="productStock" name="productStock" class="form-control" value="${quantity}"  />
+                    <input type="hidden" id="productSalePrice" name="productSalePrice" class="form-control" value="${sale_price}" readonly /> 
+                    <input type="hidden" id="productFormSale" name="productFormSale" class="form-control" value="${form_sale}" readonly />
+                </div>
+            </div>`;
+
+            document.getElementById("modal-set-quantity").querySelector(".modal-body").innerHTML = `
+            <div class="row">
+                <div class="col-md-4 form-group">
+                    <label for="quantityItem">Cantidad</label>
+                    <input type="number" id="quantityItem" onchange="updateSubtotalQuantityDiscount()" name="quantityItem" class="form-control" value="1" min="1" max="${quantity}" />
+                </div>
+                <div class="col-md-4 form-group">
+                    <label for="discountItem">Descuento(%)</label>
+                    <input type="number" id="discountPercent" onchange="updateSubtotalQuantityDiscount()" name="discountPercent" class="form-control" value="0" min="0" step="0.01" />
+                </div>
+                <div class="col-md-4 form-group">
+                    <label for="discountCurrency">Descuento($)</label>
+                    <input type="number" id="discountItem" onchange="updateSubtotalQuantityDiscount()" name="discountItem" class="form-control" value="0" min="0" step="0.01" />
+                </div>
+                <input type="hidden" id="totalDiscount" value="0"/>
+            </div>`;
+            //agregar el subtotal al modal
+            document.getElementById("modal-set-quantity").querySelector(".subtotalItem").textContent = formatCurrency.format(parseFloat(sale_price * 1).toFixed(0));
+            const modal_quantity = new bootstrap.Modal(document.getElementById("modal-set-quantity"));
+            modal_quantity.show();
         }
         //function para actualizar el total
+
+        function updateSubtotalQuantityDiscount() {
+            const quantity = parseFloat(document.getElementById("quantityItem").value) || 1;
+            const sale_price = parseFloat(document.getElementById("productSalePrice").value) || 0;
+            const subtotal = (quantity * sale_price).toFixed(2);
+            //validar si el descuento se lo hace por porcentaje o por un valor momnetario al subtotal
+            const discountPercent = parseFloat(document.getElementById("discountPercent").value) || 0;
+            const discountItem = parseFloat(document.getElementById("discountItem").value) || 0;
+            let discount = 0;   
+            if (discountPercent > 0) {
+                discount = (subtotal * discountPercent / 100).toFixed(2);
+            } else if (discountItem > 0) {
+                discount = discountItem.toFixed(2);
+            }       
+            // Calcular el subtotal final
+            const finalSubtotal = (parseFloat(subtotal) - parseFloat(discount)).toFixed(2);
+            // Actualizar el subtotal en el modal
+            document.querySelector("#modal-set-quantity .subtotalItem").textContent = formatCurrency.format(parseFloat(finalSubtotal).toFixed(0));
+            // Actualizar el valor del descuento total
+            document.getElementById("totalDiscount").value = discount;
+        }
+
         function updateTotal() {
             let total = 0;
             document.querySelectorAll("#detalles tbody tr").forEach(row => {
@@ -385,6 +508,17 @@
                 const totalPayment = document.querySelector('#totalPayment');
                 totalPayment.textContent = formatCurrency.format(total.toFixed(0));
                 table_payments_tbody.appendChild(tr);
+                //mostrar el boton de facturar
+                const btn_invoice = document.getElementById("invoice");
+                btn_invoice.style.display = "";
+            }else{
+                const totalPayment = document.querySelector('#totalPayment');
+                totalPayment.textContent = 0;
+                const table_payments_tbody = document.querySelector('#table_payments tbody');
+                table_payments_tbody.innerHTML = "";
+                //ocultar el boton de facturar
+                const btn_invoice = document.getElementById("invoice");
+                btn_invoice.style.display = "none";
             }
 
         }
@@ -625,6 +759,7 @@ function toinvoice(){
         }
         
         function closeModal(){
+            console.log("here");
             const myModal = new bootstrap.Modal(document.getElementById('modal-receipt-invoice'));
             myModal.hide();
 
@@ -651,4 +786,5 @@ function toinvoice(){
 @endpush
 
 @endsection
+
 
