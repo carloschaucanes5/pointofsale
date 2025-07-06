@@ -11,3 +11,12 @@
         </div>
     </div>
 </div>
+@section('scripts')
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            console.log("Modal de cantidad listo");
+        });
+    </script>
+@endsection
+
+

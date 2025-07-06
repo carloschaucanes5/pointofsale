@@ -197,8 +197,14 @@
                                 //enfoca en el primer boton de la tabla income:details
                                 const firstButton = tbody.querySelector("button");
                                 if (firstButton) {
-                                    firstButton.focus();
+                                    if(data.incomes_detail.data.length == 1){
+                                        firstButton.onclick();
+                                    }else{
+                                        firstButton.focus();
+                                    }
+                                    
                                 }
+                                
                         }else{
                             // Si no hay resultados, muestra un mensaje
                             const tr = document.createElement("tr");
@@ -249,6 +255,8 @@
             document.querySelector('form').addEventListener('submit', function(e) {
                 e.preventDefault(); // Cancela cualquier envío
             });
+
+
 
         });
     
@@ -304,10 +312,16 @@
                                                 <td>${formatCurrency.format(parseFloat(item.sale_price).toFixed(0))}</td>
                                                 <td>${item.form_sale}</td>
                                                 <td>${item.expiration_date}</td>
-                                                <td><button class="btn btn-warning" type="button" onclick="add_quantity_Discount('${itemSelected}')"> <span class="bi bi-cart"></span></button></td>
+                                                <td><button class="btn btn-warning" type="button" onclick="add_quantity_Discount(${itemSelected})"> <span class="bi bi-cart"></span></button></td>
                                             `;
                                             tbody.appendChild(tr);
                                         });
+                                        if(data.incomes_detail.data.length == 1 ){
+                                            console.log("olaaaaaa");
+                                           const  trFirst = document.querySelector("#incomes_detail tbody tr")[0];
+                                            trFirst.querySelector("button").onclick();
+                                        }
+
                                     }else{
                                         const tr = document.createElement("tr");
                                         tr.innerHTML = `<td colspan="5" class="text-center">No se encontraron productos</td>`;
@@ -323,7 +337,6 @@
                     });
                 }
         }
-
         //verificar si el item se encuentra en el carrito de compras
         function verifyExist(code,sale_price,form_sale,quantity){
             const codes = document.querySelectorAll("#detalles tbody tr input[name='code[]']");
@@ -337,7 +350,6 @@
                     }
                     //enfocar el input de cantidad
                     return true;
-                   
                 }
             }
             return false;
@@ -459,6 +471,7 @@
             document.getElementById("modal-set-quantity").querySelector(".subtotalItem").textContent = formatCurrency.format(parseFloat(sale_price * 1).toFixed(0));
             const modal_quantity = new bootstrap.Modal(document.getElementById("modal-set-quantity"));
             modal_quantity.show();
+            
         }
         //function para actualizar el total
 
