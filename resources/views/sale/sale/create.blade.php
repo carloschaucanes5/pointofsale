@@ -164,12 +164,14 @@
 @push("scripts")
     <script>
         document.addEventListener('DOMContentLoaded',function(){
+
             //focalizar el input de busqueda
             document.getElementById("product_search").focus();
             //llamar tipo ajax hacia el controlador para la busqueda de entradas o inventario
             document.getElementById("product_search").addEventListener("keyup",function(e){
                 e.preventDefault();
-                if(e.key == 'Enter'){
+                //cuando sea enter y este enfocado en el input de busqueda
+                if(e.key == 'Enter' && this.value.trim() != ""){
                     showSpinner();
                     const codeName = this.value;
                    fetch("{{url('sale/sale/search_product')}}/" + encodeURIComponent(codeName))
@@ -199,6 +201,7 @@
                                 if (firstButton) {
                                     if(data.incomes_detail.data.length == 1){
                                         firstButton.onclick();
+                                       
                                     }else{
                                         firstButton.focus();
                                     }
@@ -211,7 +214,7 @@
                             tr.innerHTML = `<td colspan="5" class="text-center">No se encontraron productos</td>`;
                             tbody.appendChild(tr);
                         }
-                        create_pagination(data);
+                        //create_pagination(data);
                     })
                     .catch(error => {
                         console.error('Error:', error);
@@ -223,12 +226,7 @@
             })  
 
         
-            document.getElementById("invoice").addEventListener("keydown", function(e) {
-                if (e.key === "F") {
-                    e.preventDefault(); // Evita el comportamiento por defecto de la barra espaciadora
-                    this.focus(); // Enfoca el botón
-                }
-            });
+
 
             //desplazamiento con las flechas del teclado sobre cada boton de la tabla incomes_detail pasar enfocando boton por boton
             const tbody = document.querySelector("#incomes_detail tbody");
@@ -257,7 +255,10 @@
             });
 
 
+            $('#modal-receipt-invoice').on('hidden.bs.modal', function (e) {
+                window.location.reload(); // Recargar la página al cerrar el modal
 
+            });
         });
     
 
@@ -317,7 +318,6 @@
                                             tbody.appendChild(tr);
                                         });
                                         if(data.incomes_detail.data.length == 1 ){
-                                            console.log("olaaaaaa");
                                            const  trFirst = document.querySelector("#incomes_detail tbody tr")[0];
                                             trFirst.querySelector("button").onclick();
                                         }
@@ -337,23 +337,7 @@
                     });
                 }
         }
-        //verificar si el item se encuentra en el carrito de compras
-        function verifyExist(code,sale_price,form_sale,quantity){
-            const codes = document.querySelectorAll("#detalles tbody tr input[name='code[]']");
-            const sale_prices = document.querySelectorAll("#detalles tbody tr input[name='sale_price[]']");
-            const form_sales = document.querySelectorAll("#detalles tbody tr input[name='form_sale[]']");
-            const quantities = document.querySelectorAll("#detalles tbody tr input[name='quantity[]']");
-            for(let i=0;i<codes.length;i++){
-                if(codes[i].value == code && sale_prices[i].value == sale_price && form_sales[i].value == form_sale){
-                    if(quantities[i].value <=quantity){
-                        quantities[i].value = parseFloat(quantities[i].value) + 1;
-                    }
-                    //enfocar el input de cantidad
-                    return true;
-                }
-            }
-            return false;
-        }
+
 
         //
         //function para adicionar un item al carrito de compras
@@ -368,11 +352,6 @@
             const totalDiscount = document.getElementById("totalDiscount").value;
 
             const subtotal = (parseFloat(sale_price) * parseFloat(quantityItem)) - (parseFloat(totalDiscount));
-                //verificar si el item ya existe en el carrito de compras
-                if(verifyExist(code,sale_price,form_sale,stock)){
-                    updateTotal();
-                    return;
-                }
                 const quantity_min = 1;
        
                 const table = document.getElementById("detalles").getElementsByTagName('tbody')[0];
@@ -415,13 +394,23 @@
         //adicionar cantidad al item seleccionado
         function add_quantity_Discount(item)
         {
+            
             const [id, code, name, sale_price, form_sale, quantity] = item.split(",");
-            if(verifyExist(code,sale_price,form_sale,quantity)){
-                updateTotal();
-                return;
+            //valido si es la tabla detalles hay con las mismas caracteristicas
+            const existingRow = Array.from(document.querySelectorAll("#detalles tbody tr")).find(row => {
+                return row.querySelector('input[name="income_detail_id[]"]').value === id;
+                });
+            if (existingRow) {
+                if(parseInt(existingRow.querySelector('input[name="quantity[]"]').value) < quantity){
+                     existingRow.querySelector('input[name="quantity[]"]').value = parseInt(existingRow.querySelector('input[name="quantity[]"]').value) + 1;
+                     updateSubtotal(existingRow.querySelector('input[name="quantity[]"]'));
+                }
             }
-            //colocar la informacion en el body del modal la informacion del producto, nombre, codigo, precio de venta, forma de venta y cantidad
-            document.getElementById("modal-set-quantity").querySelector(".modal-header").innerHTML = `
+            else
+            {
+                
+            const modalSetQuantity = document.getElementById("modal-set-quantity");
+            modalSetQuantity.querySelector(".modal-header").innerHTML = `
                 <div class="row">
                     <div class="form-group">
                         <div class="card text-dark bg-light mb-3">
@@ -451,11 +440,11 @@
                 </div>
             </div>`;
 
-            document.getElementById("modal-set-quantity").querySelector(".modal-body").innerHTML = `
+            modalSetQuantity.querySelector(".modal-body").innerHTML = `
             <div class="row">
                 <div class="col-md-4 form-group">
                     <label for="quantityItem">Cantidad</label>
-                    <input type="number" id="quantityItem" onchange="updateSubtotalQuantityDiscount()" name="quantityItem" class="form-control" value="1" min="1" max="${quantity}" />
+                    <input type="number" id="quantityItem" onkeydown="accept_quantity(event)" onchange="updateSubtotalQuantityDiscount()" name="quantityItem" class="form-control" value="1" min="1" max="${quantity}" step="1"/>
                 </div>
                 <div class="col-md-4 form-group">
                     <label for="discountItem">Descuento(%)</label>
@@ -468,12 +457,70 @@
                 <input type="hidden" id="totalDiscount" value="0"/>
             </div>`;
             //agregar el subtotal al modal
-            document.getElementById("modal-set-quantity").querySelector(".subtotalItem").textContent = formatCurrency.format(parseFloat(sale_price * 1).toFixed(0));
-            const modal_quantity = new bootstrap.Modal(document.getElementById("modal-set-quantity"));
-            modal_quantity.show();
-            
+           modalSetQuantity.querySelector(".subtotalItem").textContent = formatCurrency.format(parseFloat(sale_price * 1).toFixed(0));
+           //colocar focus en quantityItem
+          
+            //mostrar el modal
+           const modal_quantity = new bootstrap.Modal(modalSetQuantity);
+           //crear una promesa que primero me muestre el modal y luego me enfoque
+           
+            modal_quantity.show();  
+            setInterval(() => {
+               if(modalSetQuantity.querySelector("#quantityItem").focus()){
+                clearInterval();
+               }
+            }, 100);
+          }    
         }
-        //function para actualizar el total
+   
+        function accept_quantity(event) {
+            event.preventDefault();
+            if(event.key==="Enter"){
+                const quantityItem = document.getElementById("quantityItem");
+                const quantity = parseFloat(quantityItem.value) || 1;
+                const stock = parseFloat(document.getElementById("productStock").value) || 0;
+                if(quantity > stock){
+                    Swal.fire({
+                        title: 'Advertencia',
+                        text: 'La cantidad no puede ser mayor al stock disponible',
+                        icon: 'warning',
+                        timer: 3000
+                    });
+                    quantityItem.value = stock;
+                }
+                else
+                {
+                    document.getElementById("modal-set-quantity").querySelector(".modal-footer button").click();
+                    //enfocar el input de buscar producto
+                    document.getElementById("product_search").value = "";
+                    setTimeout(() => {
+                        document.getElementById("product_search").focus();
+                    }, 2000);
+                       
+                }
+                //si usa las teclas flecha arriba y abajo del teclado aumenta la cantidad o desminuye de quantityItem
+            }else if(event.key === "ArrowUp"){
+                const quantityItem = document.getElementById("quantityItem");
+                const stock = parseFloat(document.getElementById("productStock").value) || 0;
+                let quantity = parseFloat(quantityItem.value) || 1;
+                if(quantity < stock){
+                    quantityItem.value = quantity + 1;
+                }else{
+                    return false;
+                }
+                
+            }else if(event.key === "ArrowDown"){
+                const quantityItem = document.getElementById("quantityItem");
+                let quantity = parseFloat(quantityItem.value) || 1;
+                if(quantity > 1){
+                    quantityItem.value = quantity - 1;
+                }else{
+                    return false;
+                }
+            }
+            updateSubtotalQuantityDiscount();
+        }
+
 
         function updateSubtotalQuantityDiscount() {
             const quantity = parseFloat(document.getElementById("quantityItem").value) || 1;
@@ -772,7 +819,6 @@ function toinvoice(){
         }
         
         function closeModal(){
-            console.log("here");
             const myModal = new bootstrap.Modal(document.getElementById('modal-receipt-invoice'));
             myModal.hide();
 
