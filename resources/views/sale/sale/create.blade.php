@@ -130,7 +130,7 @@
                                                 <td> 
                                                     <div style="display: flex;flex-direction: row;justify-content: center"> 
                                                         <input type="hidden" name="_token" value="{{csrf_token()}}">
-                                                        <button type="reset" class="btn btn-danger me-1 mb-1">Cancelar</button>
+                                                        <button type="reset" onclick="window.location.reload()" class="btn btn-danger me-1 mb-1">Cancelar</button>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -167,6 +167,7 @@
 
             //focalizar el input de busqueda
             document.getElementById("product_search").focus();
+            document.getElementById("invoice").style.display = "none";
             //llamar tipo ajax hacia el controlador para la busqueda de entradas o inventario
             document.getElementById("product_search").addEventListener("keyup",function(e){
                 e.preventDefault();
@@ -200,8 +201,20 @@
                                 const firstButton = tbody.querySelector("button");
                                 if (firstButton) {
                                     if(data.incomes_detail.data.length == 1){
-                                        firstButton.onclick();
-                                       
+                                        const detallesTr = document.querySelectorAll("#detalles tbody tr input[name='income_detail_id[]']");
+                                        let b=0;
+                                        for(let i = 0;i<detallesTr.length;i++){
+                                            if(detallesTr[i].value == data.incomes_detail.data[0].id){
+                                                b=1;
+                                            }
+                                        }
+                                        if(b==0){
+                                            firstButton.onclick();
+                                        }
+                                        else
+                                        {
+                                            //firstButton.focus();
+                                        }     
                                     }else{
                                         firstButton.focus();
                                     }
@@ -222,6 +235,14 @@
                         hideSpinner();
                         
                     });
+                }else if(e.key == 'Enter' && this.value.trim() == ""){
+                    //enfocar en facturar cuando haya un valor mayor aque cero en el total
+                    e.preventDefault();
+                    if(parseFloat(document.getElementById("sale_total").value) > 0){
+                        document.getElementById("invoice").focus();
+                    }
+                    
+
                 }
             })  
 
@@ -464,12 +485,12 @@
            const modal_quantity = new bootstrap.Modal(modalSetQuantity);
            //crear una promesa que primero me muestre el modal y luego me enfoque
            
-            modal_quantity.show();  
-            setInterval(() => {
-               if(modalSetQuantity.querySelector("#quantityItem").focus()){
-                clearInterval();
-               }
-            }, 100);
+            modal_quantity.show(); 
+            setTimeout(() => {
+                    modalSetQuantity.querySelector("#quantityItem").focus()
+            }, 500);
+                
+            
           }    
         }
    
@@ -495,7 +516,7 @@
                     document.getElementById("product_search").value = "";
                     setTimeout(() => {
                         document.getElementById("product_search").focus();
-                    }, 2000);
+                    }, 1000);
                        
                 }
                 //si usa las teclas flecha arriba y abajo del teclado aumenta la cantidad o desminuye de quantityItem
