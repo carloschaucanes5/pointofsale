@@ -3,7 +3,7 @@
 @section('title', 'Index')
 
 @section('content')
-    
+   
     <div class="content-header">
         <div class="container-fluid">
             <div class="row mb-2">
@@ -67,8 +67,7 @@
                         @forEach($sales as $sale)
                         <tr>
                             <td>
-                                <a href="{{route('sale.show',$sale->id)}}" class="btn btn-warning btn-sm"><i class="bi bi-pen"></i></a>
-                                <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="#"><i class="bi bi-trash"></i></button>
+                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="view_invoice({{$sale->id}})" data-bs-toggle="#"><i class="bi bi-eye"></i></button>
                             </td>
                             <td>{{$sale->created_at}}</td>
                             <td>{{$sale->name}}</td>
@@ -83,6 +82,101 @@
             </div>
         </div>
     </section>
+    
+ @include('sale.sale.receipt')
 @endsection
+
+@push('scripts')
+    <script>
+        function view_invoice(sale_id){
+                showSpinner();
+                fetch("{{url('sale/sale/receipt')}}/" + encodeURIComponent(sale_id))
+                .then(response => response.json())
+                .then(data => {
+                    if(data.success) {
+                        document.getElementById("sale_number").textContent = data.sale_id;  
+                        generateInvoice(data.info_sale,data.detail_sale, data.form_payment);
+                        const myModal = new bootstrap.Modal(document.getElementById('modal-receipt-invoice'));
+                        myModal.show();  
+                    }else {
+                        Swal.fire({
+                            title: 'Error',
+                            text: 'No se pudo generar la factura, intentalo mas tarde',
+                            icon: 'error',
+                            buttons: true,
+                            dangerMode: true,
+                            timer: 3000
+                        });
+                    }
+                })
+                .catch(error => {
+                   
+                            Swal.fire({
+                            title: 'Error',
+                            text: error,
+                            icon: 'error',
+                            buttons: true,
+                            dangerMode: true,
+                            timer: 3000
+                        });
+                }).finally(()=>{
+                     hideSpinner();
+                });
+        }
+
+        function generateInvoice(info_sale,detail_sale,info_payment){
+            const information_customer = document.getElementById("information_customer");
+            information_customer.innerHTML = `<small class="text-muted mb-custom">Cliente: <b>${info_sale.customer_name}</b></small><br>
+                                                <small class="text-muted mb-custom">Documento: <b>${info_sale.document_type}:${info_sale.document_number}</b></small><br>
+                                                <small class="text-muted mb-custom">Dirección: <b>${info_sale.customer_address}</b></small><br>
+                                                <small class="text-muted mb-custom">Télefono:<b>${info_sale.customer_phone}</b></small><br>`;
+            document.getElementById("sale_number").textContent = info_sale.id;
+            document.getElementById("date_sale").textContent = `Fecha: ${info_sale.updated_at}`;
+            const body_details = document.querySelector("#details table tbody");
+            const foot_details = document.querySelector("#details table tfoot")
+            var discountTotals  = 0;
+            var subtotals = 0;
+            for(let i=0;i<detail_sale.length;i++){
+                const detail = detail_sale[i];
+                discountTotals += detail.discount; 
+                subtotals += (detail.sale_price * detail.quantity); 
+                const tr = document.createElement("tr");
+                tr.innerHTML = `<td>${detail.quantity}</td><td>${detail.article} ${detail.concentration} ${detail.presentation}</td><td>${detail.discount}</td><td>${formatCurrency.format(parseFloat(detail.sale_price * detail.quantity).toFixed(0))}</td>`;
+                body_details.appendChild(tr);
+            }
+            const trFoot = document.createElement("tr");
+            trFoot.style.borderTop = "2px solid #000";
+            trFoot.style.borderBottom = "2px solid #000";
+            trFoot.innerHTML = `
+                <td class="text-center">0</td>
+                <td class="text-center">${info_sale.sale_total}</td>
+                <td class="text-center">0</td>
+                <td class="text-center">${info_sale.sale_total}</td>
+            `; 
+            foot_details.appendChild(trFoot);
+            document.getElementById('receipt_subtotal').textContent = formatCurrency.format(subtotals);
+            document.getElementById('receipt_discount').textContent = formatCurrency.format(discountTotals);
+            document.getElementById('receipt_tax').textContent = 0;
+            document.getElementById('receipt_total').textContent = formatCurrency.format(info_sale.sale_total);
+            document.getElementById('receipt_change').textContent = formatCurrency.format(info_sale.change);
+
+            const table_form_payment = document.querySelector("#table_form_payment tbody");
+            var received = 0;
+            info_payment.forEach(ele=>{
+                    const tr_pay = document.createElement("tr");
+                    tr_pay.innerHTML = `
+                    <td>${ele.method}</td>
+                    <td>${ele.value}</td>
+                `;
+                received=received + ele.value;
+                table_form_payment.appendChild(tr_pay);
+            });
+            document.getElementById('receipt_received').textContent = formatCurrency.format(received);
+            document.getElementById("employee").textContent = info_sale.user_name;
+        }
+    </script>
+@endpush
+
+
 
 

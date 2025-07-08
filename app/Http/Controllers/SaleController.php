@@ -22,6 +22,15 @@ class SaleController extends Controller
     public function index(Request $request)
     {
         if($request){
+            $logo = DB::table('config')
+                          ->where("key","=","logo")
+                          ->get()
+                          ->first();
+            $company = DB::table('config')
+                        ->where("key","like","company%")
+                        ->select('key','value','alias')
+                        ->get()
+                        ->keyBy('key');
             $query = trim($request->get('searchText'));
             $sales = DB::table("sale as sal")
                        ->join('person as pe','pe.id','=','sal.customer_id')
@@ -29,8 +38,8 @@ class SaleController extends Controller
                        ->select('sal.id','sal.created_at','pe.name','sal.tax','sal.status','sal.sale_total')
                        ->groupBy('sal.id','sal.created_at','pe.name','sal.tax','sal.status','sal.sale_total')
                        ->orderBy('sal.id','desc')
-                       ->paginate(15);
-            return view('sale.sale.index',['sales'=>$sales,'texto'=>$query]);
+                       ->paginate(10);
+            return view('sale.sale.index',['sales'=>$sales,'texto'=>$query,'company'=>$company,'logo'=>$logo]);
         }
     }
 
@@ -107,7 +116,7 @@ class SaleController extends Controller
     public function store(Request $request)
     {
         try{
-            if(auth()->user()->id){
+            if(isset(auth()->user()->id)){
                  DB::beginTransaction();
                 $sale = new Sale();
                 $sale->customer_id = explode("-",$request->post('customer_id'))[0];
@@ -204,25 +213,38 @@ class SaleController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Request $request)
     {
-        
 
+
+    }
+
+    public function receipt($sale_id){
         $sale = DB::table("sale as s")
-                 ->join("person as p","s.customer_id","=","p.id")
-                 ->join("sale_detail as sde","s.id","=","sde.sale_id")
-                 ->select("s.id","s.created_at","s.updated_at","p.name","s.voucher_type","s.voucher_number","s.tax","s.status","s.sale_total")
-                 ->where("s.id","=",$id)
-                 ->first();
+        ->join("person as p","s.customer_id","=","p.id")
+        ->join("users as u","u.id","=","s.users_id")
+        ->select("s.id","s.change","s.updated_at","p.name as customer_name","p.address as customer_address","p.phone as customer_phone","p.email as customer_email","p.document_type","p.document_number","s.tax","s.sale_total","u.name as user_name")
+        ->where("s.id","=",$sale_id)
+        ->first();
 
         $details = DB::table("sale_detail as d")
-                ->join("product as pro","pro.id","=","d.product_id")
-                ->select("pro.name as article","d.quantity","d.discount","d.sale_price")
-                ->where("d.sale_id","=",$id)
-                ->get();
+        ->join("income_detail_historical as ide","ide.income_detail_id","=","d.income_detail_id")
+        ->join("product as pro","pro.id","=","ide.product_id")
+        ->select("pro.name as article","pro.concentration","pro.presentation","ide.form_sale","d.quantity","d.discount","d.sale_price")
+        ->where("d.sale_id","=",$sale_id)
+        ->get();
 
-        return view("sale.sale.show",["sale"=>$sale,"details"=>$details]);
+        $form_payment = DB::table("payment as p")
+            ->select("p.sale_id","p.method","p.value","p.status")
+            ->where("p.sale_id","=",$sale_id)
+            ->get();
 
+        return response()->json(
+            ["success"=>true,"message"=>"Venta efectuada con éxito",
+            "info_sale"=>$sale,
+            "detail_sale"=>$details,
+            "form_payment"=>$form_payment
+            ],201);
     }
 
     /**
