@@ -83,6 +83,15 @@
                             </div>
                             <div class="form-group">
                                 <hr/>
+                                <label for="payment_form"><b>Forma de Pago</b></label>
+                                <select name="payment_form" id="payment_form" class="form-control">
+                                    @foreach($payment_forms as $form)
+                                        <option value="{{$form}}">{{$form}}</option>
+                                    @endforeach
+                                </select>                
+                            </div>
+                            <div class="form-group">
+                                <hr/>
                                 <label for="payment_method"><b>Medio de Pago</b></label>
                                 <select name="payment_method" id="payment_method" class="form-control">
                                     @foreach($payment_methods as $method)
@@ -429,7 +438,6 @@
             }
             else
             {
-                
             const modalSetQuantity = document.getElementById("modal-set-quantity");
             modalSetQuantity.querySelector(".modal-header").innerHTML = `
                 <div class="row">
@@ -479,18 +487,12 @@
             </div>`;
             //agregar el subtotal al modal
            modalSetQuantity.querySelector(".subtotalItem").textContent = formatCurrency.format(parseFloat(sale_price * 1).toFixed(0));
-           //colocar focus en quantityItem
-          
-            //mostrar el modal
            const modal_quantity = new bootstrap.Modal(modalSetQuantity);
            //crear una promesa que primero me muestre el modal y luego me enfoque
-           
             modal_quantity.show(); 
             setTimeout(() => {
                     modalSetQuantity.querySelector("#quantityItem").focus()
             }, 500);
-                
-            
           }    
         }
    
@@ -732,18 +734,57 @@ function deleteItem(item){
     updateTotal();
 }
 
-function toinvoice(){
-            showSpinner();
+async function toinvoice(){
+            
+            let payment_form = document.getElementById("payment_form").value;            
+            
             let form = document.getElementById('form-sale');
             //--------------------------------------------
             const table_payments = document.querySelectorAll("#table_payments tbody tr");
             let methods = [];
+            let cc = 0;
             for (let i = 0; i < table_payments.length; i++) {
                 let valorPayment = parseFloat(table_payments[i].children[1].textContent);
                 let methodPayment = table_payments[i].children[0].textContent;
+                if(methodPayment=="credito")cc++;
                 const obj = {method:methodPayment,value:valorPayment};
                 methods.push(obj);
             }
+            if(payment_form == "credito" && !(cc > 0)){
+                Swal.fire({
+                    title: 'Forma de pago',
+                    text: 'Si la forma de pago es a Credito, se debe seleccionar almenos un medio de pago tipo credito',
+                    icon: 'warning',
+                    buttons: true,
+                    dangerMode: true,
+                    timer: 6000
+                });
+                return;
+            }else if(payment_form == 'contado' && (cc > 0)){
+                Swal.fire({
+                    title: 'Forma de Pago',
+                    text: 'Si la forma de pago es a Contado, no se debe seleccionar medio de pago tipo credito',
+                    icon: 'warning',
+                    buttons: true,
+                    dangerMode: true,
+                    timer: 6000
+                });
+                return;
+            }
+            const confirmTransaction = async () => {
+                return Swal.fire({
+                    title: '¿Estás seguro?',
+                    text: "¡Esta acción no se puede deshacer!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Sí, Facturar',
+                    cancelButtonText: 'Cancelar',
+                    reverseButtons: true
+                });
+            };
+            const result = await confirmTransaction();
+            if (!result.isConfirmed) return;
+            showSpinner();
             //-------------------------------------------
             let formData = new FormData(form);
                 formData.append("methods",JSON.stringify(methods));
@@ -785,6 +826,7 @@ function toinvoice(){
                         });
                 }).finally(()=>{
                      hideSpinner();
+                     document.getElementById("btn_print").focus();
                 });
         }
 
@@ -808,16 +850,6 @@ function toinvoice(){
                 tr.innerHTML = `<td>${detail.quantity}</td><td>${detail.article} ${detail.concentration} ${detail.presentation}</td><td>${detail.discount}</td><td>${formatCurrency.format(parseFloat(detail.sale_price * detail.quantity).toFixed(0))}</td>`;
                 body_details.appendChild(tr);
             }
-            const trFoot = document.createElement("tr");
-            trFoot.style.borderTop = "2px solid #000";
-            trFoot.style.borderBottom = "2px solid #000";
-            trFoot.innerHTML = `
-                <td class="text-center">0</td>
-                <td class="text-center">${info_sale.sale_total}</td>
-                <td class="text-center">0</td>
-                <td class="text-center">${info_sale.sale_total}</td>
-            `; 
-            foot_details.appendChild(trFoot);
             document.getElementById('receipt_subtotal').textContent = formatCurrency.format(subtotals);
             document.getElementById('receipt_discount').textContent = formatCurrency.format(discountTotals);
             document.getElementById('receipt_tax').textContent = 0;

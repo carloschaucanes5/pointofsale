@@ -78,6 +78,11 @@ class SaleController extends Controller
                           ->where("key","=","payment_methods")
                           ->get()
                           ->first();
+        
+        $payment_forms =DB::table('config')
+                    ->where("key","=","payment_forms")
+                    ->get()
+                    ->first();
 
         $logo = DB::table('config')
                           ->where("key","=","logo")
@@ -104,6 +109,7 @@ class SaleController extends Controller
         'persons'=>$persons,
         'products'=>$products,
         'payment_methods'=>explode(",",$payment_methods->value),
+        'payment_forms'=>explode(",",$payment_forms->value),
         'logo'=>$logo,
         'company'=>$company
         ]
@@ -122,6 +128,9 @@ class SaleController extends Controller
                 $sale->customer_id = explode("-",$request->post('customer_id'))[0];
                 $sale->tax = 16;
                 $sale->status = 1;
+
+                $sale->payment_form = $request->post('payment_form');
+
                 $sale->change = floatval($request->post('totalChangeHidden'));
                 $sale->sale_total = floatval($request->post('sale_total'));
                 $sale->users_id = auth()->user()->id;
@@ -215,7 +224,6 @@ class SaleController extends Controller
      */
     public function show(Request $request)
     {
-
 
     }
 

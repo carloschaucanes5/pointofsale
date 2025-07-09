@@ -144,16 +144,7 @@
                 tr.innerHTML = `<td>${detail.quantity}</td><td>${detail.article} ${detail.concentration} ${detail.presentation}</td><td>${detail.discount}</td><td>${formatCurrency.format(parseFloat(detail.sale_price * detail.quantity).toFixed(0))}</td>`;
                 body_details.appendChild(tr);
             }
-            const trFoot = document.createElement("tr");
-            trFoot.style.borderTop = "2px solid #000";
-            trFoot.style.borderBottom = "2px solid #000";
-            trFoot.innerHTML = `
-                <td class="text-center">0</td>
-                <td class="text-center">${info_sale.sale_total}</td>
-                <td class="text-center">0</td>
-                <td class="text-center">${info_sale.sale_total}</td>
-            `; 
-            foot_details.appendChild(trFoot);
+
             document.getElementById('receipt_subtotal').textContent = formatCurrency.format(subtotals);
             document.getElementById('receipt_discount').textContent = formatCurrency.format(discountTotals);
             document.getElementById('receipt_tax').textContent = 0;
@@ -173,6 +164,23 @@
             });
             document.getElementById('receipt_received').textContent = formatCurrency.format(received);
             document.getElementById("employee").textContent = info_sale.user_name;
+        }
+
+        function printInvoice(divId){
+            let contenido = document.getElementById(divId).innerHTML;
+            let ventana = window.open('', '', 'height=600,width=800');
+            ventana.document.write('<html><head><title>Imprimir</title>');
+            ventana.document.write('<style>body{font-family:sans-serif; font-size:12px;}</style>');
+            ventana.document.write('</head><body>');
+            ventana.document.write(contenido);
+            ventana.document.write('</body></html>');
+            ventana.document.close();
+            ventana.focus();
+            ventana.print();
+            ventana.close();
+            setInterval(() => {
+                window.location.reload();
+            },4000);
         }
     </script>
 @endpush

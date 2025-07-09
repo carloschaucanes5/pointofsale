@@ -18,7 +18,8 @@ class Sale extends Model
     'customer_id',
     'sale_total',
     'change',
-    'users_id'
+    'users_id',
+    'payment_form'
     ];
 
     protected $guarded = [];
