@@ -21,6 +21,9 @@ class SaleController extends Controller
 {
     public function index(Request $request)
     {
+        $searchText = $request->get("searchText");
+        $start_date = $request->get("start_date");
+        $end_date = $request->get("end_date");
         if($request){
             $logo = DB::table('config')
                           ->where("key","=","logo")
@@ -31,15 +34,38 @@ class SaleController extends Controller
                         ->select('key','value','alias')
                         ->get()
                         ->keyBy('key');
-            $query = trim($request->get('searchText'));
-            $sales = DB::table("sale as sal")
+            if(trim($searchText)==""){
+                $sales = DB::table("sale as sal")
                        ->join('person as pe','pe.id','=','sal.customer_id')
-                       ->join('sale_detail as sde','sde.sale_id','=','sal.id')
-                       ->select('sal.id','sal.created_at','pe.name','sal.tax','sal.status','sal.sale_total')
-                       ->groupBy('sal.id','sal.created_at','pe.name','sal.tax','sal.status','sal.sale_total')
+                       ->join("users as u","u.id","=","sal.users_id")
+                       ->whereBetween("sal.created_at",[
+                            date($start_date." 00:00:00"),
+                            date($end_date." 23:59:59")
+                       ])
+                       ->select("sal.id","sal.change","sal.created_at","pe.name as customer_name","pe.address as customer_address","pe.phone as customer_phone","pe.email as customer_email","pe.document_type","pe.document_number","sal.tax","sal.sale_total","u.name as user_name","sal.payment_form")
                        ->orderBy('sal.id','desc')
-                       ->paginate(10);
-            return view('sale.sale.index',['sales'=>$sales,'texto'=>$query,'company'=>$company,'logo'=>$logo]);
+                       ->paginate(6);
+            }else{
+                    $sales = DB::table("sale as sal")
+                       ->join('sale_detail as sde','sde.sale_id',"=","sal.id")
+                       ->join('income_detail_historical as idh','idh.income_detail_id','=','sde.income_detail_id')
+                       ->join('product as pr','pr.id','=','idh.product_id') 
+                       ->join('person as pe','pe.id','=','sal.customer_id')
+                       ->join("users as u","u.id","=","sal.users_id")
+                       ->where(function($query) use ($searchText){
+                            $query->where('pr.name','like','%'.$searchText.'%')
+                                    ->orwhere('pr.code','like','%'.$searchText.'%');
+                            })
+                       ->whereBetween("sal.created_at",[
+                            date($start_date." 00:00:00"),
+                            date($end_date." 23:59:59")
+                       ])
+                       ->select("sal.id","sal.change","sal.created_at","pe.name as customer_name","pe.address as customer_address","pe.phone as customer_phone","pe.email as customer_email","pe.document_type","pe.document_number","sal.tax","sal.sale_total","u.name as user_name","sal.payment_form")
+                       ->orderBy('sal.id','desc')
+                       ->paginate(6);
+            }
+
+            return view('sale.sale.index',['sales'=>$sales,'texto'=>$searchText,'start_date'=>$start_date,'end_date'=>$end_date,'company'=>$company,'logo'=>$logo]);
         }
     }
 
@@ -65,7 +91,6 @@ class SaleController extends Controller
         }catch(Exception $e){
             return response()->json(['error'=>$e->getMessage()],500);
         }
-
      }
 
 
@@ -166,12 +191,12 @@ class SaleController extends Controller
 
                 DB::commit();
 
-                 $sale = DB::table("sale as s")
-                 ->join("person as p","s.customer_id","=","p.id")
-                 ->join("users as u","u.id","=","s.users_id")
-                 ->select("s.id","s.change","s.updated_at","p.name as customer_name","p.address as customer_address","p.phone as customer_phone","p.email as customer_email","p.document_type","p.document_number","s.tax","s.sale_total","u.name as user_name")
-                 ->where("s.id","=",$sale->id)
-                 ->first();
+                $sale = DB::table("sale as s")
+                ->join("person as p","s.customer_id","=","p.id")
+                ->join("users as u","u.id","=","s.users_id")
+                ->select("s.id","s.change","s.updated_at","p.name as customer_name","p.address as customer_address","p.phone as customer_phone","p.email as customer_email","p.document_type","p.document_number","s.tax","s.sale_total","u.name as user_name","s.payment_form")
+                ->where("s.id","=",$sale->id)
+                ->first();
 
                 $details = DB::table("sale_detail as d")
                 ->join("income_detail_historical as ide","ide.income_detail_id","=","d.income_detail_id")
@@ -231,7 +256,7 @@ class SaleController extends Controller
         $sale = DB::table("sale as s")
         ->join("person as p","s.customer_id","=","p.id")
         ->join("users as u","u.id","=","s.users_id")
-        ->select("s.id","s.change","s.updated_at","p.name as customer_name","p.address as customer_address","p.phone as customer_phone","p.email as customer_email","p.document_type","p.document_number","s.tax","s.sale_total","u.name as user_name")
+        ->select("s.id","s.change","s.updated_at","p.name as customer_name","p.address as customer_address","p.phone as customer_phone","p.email as customer_email","p.document_type","p.document_number","s.tax","s.sale_total","u.name as user_name","s.payment_form")
         ->where("s.id","=",$sale_id)
         ->first();
 

@@ -534,4 +534,66 @@
 
     });
 
+
+    function generateInvoice(info_sale,detail_sale,info_payment){
+        const information_customer = document.getElementById("information_customer");
+        information_customer.innerHTML = `<small class="text-muted mb-custom">Cliente: <b>${info_sale.customer_name}</b></small><br>
+                                            <small class="text-muted mb-custom">Documento: <b>${info_sale.document_type}:${info_sale.document_number}</b></small><br>
+                                            <small class="text-muted mb-custom">Dirección: <b>${info_sale.customer_address}</b></small><br>
+                                            <small class="text-muted mb-custom">Télefono:<b>${info_sale.customer_phone}</b></small>`;
+        document.getElementById("info_form_payment").textContent = info_sale.payment_form;
+        document.getElementById("sale_number").textContent = info_sale.id;
+        document.getElementById("date_sale").textContent = `Fecha: ${info_sale.updated_at}`;
+        const body_details = document.querySelector("#details table tbody");
+        const foot_details = document.querySelector("#details table tfoot")
+        var discountTotals  = 0;
+        var subtotals = 0;
+        for(let i=0;i<detail_sale.length;i++){
+            const detail = detail_sale[i];
+            discountTotals += parseFloat(detail.discount); 
+            subtotals += (parseFloat(detail.sale_price) * parseFloat(detail.quantity)); 
+            const tr = document.createElement("tr");
+            tr.innerHTML = `<td>${detail.quantity}</td><td>${detail.article} ${detail.concentration} ${detail.presentation}</td><td>${detail.discount}</td><td>${formatCurrency.format(parseFloat(detail.sale_price * detail.quantity).toFixed(0))}</td>`;
+            body_details.appendChild(tr);
+        }
+
+        document.getElementById('receipt_subtotal').textContent = formatCurrency.format(subtotals);
+        document.getElementById('receipt_discount').textContent = formatCurrency.format(discountTotals);
+        document.getElementById('receipt_tax').textContent =  formatCurrency.format(0);;
+        document.getElementById('receipt_total').textContent = formatCurrency.format(info_sale.sale_total);
+        document.getElementById('receipt_change').textContent = formatCurrency.format(info_sale.change);
+
+        const table_form_payment = document.querySelector("#table_method_payment tbody");
+        var received = 0;
+        info_payment.forEach(ele=>{
+                const tr_pay = document.createElement("tr");
+                tr_pay.innerHTML = `
+                <td>${ele.method}</td>
+                <td>${ele.value}</td>
+            `;
+            received=received + ele.value;
+            table_form_payment.appendChild(tr_pay);
+        });
+        document.getElementById('receipt_received').textContent = formatCurrency.format(received);
+        document.getElementById("employee").textContent = info_sale.user_name;
+    }
+
+
+    function printDiv(divId){
+        let contenido = document.getElementById(divId).innerHTML;
+        let ventana = window.open('', '', 'height=600,width=800');
+        ventana.document.write('<html><head><title>Imprimir</title>');
+        ventana.document.write('<style>body{font-family:sans-serif; font-size:12px;}</style>');
+        ventana.document.write('</head><body>');
+        ventana.document.write(contenido);
+        ventana.document.write('</body></html>');
+        ventana.document.close();
+        ventana.focus();
+        ventana.print();
+        ventana.close();
+        setInterval(() => {
+            window.location.reload();
+        },4000);
+    }
+
 </script>

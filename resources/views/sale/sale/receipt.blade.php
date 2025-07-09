@@ -1,6 +1,6 @@
 <style>
     .mb-custom {
-        margin-bottom: 0.25rem;
+        margin-bottom: 0.25rem !important;
     }
     #content-receipt{
         width: 95%;
@@ -8,8 +8,8 @@
         height: 50vh;
         overflow-x:hidden;
         overflow-y: auto;
-        font-family: Verdana, Geneva, Tahoma, sans-serif;
-        font-size: 12px;
+        font-family: Verdana, Geneva, Tahoma, sans-serif !important;
+        font-size: 12px !important;
     }
 
     .noprint {
@@ -45,7 +45,7 @@
                                     <small class="text-muted mb-custom">Factura de Venta: <b>POS</b><b id="sale_number"></b></small><br>
                                     <p id="information_customer"></p>
                                 </td>
-                                <td >
+                                <td style="display:flex;flex-direction:column;justify-content:end" >
                                     <strong>Atendido Por</strong><br><label id="employee"></label>
                                 </td>
                             </tr>
@@ -74,10 +74,22 @@
                         <table style="with:100%;justify-content:end">
                             <tr>
                                 <td>
-                                    <table id="table_form_payment">
+                                    <table>
+                                        <tbody>
+                                            <tr>
+                                                <th>Forma Pago:</th>
+                                                <th></th>
+                                            </tr>
+                                            <tr>
+                                                <td id="info_form_payment"></td>
+                                                <td></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                    <table id="table_method_payment">
                                         <thead>
                                             <tr>
-                                                <th class="text-center">Medio de Pago</th>
+                                                <th class="text-center">Medio de Pago:</th>
                                                 <th class="text-center"></th>
                                             </tr>
                                         </thead>
@@ -86,12 +98,12 @@
                                 </td>
                                 <td>
                                     <table>
-                                        <tr><th>SUBTOTAL:</th><td><label id="receipt_subtotal"></label></td></tr>
+                                        <tr><th>Subtotal:</th><td><label id="receipt_subtotal"></label></td></tr>
                                         <tr><th>(-)Descuento:</th><td><label id="receipt_discount"></label></td></tr>
                                         <tr><th>(+)Imp:</th><td><label id="receipt_tax">0</label></td></tr>
-                                        <tr><th>TOTAL:</th><td><label id="receipt_total"></label></td></tr>
-                                        <tr><th>RECIBIDO:</th><td><label id="receipt_received"></label></td></tr>
-                                        <tr><th>CAMBIO:</th><td><label id="receipt_change"></label></td></tr>
+                                        <tr><th>total:</th><td><label id="receipt_total"></label></td></tr>
+                                        <tr><th>Recibido:</th><td><label id="receipt_received"></label></td></tr>
+                                        <tr><th>Cambio:</th><td><label id="receipt_change"></label></td></tr>
                                     </table>
                                 </td>
                             </tr>
@@ -102,15 +114,15 @@
                     <div class="col-md-12 text-center">
                         <hr>
                         <center> 
-                            <small class="text-muted mb-custom">Gracias por su compra</small><br>
-                            <small class="text-muted mb-custom text-center">{{$company["company_timetable"]->alias}}:{{$company["company_timetable"]->value}}</small><br>
-                            <small class="text-muted mb-custom text-center">{{$company["company_information"]->value}}</small><br> 
+                            <small class="text-muted mb-custom"><strong>...! GRACIAS POR SU COMPRA ¡...</strong></small><br>
+                            <small class="text-muted mb-custom text-center">{{$company["company_timetable"]->alias}}:{!!$company["company_timetable"]->value!!}</small><br>
+                            <small class="text-muted mb-custom text-center">{!!$company["company_information"]->value!!}</small><br> 
                         </center>
                     </div>
                 </div>
     </div>
     <div class="modal-footer justify-content-center">
         <button type="button" data-dismiss="modal"  class="btn btn-warning" >Cerrar</button>
-        <button type="button" id="btn_print" onclick="printInvoice('content-receipt')" class="btn btn-success" >Imprimir</button>
+        <button type="button" id="btn_print" onclick="printDiv('content-receipt')" class="btn btn-success" >Imprimir</button>
     </div>
 </div>

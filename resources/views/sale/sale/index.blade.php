@@ -27,14 +27,20 @@
                         <div class="col-xl-12" >
                             <form action="{{route('sale.index')}}" method="get">
                                 <div class="row">
-                                    <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+                                    <div class="col-lg-5 col-md-5 col-sm-5 col-xs-12">
                                         <div class="input-group mb-6">
                                             <span class="input-group-text" id="basic-addon1"><i class="bi bi-search"></i></span>
-                                            <input type="text" class="form-control" name="searchText" placeholder="Buscar Venta" value="{{$texto}}" aria-label="campo busqueda" aria-describedby="button-addon2">
+                                            <input type="text" class="form-control"  name="searchText" placeholder="Buscar Venta" value="{{$texto}}" aria-label="campo busqueda" aria-describedby="button-addon2">
                                             <button class="btn btn-outline-secondary" type="submit" id="button-addon2">Buscar</button>
                                         </div>
                                     </div>
-                                    <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+                                    <div class="col-lg-5 col-md-5 col-sm-5 col-xs-12">
+                                        <div class="input-group">
+                                            <label  for="start_date">Fecha Inicio</label><input class="form-control" type="date" value="{{$start_date}}" name="start_date">
+                                            <label for="end_date">Fecha Final</label><input class="form-control"  type="date" value="{{$end_date}}" name="end_date">
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-2 col-md-2 col-sm-2 col-xs-12">
                                         <div class="input-group mb-6">
                                             <span class="input-group-text" id="basic-addon1"><i class="bi bi-plus-circle-fill"></i></span>
                                             <a href="{{route('sale.create')}}" class="btn btn-success">Nuevo</a>
@@ -56,11 +62,12 @@
                     <thead>
                         <tr>
                             <th>Opciones</th>
+                            <th>POS</th>
                             <th>Fecha</th>
                             <th>Cliente</th>
-                            <th>Impuesto</th>
                             <th>Total</th>
-                            <th>Estado</th>
+                            <th>F.Pago</th>
+                            <th>Responsable</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -69,11 +76,12 @@
                             <td>
                                 <button type="button" class="btn btn-outline-primary btn-sm" onclick="view_invoice({{$sale->id}})" data-bs-toggle="#"><i class="bi bi-eye"></i></button>
                             </td>
+                            <td>{{$sale->id}}</td>
                             <td>{{$sale->created_at}}</td>
-                            <td>{{$sale->name}}</td>
-                            <td>{{$sale->tax}}</td>
-                            <td>{{$sale->sale_total}}</td>
-                            <td>{{$sale->status}}</td>
+                            <td>{{$sale->customer_name}}</td>
+                            <td>${{number_format($sale->sale_total,0,",",".")}}</td>
+                            <td>{{$sale->payment_form}}</td>
+                            <td>{{$sale->user_name}}</td>
                         </tr>
                         @endforeach
                     </tbody> 
@@ -89,6 +97,10 @@
 @push('scripts')
     <script>
         function view_invoice(sale_id){
+                const body_details = document.querySelector("#details table tbody");
+                const table_form_payment = document.querySelector("#table_method_payment tbody");
+                body_details.innerHTML = "";
+                table_form_payment.innerHTML = "";
                 showSpinner();
                 fetch("{{url('sale/sale/receipt')}}/" + encodeURIComponent(sale_id))
                 .then(response => response.json())
@@ -124,64 +136,6 @@
                 });
         }
 
-        function generateInvoice(info_sale,detail_sale,info_payment){
-            const information_customer = document.getElementById("information_customer");
-            information_customer.innerHTML = `<small class="text-muted mb-custom">Cliente: <b>${info_sale.customer_name}</b></small><br>
-                                                <small class="text-muted mb-custom">Documento: <b>${info_sale.document_type}:${info_sale.document_number}</b></small><br>
-                                                <small class="text-muted mb-custom">Dirección: <b>${info_sale.customer_address}</b></small><br>
-                                                <small class="text-muted mb-custom">Télefono:<b>${info_sale.customer_phone}</b></small><br>`;
-            document.getElementById("sale_number").textContent = info_sale.id;
-            document.getElementById("date_sale").textContent = `Fecha: ${info_sale.updated_at}`;
-            const body_details = document.querySelector("#details table tbody");
-            const foot_details = document.querySelector("#details table tfoot")
-            var discountTotals  = 0;
-            var subtotals = 0;
-            for(let i=0;i<detail_sale.length;i++){
-                const detail = detail_sale[i];
-                discountTotals += detail.discount; 
-                subtotals += (detail.sale_price * detail.quantity); 
-                const tr = document.createElement("tr");
-                tr.innerHTML = `<td>${detail.quantity}</td><td>${detail.article} ${detail.concentration} ${detail.presentation}</td><td>${detail.discount}</td><td>${formatCurrency.format(parseFloat(detail.sale_price * detail.quantity).toFixed(0))}</td>`;
-                body_details.appendChild(tr);
-            }
-
-            document.getElementById('receipt_subtotal').textContent = formatCurrency.format(subtotals);
-            document.getElementById('receipt_discount').textContent = formatCurrency.format(discountTotals);
-            document.getElementById('receipt_tax').textContent = 0;
-            document.getElementById('receipt_total').textContent = formatCurrency.format(info_sale.sale_total);
-            document.getElementById('receipt_change').textContent = formatCurrency.format(info_sale.change);
-
-            const table_form_payment = document.querySelector("#table_form_payment tbody");
-            var received = 0;
-            info_payment.forEach(ele=>{
-                    const tr_pay = document.createElement("tr");
-                    tr_pay.innerHTML = `
-                    <td>${ele.method}</td>
-                    <td>${ele.value}</td>
-                `;
-                received=received + ele.value;
-                table_form_payment.appendChild(tr_pay);
-            });
-            document.getElementById('receipt_received').textContent = formatCurrency.format(received);
-            document.getElementById("employee").textContent = info_sale.user_name;
-        }
-
-        function printInvoice(divId){
-            let contenido = document.getElementById(divId).innerHTML;
-            let ventana = window.open('', '', 'height=600,width=800');
-            ventana.document.write('<html><head><title>Imprimir</title>');
-            ventana.document.write('<style>body{font-family:sans-serif; font-size:12px;}</style>');
-            ventana.document.write('</head><body>');
-            ventana.document.write(contenido);
-            ventana.document.write('</body></html>');
-            ventana.document.close();
-            ventana.focus();
-            ventana.print();
-            ventana.close();
-            setInterval(() => {
-                window.location.reload();
-            },4000);
-        }
     </script>
 @endpush
 
