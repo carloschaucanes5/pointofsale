@@ -30,14 +30,14 @@
                                     <div class="col-lg-5 col-md-5 col-sm-5 col-xs-12">
                                         <div class="input-group mb-6">
                                             <span class="input-group-text" id="basic-addon1"><i class="bi bi-search"></i></span>
-                                            <input type="text" class="form-control"  name="searchText" placeholder="Buscar Venta" value="{{$texto}}" aria-label="campo busqueda" aria-describedby="button-addon2">
+                                            <input type="text" class="form-control"  name="searchText" placeholder="Buscar Venta" value="{{old('searchText',$texto)}}" aria-label="campo busqueda" aria-describedby="button-addon2">
                                             <button class="btn btn-outline-secondary" type="submit" id="button-addon2">Buscar</button>
                                         </div>
                                     </div>
                                     <div class="col-lg-5 col-md-5 col-sm-5 col-xs-12">
                                         <div class="input-group">
-                                            <label  for="start_date">Fecha Inicio</label><input class="form-control" type="date" value="{{$start_date}}" name="start_date">
-                                            <label for="end_date">Fecha Final</label><input class="form-control"  type="date" value="{{$end_date}}" name="end_date">
+                                            <label  for="start_date">Fecha Inicio</label><input class="form-control" type="date" value="{{old('start_date',$start_date)}}" name="start_date">
+                                            <label for="end_date">Fecha Final</label><input class="form-control"  type="date" value="{{old('end_date',$end_date)}}" name="end_date">
                                         </div>
                                     </div>
                                     <div class="col-lg-2 col-md-2 col-sm-2 col-xs-12">
@@ -74,7 +74,8 @@
                         @forEach($sales as $sale)
                         <tr>
                             <td>
-                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="view_invoice({{$sale->id}})" data-bs-toggle="#"><i class="bi bi-eye"></i></button>
+                                <button type="button" class="btn btn-primary btn-sm" onclick="view_invoice({{$sale->id}})" data-bs-toggle="#"><i class="bi bi-eye"></i></button>
+                                <a  class="btn btn-warning btn-sm" title="Efectuar Devolución" href="{{route('sale.show',$sale->id)}}" ><i class="bi bi-arrow-return-left"></i></a>
                             </td>
                             <td>{{$sale->id}}</td>
                             <td>{{$sale->created_at}}</td>

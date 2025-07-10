@@ -22,8 +22,8 @@ class SaleController extends Controller
     public function index(Request $request)
     {
         $searchText = $request->get("searchText");
-        $start_date = $request->get("start_date");
-        $end_date = $request->get("end_date");
+        $start_date = $request->get("start_date")?$request->get("start_date"):date('Y-m-d');
+        $end_date = $request->get("end_date")?$request->get("end_date"):date('Y-m-d');
         if($request){
             $logo = DB::table('config')
                           ->where("key","=","logo")
@@ -44,7 +44,12 @@ class SaleController extends Controller
                        ])
                        ->select("sal.id","sal.change","sal.created_at","pe.name as customer_name","pe.address as customer_address","pe.phone as customer_phone","pe.email as customer_email","pe.document_type","pe.document_number","sal.tax","sal.sale_total","u.name as user_name","sal.payment_form")
                        ->orderBy('sal.id','desc')
-                       ->paginate(6);
+                       ->paginate(6)
+                       ->appends([
+                            'searchText' => $searchText,
+                            'start_date' => $start_date,
+                            'end_date' => $end_date,
+                        ]);
             }else{
                     $sales = DB::table("sale as sal")
                        ->join('sale_detail as sde','sde.sale_id',"=","sal.id")
@@ -61,8 +66,15 @@ class SaleController extends Controller
                             date($end_date." 23:59:59")
                        ])
                        ->select("sal.id","sal.change","sal.created_at","pe.name as customer_name","pe.address as customer_address","pe.phone as customer_phone","pe.email as customer_email","pe.document_type","pe.document_number","sal.tax","sal.sale_total","u.name as user_name","sal.payment_form")
+                       ->groupBy("sal.id","sal.change","sal.created_at","pe.name as customer_name","pe.address as customer_address","pe.phone as customer_phone","pe.email as customer_email","pe.document_type","pe.document_number","sal.tax","sal.sale_total","u.name as user_name","sal.payment_form")
+
                        ->orderBy('sal.id','desc')
-                       ->paginate(6);
+                       ->paginate(6)               
+                       ->appends([
+                            'searchText' => $searchText,
+                            'start_date' => $start_date,
+                            'end_date' => $end_date,
+                        ]);
             }
 
             return view('sale.sale.index',['sales'=>$sales,'texto'=>$searchText,'start_date'=>$start_date,'end_date'=>$end_date,'company'=>$company,'logo'=>$logo]);
@@ -247,9 +259,47 @@ class SaleController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Request $request)
+    public function show(Request $request,$id)
     {
+        $sale_id = $id;
+        $sale = DB::table("sale as s")
+            ->join("person as p", "s.customer_id", "=", "p.id")
+            ->select(
+                "s.id",
+                "s.change",
+                "s.updated_at",
+                "p.name as customer_name",
+                "p.address as customer_address",
+                "p.phone as customer_phone",
+                "p.email as customer_email",
+                "p.document_type",
+                "p.document_number",
+                "s.tax",
+                "s.sale_total",
+                "s.payment_form"
+            )
+            ->where("s.id", "=", $sale_id)
+            ->first();
 
+        $details = DB::table("sale_detail as d")
+            ->join("income_detail_historical as ide", "ide.income_detail_id", "=", "d.income_detail_id")
+            ->join("product as pro", "pro.id", "=", "ide.product_id")
+            ->select(
+                "pro.name as article",
+                "pro.concentration",
+                "pro.presentation",
+                "ide.form_sale",
+                "d.quantity",
+                "d.discount",
+                "ide.sale_price"
+            )
+            ->where("d.sale_id", "=", $sale_id)
+            ->get();
+
+        return view('sale.sale.show', [
+            'sale' => $sale,
+            'details' => $details
+        ]);
     }
 
     public function receipt($sale_id){

@@ -3,6 +3,7 @@
 @section('title', 'Mostrar Ingreso')
 
 @section('content')
+
     <div class="col-md-12">
         <div class="card card-primary">
             <div class="card-header">
@@ -10,22 +11,24 @@
             </div>
                 <div class="card-body">
                     <div class="row">
+
+
                         <div class="col-md-6">
                             <div class="form-group">
-                            <label for="customer_id">Cliente</label>
-                            <p>{{$sale->name}}</p>
+                            <label>Cliente:</label>
+                            <p>{{$sale->customer_name}}</p>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="form-group">
-                                <label for="voucher_type">Tipo de comprobante</label>
-                                <p>{{$sale->voucher_type}}</p>
+                                <label>Fecha:</label>
+                                <p>{{$sale->updated_at}}</p>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="form-group">
-                                <label for="voucher_number">Número de comprobante</label>
-                                <p>{{$sale->voucher_number}}</p>
+                                <label>Forma de pago</label>
+                                <p>{{$sale->payment_form}}</p>
                             </div>
                         </div>
                     </div>
@@ -39,6 +42,7 @@
                                         <th>Precio Venta</th>
                                         <th>Descuento</th>
                                         <th>Subtotal</th>
+                                        <th>F.V</th>
                                     </tr>
                                 </thead>
                                 <tfoot>
@@ -47,16 +51,18 @@
                                     <th></th>
                                     <th>Total:</th>
                                     <th id="total">$ {{number_format($sale->sale_total,2)}}</th>
+                                    <td></td>
                                 </tfoot>
                                 <tbody>
+                                    
                                   @foreach($details as $det)
                                     <tr>
-                                        <td>{{$det->article}}</td>
+                                        <td>{{$det->article}} {{$det->concentration}} {{$det->presentation}}</td>
                                         <td>{{$det->quantity}}</td>
-                                        <td>{{$det->discount}}</td>
                                         <td>{{$det->sale_price}}</td>
-                                        <td>{{number_format($det->quantity * $det->sale_price,2)}}</td>
-                                        <td></td>
+                                        <td>{{$det->discount}}</td>
+                                        <td>{{number_format(($det->quantity * $det->sale_price)-$det->discount,2)}}</td>
+                                        <td>{{$det->form_sale}}</td>
                                     </tr>
                                   @endforeach
                                 </tbody> 
