@@ -3,7 +3,10 @@
 namespace App\Http\Controllers;
 use Illuminate\Support\Facades\Redirect;
 use App\Http\Requests\SaleFormRequest;
+use App\Models\IncomeDetail;
+use App\Models\IncomeDetailHistorical;
 use App\Models\Payment;
+use App\Models\ReturnSale;
 use Exception;
 use Symfony\Component\Console\Input\Input;
 use Illuminate\Support\Carbon;
@@ -288,18 +291,75 @@ class SaleController extends Controller
                 "pro.name as article",
                 "pro.concentration",
                 "pro.presentation",
+                "pro.laboratory",
                 "ide.form_sale",
                 "d.quantity",
                 "d.discount",
-                "ide.sale_price"
+                "ide.sale_price",
+                "ide.income_detail_id"
             )
             ->where("d.sale_id", "=", $sale_id)
             ->get();
+
+        $total = 
 
         return view('sale.sale.show', [
             'sale' => $sale,
             'details' => $details
         ]);
+    }
+
+    public function return_sale(Request $request){
+        try{
+            DB::beginTransaction();
+            $sale_id = $request->post("sale_id");
+            $income_detail_id = $request->post("income_detail_id");
+            $quantity_return = $request->post("quantity_return");
+            $description_return = $request->post("description_return");
+
+            $income_detail_id_found = IncomeDetail::find($income_detail_id);
+            if($income_detail_id_found){
+                $income_detail_id_found->quantity = $income_detail_id_found->quantity + $quantity_return;
+                $income_detail_id_found->save();
+
+                $sale_detail = SaleDetail::where('income_detail_id',$income_detail_id)
+                                         ->where('sale_id',$sale_id)
+                                         ->first();
+                if($sale_detail){
+                    $sale_detail->quantity =  $sale_detail->quantity - $quantity_return;
+                    $sale_detail->save();
+                }
+
+            }else{
+                    $income_detail_id_found = IncomeDetailHistorical::where('income_detail_id',$income_detail_id)->first();
+                    $detail = new IncomeDetail();
+                    $detail->income_id = $income_detail_id_found->income_id;
+                    $detail->product_id = $income_detail_id_found->product_id;
+                    $detail->quantity = $income_detail_id_found->quantity;
+                    $detail->purchase_price = $income_detail_id_found->purchase_price;
+                    $detail->sale_price = $income_detail_id_found->sale_price;
+                    $detail->form_sale = $income_detail_id_found->form_sale;
+                    $detail->expiration_date = $income_detail_id_found->expiration_date;
+                    $detail->save();
+            }
+            $return_sale = new ReturnSale();
+            $return_sale->income_detail_id = $income_detail_id;
+            $return_sale->sale_id = $sale_id;
+            $return_sale->description = $description_return?$description_return:"";
+            $return_sale->quantity = $quantity_return;
+            $return_sale->status = 1;
+            $return_sale->users_id = auth()->user()->id;
+            $return_sale->save();
+            DB::commit();
+            return response()->json(
+                ["success"=>true,"message"=>"Devolución exitosa"
+                ],201);
+        }catch(Exception $err){
+            DB::rollBack();
+            return response()->json(
+            ["success"=>false,"message"=>$err->getMessage()
+            ],501);
+        }
     }
 
     public function receipt($sale_id){

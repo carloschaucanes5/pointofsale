@@ -58,8 +58,8 @@ Route::get('purchase/income/search_product/{codeOrName}', [IncomeController::cla
 Route::get('purchase/income/view_voucher/{voucherId}', [IncomeController::class, 'view_voucher']);
 Route::get('sale/sale/search_product/{codeName}', [SaleController::class, 'search_product']);
 Route::get('sale/sale/receipt/{sale_id}', [SaleController::class, 'receipt']);
-Route::post('store/inventory/proccess_out/{income_detail_id}', [InventoryController::class, 'proccess_out'])
-    ->name('store.inventory.proccess_out');
+Route::post('sale/sale/return_sale', [SaleController::class, 'return_sale'])->name('sale.sale.return_sale');
+Route::post('store/inventory/proccess_out/{income_detail_id}', [InventoryController::class, 'proccess_out'])->name('store.inventory.proccess_out');
 
 Route::resource('segurity/user', UserController::class);
 
