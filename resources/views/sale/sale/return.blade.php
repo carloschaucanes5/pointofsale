@@ -8,7 +8,7 @@
       </div>
       <div class="modal-body">
         <div class="row">
-            <form id="form-return">
+            <form id="form-return-{{$det->income_detail_id}}">
                 @csrf
             <div class="col-md-12">
                     <div class="form-group">
@@ -23,7 +23,7 @@
                     </div>
                     <div class="form-group">
                         <label for="quantity_return"><b>Cantidad</b></label>
-                        <input type="number" class="form-control" min="1" max="{{$det->quantity}}" onkeyup="validate_quantity(this)" id="quantity_return" name="quantity_return" value="{{$det->quantity}}">
+                        <input type="number" class="form-control" min="1" max="{{$det->quantity}}" onblur="validate_quantity(this)" id="quantity_return" name="quantity_return" value="{{$det->quantity}}">
                     </div>
                     <div class="form-group">
                         <label for="description_return"><b>Descripción</b></label>
@@ -35,7 +35,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-        <button type="button" class="btn btn-warning" onclick="make_return(event)">Confirmar</button>
+        <button type="button" class="btn btn-warning" onclick="make_return(event,{{$det->income_detail_id}})">Confirmar</button>
       </div>
     </div>
   </div>
@@ -49,13 +49,17 @@
             if(!(parseInt(input.value) <=parseInt(input.max) && parseInt(input.value) >= parseInt(input.min))){
                 input.value = input.min;  
             }
+            else{
+                document.getElementById("quantity_return").value = input.value;
+            }
         } 
     }
 
-    async function  make_return(event){
+    async function  make_return(event,income_detail_id){
+        event.preventDefault();
+        showSpinner();
         try{
-            event.preventDefault();
-            const formreturn = document.getElementById("form-return");
+            const formreturn = document.getElementById(`form-return-${income_detail_id}`);
             const form = new FormData(formreturn);
             const res = await fetch("{{route('sale.sale.return_sale')}}",{
                 method:'POST',
@@ -72,6 +76,7 @@
                     'text':data.message,
                     'timer':2000
                 }).then(()=>{
+                    document.getElementById('description_return').value = "";
                     window.location.reload();
                 });
             }else{
@@ -87,6 +92,8 @@
                     'title':'Devolución',
                     'text': error
                 });
+        }finally{
+             hideSpinner();
         }
     }
 </script>

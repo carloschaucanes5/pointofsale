@@ -571,7 +571,7 @@
                 <td>${ele.method}</td>
                 <td>${ele.value}</td>
             `;
-            received=received + ele.value;
+            received=received + parseFloat(ele.value);
             table_form_payment.appendChild(tr_pay);
         });
         document.getElementById('receipt_received').textContent = formatCurrency.format(received);

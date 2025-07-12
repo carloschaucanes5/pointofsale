@@ -473,15 +473,15 @@
             <div class="row">
                 <div class="col-md-4 form-group">
                     <label for="quantityItem">Cantidad</label>
-                    <input type="number" id="quantityItem" onkeydown="accept_quantity(event)" onchange="updateSubtotalQuantityDiscount()" name="quantityItem" class="form-control" value="1" min="1" max="${quantity}" step="1"/>
+                    <input type="number" id="quantityItem" onkeydown="accept_quantity(event)" onchange="updateSubtotalQuantityDiscount(event)" onkeyup="updateSubtotalQuantityDiscount(event)" name="quantityItem" class="form-control" value="1" min="1" max="${quantity}" step="1"/>
                 </div>
                 <div class="col-md-4 form-group">
-                    <label for="discountItem">Descuento(%)</label>
-                    <input type="number" id="discountPercent" onchange="updateSubtotalQuantityDiscount()" name="discountPercent" class="form-control" value="0" min="0" step="0.01" />
+                    <label for="discountItem">Descuento(%)/U</label>
+                    <input type="number" id="discountPercent" onkeyup="updateSubtotalQuantityDiscount(event)" onchange="updateSubtotalQuantityDiscount(event)" name="discountPercent" class="form-control" value="0" min="0" step="0.01" max="100" />
                 </div>
                 <div class="col-md-4 form-group">
-                    <label for="discountCurrency">Descuento($)</label>
-                    <input type="number" id="discountItem" onchange="updateSubtotalQuantityDiscount()" name="discountItem" class="form-control" value="0" min="0" step="0.01" />
+                    <label for="discountCurrency">Descuento($)/U</label>
+                    <input type="number" id="discountItem" onkeyup="updateSubtotalQuantityDiscount(event)" onchange="updateSubtotalQuantityDiscount(event)" name="discountItem" class="form-control" value="0" min="0" step="0.01" max="${sale_price}" />
                 </div>
                 <input type="hidden" id="totalDiscount" value="0"/>
             </div>`;
@@ -541,29 +541,74 @@
                     return false;
                 }
             }
-            updateSubtotalQuantityDiscount();
+            updateSubtotalQuantityDiscount(event);
+        }
+
+        function validate_money(input){
+            const valueSaved = input.value;
+            if (!/^\d*$/.test(input.value)){
+                input.value = 0;  
+            }else{
+                if(input.max && input.min){
+                    if(!(parseFloat(input.value) <=parseFloat(input.max) && parseFloat(input.value) >= parseFloat(input.min))){
+                    input.value = input.min;  
+                    }
+                    else
+                    {
+                        input.value = valueSaved;
+                    }
+                }
+            } 
+        }
+
+        function validate_quantity(input){
+            const valueSaved = input.value;
+            if (!/^\d*$/.test(input.value)){
+                input.value = 0;  
+            }else{
+                if(input.max!="" && input.min!=""){
+                    if(!(parseInt(input.value) <=parseInt(input.max) && parseInt(input.value) >= parseInt(input.min))){
+                    input.value = input.min;  
+                    }
+                    else
+                    {
+                        input.value = valueSaved;
+                    }
+                }
+            } 
         }
 
 
-        function updateSubtotalQuantityDiscount() {
+        function updateSubtotalQuantityDiscount(e) {
+
+            if(e.target.id=="discountPercent"){
+                document.getElementById("discountItem").value = 0;
+            }else if(e.target.id=="discountItem"){
+                document.getElementById("discountPercent").value = 0;
+            }
+
+
+            validate_quantity(document.getElementById("quantityItem"));
+            validate_quantity(document.getElementById("discountPercent"));
+            validate_money(document.getElementById("discountItem"));
+
             const quantity = parseFloat(document.getElementById("quantityItem").value) || 1;
             const sale_price = parseFloat(document.getElementById("productSalePrice").value) || 0;
-            const subtotal = (quantity * sale_price).toFixed(2);
             //validar si el descuento se lo hace por porcentaje o por un valor momnetario al subtotal
             const discountPercent = parseFloat(document.getElementById("discountPercent").value) || 0;
             const discountItem = parseFloat(document.getElementById("discountItem").value) || 0;
             let discount = 0;   
             if (discountPercent > 0) {
-                discount = (subtotal * discountPercent / 100).toFixed(2);
+                discount = (sale_price * discountPercent / 100).toFixed(2);
             } else if (discountItem > 0) {
                 discount = discountItem.toFixed(2);
             }       
             // Calcular el subtotal final
-            const finalSubtotal = (parseFloat(subtotal) - parseFloat(discount)).toFixed(2);
+            const finalSubtotal = ((sale_price - discount)* quantity).toFixed(2);
             // Actualizar el subtotal en el modal
             document.querySelector("#modal-set-quantity .subtotalItem").textContent = formatCurrency.format(parseFloat(finalSubtotal).toFixed(0));
             // Actualizar el valor del descuento total
-            document.getElementById("totalDiscount").value = discount;
+            document.getElementById("totalDiscount").value = (discount * quantity);
         }
 
         function updateTotal() {
@@ -809,7 +854,7 @@ async function toinvoice(){
                             icon: 'error',
                             buttons: true,
                             dangerMode: true,
-                            timer: 3000
+                            timer: 2000
                         });
                     }
                     //location.reload();
