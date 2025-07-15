@@ -24,6 +24,20 @@
                         <label for="password">Password</label>
                         <input type="password" class="form-control" name="password" id="password" placeholder="Ingresar la contraseña">
                     </div>
+                    <div>
+                    <div class="form-group">
+                        <label>Rol</label>
+                        <select class="form-control" name="role" id="role">
+                            @if(Auth::user()->role == 'superadmin')
+                                <option value="superadmin" {{ $user->role == 'superadmin' ? 'selected' : '' }}>Superadmin</option>
+                            @endif
+                            <option value="admin" {{ $user->role == 'admin' ? 'selected' : '' }}>Administrador</option>
+                            <option value="cashier" {{ $user->role == 'cashier' ? 'selected' : '' }}>Cajero</option>
+                            <option value="user" {{ $user->role == 'user' ? 'selected' : '' }}>Usuario</option>
+                        </select>
+                    </div>
+                    </div>
+
                 </div>
                 <div class="card-footer">
                     <button type="submit" class="btn btn-success me-1 mb-1">Guardar</button>

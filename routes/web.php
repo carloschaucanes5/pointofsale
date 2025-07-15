@@ -27,42 +27,40 @@ use App\Models\Voucher;
 |
 */
 
+// 👉 Estas rutas NO deben estar dentro de middleware('auth')
 Route::get('/', function () {
     return view('auth/login');
 });
 
-Route::get('/home',function(){
-    return view('home');
+Auth::routes(); // Incluye rutas como /login, /logout, /register, etc.
+
+Route::get('/home', [HomeController::class, 'index'])->name('home');
+
+// ✅ Rutas protegidas por autenticación
+Route::middleware(['auth','role:admin,superadmin,cashier'])->group(function() {
+    Route::resource('store/category', CategoryController::class);
+    Route::resource('store/product', ProductController::class);
+    Route::resource('store/laboratory', LaboratoryController::class);
+    Route::resource('store/inventory', InventoryController::class);
+    Route::resource('sale/customer', CustomerController::class);
+    Route::resource('sale/sale', SaleController::class);
+    Route::resource('purchase/supplier', SupplierController::class);
+    Route::resource('purchase/income', IncomeController::class);
+    Route::resource('purchase/voucher', VoucherController::class);
+    Route::resource('segurity/user', UserController::class);
+
+    Route::get('purchase/income/search_product/{codeOrName}', [IncomeController::class, 'search_product']);
+    Route::get('purchase/income/view_voucher/{voucherId}', [IncomeController::class, 'view_voucher']);
+    Route::get('sale/sale/search_product/{codeName}', [SaleController::class, 'search_product']);
+    Route::get('sale/sale/receipt/{sale_id}', [SaleController::class, 'receipt']);
+    Route::post('sale/sale/return_sale', [SaleController::class, 'return_sale'])->name('sale.sale.return_sale');
+    Route::post('store/inventory/proccess_out/{income_detail_id}', [InventoryController::class, 'proccess_out'])->name('store.inventory.proccess_out');
 });
 
 
-Route::view('user/login',"login")->name("login");
-Route::view('register',"user/register")->name("register");
-Route::view('user/private',"secret")->name("private");
 
-Route::post('/validate-register',[LoginController::class,"register"])->name("validate-register");
-Route::post('/start-session',[LoginController::class,"login"])->name("start-session");
-Route::post('/logout',[LoginController::class,"logout"])->name("logout");
 
-Route::resource('store/category',CategoryController::class);
-Route::resource('store/product', ProductController::class);
-Route::resource('store/laboratory', LaboratoryController::class);
-Route::resource('store/inventory', InventoryController::class);
-Route::resource('sale/customer', CustomerController::class);
-Route::resource('sale/sale', SaleController::class);
-Route::resource('purchase/supplier', SupplierController::class);
-Route::resource('purchase/income', IncomeController::class);
-Route::resource('purchase/voucher', VoucherController::class);
 
-Route::get('purchase/income/search_product/{codeOrName}', [IncomeController::class, 'search_product']);
-Route::get('purchase/income/view_voucher/{voucherId}', [IncomeController::class, 'view_voucher']);
-Route::get('sale/sale/search_product/{codeName}', [SaleController::class, 'search_product']);
-Route::get('sale/sale/receipt/{sale_id}', [SaleController::class, 'receipt']);
-Route::post('sale/sale/return_sale', [SaleController::class, 'return_sale'])->name('sale.sale.return_sale');
-Route::post('store/inventory/proccess_out/{income_detail_id}', [InventoryController::class, 'proccess_out'])->name('store.inventory.proccess_out');
 
-Route::resource('segurity/user', UserController::class);
 
-Auth::routes();
 
-Route::get('/home', [HomeController::class, 'index'])->name('home');

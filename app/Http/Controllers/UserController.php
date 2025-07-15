@@ -36,6 +36,7 @@ class UserController extends Controller
         $user = new User();
         $user->name = $request->get("name");
         $user->email = $request->get("email");
+        $user->role = $request->get("role");
         $user->password = bcrypt($request->get("password"));
         $user->save();
         return Redirect::to("segurity/user");
@@ -51,6 +52,7 @@ class UserController extends Controller
         $user->name = $request->get('name');
         $user->email = $request->get('email');
         $user->password = bcrypt($request->get('password'));
+        $user->role = $request->get('role');
         $user->update();
         return Redirect::to("segurity/user");
 

@@ -199,7 +199,7 @@
                         <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
                             <img src="/pointofsale/public/assets/img/user2-160x160.jpg"
                                 class="user-image rounded-circle shadow" alt="User Image" />
-                            <span class="d-none d-md-inline">Carlos Chaucanes</span>
+                            <span class="d-none d-md-inline">{{Auth::user()->name}}</span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-lg dropdown-menu-end">
                             <!--begin::User Image-->
@@ -216,7 +216,7 @@
                             <li class="user-body">
                                 <!--begin::Row-->
                                 <div class="row">
-                                    <div class="col-4 text-center"><a href="#">Seguidores</a></div>
+                                    <div class="col-4 text-center"><a href="#">USUARIOS</a></div>
                                     <div class="col-4 text-center"><a href="#">Ventas</a></div>
                                     <div class="col-4 text-center"><a href="#">Clientes</a></div>
                                 </div>
@@ -362,12 +362,6 @@
                                     <a href="{{route('user.index')}}" class="nav-link">
                                         <i class="nav-icon bi bi-circle"></i>
                                         <p>Usuarios</p>
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a href="./index2.html" class="nav-link">
-                                        <i class="nav-icon bi bi-circle"></i>
-                                        <p>Roles</p>
                                     </a>
                                 </li>
                             </ul>

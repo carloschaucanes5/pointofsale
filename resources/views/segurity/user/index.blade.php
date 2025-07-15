@@ -59,6 +59,7 @@
                             <th>Id</th>
                             <th>Nombre</th>
                             <th>Email</th>
+                            <th>Rol</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -70,7 +71,29 @@
                             </td>
                             <td>{{$us->id}}</td>
                             <td>{{$us->name}}</td>
-                            <td>{{$us->email}}</td> 
+                            <td>{{$us->email}}</td>
+                            <td>
+                                @switch($us->role)
+                                    @case('admin')
+                                        Administrador
+                                        @break
+
+                                    @case('cashier')
+                                        Cajero
+                                        @break
+
+                                    @case('superadmin')
+                                        Super Admin
+                                        @break
+
+                                    @case('user')
+                                        Usuario
+                                        @break
+
+                                    @default
+                                        Rol desconocido
+                                @endswitch
+                            </td> 
                         </tr>
                         @include('segurity.user.modal')
                         @endforeach

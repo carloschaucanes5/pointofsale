@@ -75,7 +75,11 @@
                         <tr>
                             <td>
                                 <button type="button" class="btn btn-primary btn-sm" onclick="view_invoice({{$sale->id}})" data-bs-toggle="#"><i class="bi bi-eye"></i></button>
-                                <a  class="btn btn-warning btn-sm" title="Efectuar Devolución" href="{{route('sale.show',$sale->id)}}" ><i class="bi bi-arrow-return-left"></i></a>
+                                @auth
+                                    @if(Auth::user()->role=='admin')   
+                                        <a  class="btn btn-warning btn-sm" title="Efectuar Devolución" href="{{route('sale.show',$sale->id)}}" ><i class="bi bi-arrow-return-left"></i></a>
+                                    @endif
+                                @endauth
                             </td>
                             <td>{{$sale->id}}</td>
                             <td>{{$sale->created_at}}</td>
