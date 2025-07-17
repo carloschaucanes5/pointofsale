@@ -14,6 +14,7 @@ use App\Models\Laboratory;
 use App\http\Controllers\UserController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\InventoryController;
+use App\Http\Controllers\CashOpeningController;
 use App\Models\Voucher;
 
 /*
@@ -49,6 +50,7 @@ Route::middleware(['auth','check.session','role:admin,superadmin,cashier,user'])
     Route::resource('purchase/income', IncomeController::class);
     Route::resource('purchase/voucher', VoucherController::class);
     Route::resource('segurity/user', UserController::class);
+    Route::resource('sale/cash_opening', CashOpeningController::class);
 
     Route::put('segurity/user/{id}/{person_id?}', [UserController::class, 'update'])->name('user.update');
 

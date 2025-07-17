@@ -48,6 +48,9 @@
             display: none;
         }
     </style>
+    
+
+
 </head>
 <!--end::Head-->
 <!--begin::Body-->
@@ -276,34 +279,34 @@
                     <!--begin::Sidebar Menu-->
                     <ul class="nav sidebar-menu flex-column" data-lte-toggle="treeview" role="menu"
                         data-accordion="false">
-                        <li class="nav-item menu-open">
-                            <a href="{{ route('home') }}" class="nav-link active">
-                                <i class="nav-icon bi bi-circle"></i>
+                        <li class="nav-item">
+                            <a href="{{ route('home') }}" class="nav-link">
+                                <i class="bi bi-house-door"></i>
                                 <p>Home</p>
                             </a>
-                            <a href="#" class="nav-link active">
-                                <i class="nav-icon bi bi-speedometer"></i>
-                                <p>
-                                    Almacen
-                                    <i class="nav-arrow bi bi-chevron-right"></i>
-                                </p>
+                        </li>
+                        <li class="nav-item">
+                            <a href="#" class="nav-link">
+                                <i class="bi bi-box-seam"></i>
+                                <p>Almacen</p>
+                                 <i class="nav-arrow bi bi-chevron-right"></i>
                             </a>
                             <ul class="nav nav-treeview">
-                                <li class="nav-item">
-                                    <a href="{{ route('product.index') }}" class="nav-link active">
-                                        <i class="nav-icon bi bi-circle"></i>
+                                <li class="nav-item ms-3">
+                                    <a href="{{ route('product.index') }}" class="nav-link">
+                                        <i class="bi bi-box"></i>
                                         <p>Productos</p>
                                     </a>
                                 </li>
-                                <li class="nav-item">
-                                    <a href="{{ route('inventory.index') }}" class="nav-link active">
-                                        <i class="nav-icon bi bi-circle"></i>
+                                <li class="nav-item ms-3">
+                                    <a href="{{ route('inventory.index') }}" class="nav-link">
+                                        <i class="bi bi-clipboard-data"></i>
                                         <p>inventario</p>
                                     </a>
                                 </li>
-                                <li class="nav-item">
+                                <li class="nav-item ms-3">
                                     <a href="{{ route('category.index') }}" class="nav-link">
-                                        <i class="nav-icon bi bi-circle"></i>
+                                        <i class="bi bi-collection"></i>
                                         <p>Categorías</p>
                                     </a>
                                 </li>
@@ -311,28 +314,26 @@
                         </li>
                         <li class="nav-item ">
                             <a href="#" class="nav-link">
-                                <i class="nav-icon bi bi-speedometer"></i>
-                                <p>
-                                    Compras
-                                    <i class="nav-arrow bi bi-chevron-right"></i>
-                                </p>
+                                <i class="bi bi-bag"></i>
+                                <p>Compras</p>
+                                <i class="nav-arrow bi bi-chevron-right"></i>
                             </a>
                             <ul class="nav nav-treeview">
-                                <li class="nav-item">
+                                <li class="nav-item ms-3">
                                     <a href="{{ route('income.index') }}" class="nav-link">
-                                        <i class="nav-icon bi bi-circle"></i>
-                                        <p>Ingresos</p>
+                                        <i class="bi bi-arrow-down-circle"></i>
+                                        <p>Entradas</p>
                                     </a>
                                 </li>
-                                <li class="nav-item">
+                                <li class="nav-item ms-3">
                                     <a href="{{ route('supplier.index') }}" class="nav-link">
-                                        <i class="nav-icon bi bi-circle"></i>
+                                        <i class="bi bi-truck"></i>
                                         <p>Proveedores</p>
                                     </a>
                                 </li>
-                                <li class="nav-item">
+                                <li class="nav-item ms-3">
                                     <a href="{{ route('voucher.index') }}" class="nav-link">
-                                        <i class="nav-icon bi bi-circle"></i>
+                                        <i class="bi bi-file-text"></i>
                                         <p>Facturas</p>
                                     </a>
                                 </li>
@@ -340,57 +341,57 @@
                         </li>
                         <li class="nav-item ">
                             <a href="#" class="nav-link">
-                                <i class="nav-icon bi bi-speedometer"></i>
+                                <i class="nav-icon bi bi-bag-check"></i>
                                 <p>
                                     Ventas
                                     <i class="nav-arrow bi bi-chevron-right"></i>
                                 </p>
                             </a>
                             <ul class="nav nav-treeview">
-                                <li class="nav-item">
+                                <li class="nav-item ms-3">
                                     <a href="{{ route('customer.index') }}" class="nav-link">
-                                        <i class="nav-icon bi bi-circle"></i>
+                                        <i class="nav-icon bi bi-person"></i>
                                         <p>Clientes</p>
                                     </a>
                                 </li>
-                                <li class="nav-item">
+                                <li class="nav-item ms-3">
                                     <a href="{{route('sale.index')}}" class="nav-link">
-                                        <i class="nav-icon bi bi-circle"></i>
-                                        <p>Factura</p>
+                                        <i class="nav-icon bi bi-cart-check"></i>
+                                        <p>Venta</p>
                                     </a>
                                 </li>
                             </ul>
                         </li>
-                        <li class="nav-item ">
+                        <li class="nav-item">
                             <a href="#" class="nav-link">
-                                <i class="nav-icon bi bi-speedometer"></i>
+                                <i class="nav-icon bi bi-people"></i>
                                 <p>
-                                    Seguridad
+                                    Usuarios
                                     <i class="nav-arrow bi bi-chevron-right"></i>
                                 </p>
                             </a>
                             <ul class="nav nav-treeview">
-                                <li class="nav-item">
+                                <li class="nav-item ms-3">
                                     <a href="{{route('user.index')}}" class="nav-link">
-                                        <i class="nav-icon bi bi-circle"></i>
-                                        <p>Usuarios</p>
+                                        <i class="nav-icon bi bi-person-lines-fill"></i>
+                                        <p>Lista</p>
                                     </a>
                                 </li>
                             </ul>
                         </li>
 
-                        <li class="nav-item ">
+                        <li class="nav-item">
                             <a href="#" class="nav-link">
-                                <i class="nav-icon bi bi-speedometer"></i>
+                                <i class="nav-icon bi bi-file-earmark-text"></i>
                                 <p>
                                     Reporteria
                                     <i class="nav-arrow bi bi-chevron-right"></i>
                                 </p>
                             </a>
                             <ul class="nav nav-treeview">
-                                <li class="nav-item">
+                                <li class="nav-item ms-3">
                                     <a href="./index.html" class="nav-link">
-                                        <i class="nav-icon bi bi-circle"></i>
+                                        <i class="nav-icon bi bi-calendar-day"></i>
                                         <p>Ventas por Dia</p>
                                     </a>
                                 </li>

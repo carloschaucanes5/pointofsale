@@ -42,7 +42,7 @@
                                     </div>
                                     <div class="col-lg-2 col-md-2 col-sm-2 col-xs-12">
                                         <div class="input-group mb-6">
-                                            <a href="{{route('cash_opening.create')}}" class="btn btn-warning bi bi-cash" title="Apertura de Caja"></a>
+                                            <a href="#" class="btn btn-warning bi bi-cash" title="Apertura de Caja"></a>
                                             <a href="{{route('sale.create')}}" class="btn btn-success bi bi-plus" title="Nueva venta"></a>
                                         </div>
                                     </div>
