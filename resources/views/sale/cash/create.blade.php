@@ -3,7 +3,7 @@
 @section('title', 'Mostrar Ingreso')
 
 @section('content')
-<div class="container mt-4">
+<div class="container mt-2">
     <div class="row justify-content-center">
         <div class="col-md-8">
             <div class="card shadow-sm">
@@ -52,7 +52,7 @@
 
                         <div class="mb-3">
                             <label for="observations" class="form-label">📝 Observaciones (opcional)</label>
-                            <textarea name="observations" class="form-control" rows="3"></textarea>
+                            <textarea name="observations" class="form-control" rows="1"></textarea>
                         </div>
 
                         <button type="submit" class="btn btn-success w-100">

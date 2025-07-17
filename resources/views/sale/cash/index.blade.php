@@ -1,148 +1,99 @@
 @extends('layouts.admin')
 
-@section('title', 'Index')
+@section('title', 'Aperturas de Caja')
 
 @section('content')
-   
-    <div class="content-header">
-        <div class="container-fluid">
-            <div class="row mb-2">
-                <div class="col-sm-6">
-                    <h1 class="m-0">LISTADO DE VENTAS</h1>
-                </div>
-                <div class="col-sm-6">
-                    <ol class="breadcrumb float-sm-right">
-                        <li class="breadcrumb-item"><a href="#">Inicio</a></li>
-                        <li class="breadcrumb-item active"><a href="#">Ventas</a></li>
-                    </ol>
-                </div>
+
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0">LISTADO DE APERTURAS DE CAJA</h1>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="#">Inicio</a></li>
+                    <li class="breadcrumb-item active">Aperturas de Caja</li>
+                </ol>
             </div>
         </div>
     </div>
-    <section class="section">
-        <div class="row" id="table-hover-row">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header">
-                        <div class="col-xl-12" >
-                            <form action="{{route('sale.index')}}" method="get">
-                                <div class="row">
-                                    <div class="col-lg-5 col-md-5 col-sm-5 col-xs-12">
-                                        <div class="input-group mb-6">
-                                            <span class="input-group-text" id="basic-addon1"><i class="bi bi-search"></i></span>
-                                            <input type="text" class="form-control"  name="searchText" placeholder="Buscar Venta" value="{{old('searchText',$texto)}}" aria-label="campo busqueda" aria-describedby="button-addon2">
-                                            <button class="btn btn-outline-secondary" type="submit" id="button-addon2">Buscar</button>
-                                        </div>
-                                    </div>
-                                    <div class="col-lg-5 col-md-5 col-sm-5 col-xs-12">
-                                        <div class="input-group">
-                                            <label  for="start_date">Fecha Inicio</label><input class="form-control" type="date" value="{{old('start_date',$start_date)}}" name="start_date">
-                                            <label for="end_date">Fecha Final</label><input class="form-control"  type="date" value="{{old('end_date',$end_date)}}" name="end_date">
-                                        </div>
-                                    </div>
-                                    <div class="col-lg-2 col-md-2 col-sm-2 col-xs-12">
-                                        <div class="input-group mb-6">
-                                            <a href="#" class="btn btn-warning bi bi-cash" title="Apertura de Caja"></a>
-                                            <a href="{{route('sale.create')}}" class="btn btn-success bi bi-plus" title="Nueva venta"></a>
-                                        </div>
+</div>
+
+<section class="section">
+    <div class="row" id="table-hover-row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="col-xl-12">
+                        <form action="{{ route('cash_opening.index') }}" method="get">
+                            <div class="row">
+                                <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+                                    <div class="input-group mb-6">
+                                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                        <input type="text" class="form-control" name="searchText" placeholder="Buscar apertura" value="{{ $searchText ?? '' }}">
+                                        <button class="btn btn-outline-secondary" type="submit">Buscar</button>
                                     </div>
                                 </div>
-                            </form>
-                        </div>
+                                <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+                                    <div class="input-group mb-6">
+                                        <span class="input-group-text"><i class="bi bi-plus-circle-fill"></i></span>
+                                        <a href="{{ route('cash_opening.create') }}" class="btn btn-success">Nueva Apertura</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                @if (session('success'))
+                    <div class="alert alert-success mx-3">
+                        {{ session('success') }}
+                    </div>
+                @endif
+
+                <div class="card-content">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Opciones</th>
+                                    <th>Caja</th>
+                                    <th>Monto Inicial</th>
+                                    <th>Ubicación</th>
+                                    <th>Observaciones</th>
+                                    <th>Estado</th>
+                                    <th>Fecha Apertura</th>
+                                    <th>Usuario</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($openings as $open)
+                                <tr>
+                                    <td>
+                                        <a href="{{ route('cash_opening.edit', $open->id) }}" class="btn btn-warning btn-sm"><i class="bi bi-pen"></i></a>
+                                        <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#modal-delete-{{ $open->id }}"><i class="bi bi-trash"></i></button>
+                                    </td>
+                                    <td>{{ $open->cashbox_name }}</td>
+                                    <td>${{ number_format($open->start_amount, 0, ',', '.') }}</td>
+                                    <td>{{ $open->location }}</td>
+                                    <td>{{ $open->observations }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ $open->status == 'open' ? 'success' : 'secondary' }}">{{ ucfirst($open->status) }}</span>
+                                    </td>
+                                    <td>{{ \Carbon\Carbon::parse($open->opened_at)->format('d/m/Y H:i') }}</td>
+                                    <td>{{ $open->user->name ?? 'N/A' }}</td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                        {{ $openings->links('pagination::bootstrap-5') }}
                     </div>
                 </div>
             </div>
         </div>
-        <div class="card-content">
-            <div class="card-body">
-            </div>
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead>
-                        <tr>
-                            <th>Opciones</th>
-                            <th>POS</th>
-                            <th>Fecha</th>
-                            <th>Cliente</th>
-                            <th>Total</th>
-                            <th>F.Pago</th>
-                            <th>Responsable</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forEach($sales as $sale)
-                        <tr>
-                            <td>
-                                <button type="button" class="btn btn-primary btn-sm" onclick="view_invoice({{$sale->id}})" data-bs-toggle="#"><i class="bi bi-eye"></i></button>
-                                @auth
-                                    @if(Auth::user()->role=='admin')   
-                                        <a  class="btn btn-warning btn-sm" title="Efectuar Devolución" href="{{route('sale.show',$sale->id)}}" ><i class="bi bi-arrow-return-left"></i></a>
-                                    @endif
-                                @endauth
-                            </td>
-                            <td>{{$sale->id}}</td>
-                            <td>{{$sale->created_at}}</td>
-                            <td>{{$sale->customer_name}}</td>
-                            <td>${{number_format($sale->sale_total,0,",",".")}}</td>
-                            <td>{{$sale->payment_form}}</td>
-                            <td>{{$sale->user_name}}</td>
-                        </tr>
-                        @endforeach
-                    </tbody> 
-                </table>
-                    {{$sales->links('pagination::bootstrap-5')}}
-            </div>
-        </div>
-    </section>
-    
- @include('sale.sale.receipt')
+    </div>
+</section>
 @endsection
-
-@push('scripts')
-    <script>
-        function view_invoice(sale_id){
-                const body_details = document.querySelector("#details table tbody");
-                const table_form_payment = document.querySelector("#table_method_payment tbody");
-                body_details.innerHTML = "";
-                table_form_payment.innerHTML = "";
-                showSpinner();
-                fetch("{{url('sale/sale/receipt')}}/" + encodeURIComponent(sale_id))
-                .then(response => response.json())
-                .then(data => {
-                    if(data.success) {
-                        document.getElementById("sale_number").textContent = data.sale_id;  
-                        generateInvoice(data.info_sale,data.detail_sale, data.form_payment);
-                        const myModal = new bootstrap.Modal(document.getElementById('modal-receipt-invoice'));
-                        myModal.show();  
-                    }else {
-                        Swal.fire({
-                            title: 'Error',
-                            text: 'No se pudo generar la factura, intentalo mas tarde',
-                            icon: 'error',
-                            buttons: true,
-                            dangerMode: true,
-                            timer: 3000
-                        });
-                    }
-                })
-                .catch(error => {
-                   
-                            Swal.fire({
-                            title: 'Error',
-                            text: error,
-                            icon: 'error',
-                            buttons: true,
-                            dangerMode: true,
-                            timer: 3000
-                        });
-                }).finally(()=>{
-                     hideSpinner();
-                });
-        }
-
-    </script>
-@endpush
-
-
 
 
