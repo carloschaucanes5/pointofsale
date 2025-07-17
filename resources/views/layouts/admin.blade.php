@@ -197,18 +197,30 @@
                     <!--begin::User Menu Dropdown-->
                     <li class="nav-item dropdown user-menu">
                         <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
-                            <img src="/pointofsale/public/assets/img/user2-160x160.jpg"
-                                class="user-image rounded-circle shadow" alt="User Image" />
-                            <span class="d-none d-md-inline">{{Auth::user()->name}}</span>
+                            
+                            <span class="d-none d-md-inline bi bi-person fs-5">{{Auth::user()->name}}</span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-lg dropdown-menu-end">
                             <!--begin::User Image-->
                             <li class="user-header text-bg-primary">
-                                <img src="/pointofsale/public/assets/img/user2-160x160.jpg"
+                                <img src="/pointofsale/public/assets/img/user.png"
                                     class="rounded-circle shadow" alt="User Image" />
                                 <p>
-                                    Carlos Chaucanes - Web Developer
-                                    <small>10 de Marzo 2025</small>
+                                    {{Auth::user()->name}} - 
+                                    @switch(Auth::user()->role)
+                                        @case("superadmin")
+                                            Superadmin
+                                            @break
+                                        @case("admin")
+                                            Administrador
+                                            @break
+                                        @case("cashier")
+                                            Cajero
+                                            @break
+                                        $@default
+                                            Usuario
+                                    @endswitch
+                                    <small>{{date("Y-m-d")}}</small>
                                 </p>
                             </li>
                             <!--end::User Image-->
@@ -216,16 +228,16 @@
                             <li class="user-body">
                                 <!--begin::Row-->
                                 <div class="row">
-                                    <div class="col-4 text-center"><a href="#">USUARIOS</a></div>
-                                    <div class="col-4 text-center"><a href="#">Ventas</a></div>
-                                    <div class="col-4 text-center"><a href="#">Clientes</a></div>
+                                    <div class="col-4 text-center"><a href="{{url('segurity/user')}}">Usuarios</a></div>
+                                    <div class="col-4 text-center"><a href="{{url('sale/sale')}}">Ventas</a></div>
+                                    <div class="col-4 text-center"><a href="{{url('sale/customer')}}">Clientes</a></div>
                                 </div>
                                 <!--end::Row-->
                             </li>
                             <!--end::Menu Body-->
                             <!--begin::Menu Footer-->
                             <li class="user-footer">
-                                <a href="#" class="btn btn-default btn-flat">Perfil</a>
+                                <a href="{{route('user.edit',Auth::user()->id)}}" class="btn btn-default btn-flat">Perfil</a>
                                 <a href="{{route('logout')}}" onclick="event.preventDefault();document.getElementById('logout-form').submit();" class="btn btn-default btn-flat float-end">Salir</a>
                                 <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
                                     @csrf

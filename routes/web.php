@@ -36,8 +36,9 @@ Auth::routes(); // Incluye rutas como /login, /logout, /register, etc.
 
 Route::get('/home', [HomeController::class, 'index'])->name('home');
 
-// ✅ Rutas protegidas por autenticación
-Route::middleware(['auth','role:admin,superadmin,cashier'])->group(function() {
+
+
+Route::middleware(['auth','check.session','role:admin,superadmin,cashier,user'])->group(function() {
     Route::resource('store/category', CategoryController::class);
     Route::resource('store/product', ProductController::class);
     Route::resource('store/laboratory', LaboratoryController::class);
@@ -49,6 +50,8 @@ Route::middleware(['auth','role:admin,superadmin,cashier'])->group(function() {
     Route::resource('purchase/voucher', VoucherController::class);
     Route::resource('segurity/user', UserController::class);
 
+    Route::put('segurity/user/{id}/{person_id?}', [UserController::class, 'update'])->name('user.update');
+
     Route::get('purchase/income/search_product/{codeOrName}', [IncomeController::class, 'search_product']);
     Route::get('purchase/income/view_voucher/{voucherId}', [IncomeController::class, 'view_voucher']);
     Route::get('sale/sale/search_product/{codeName}', [SaleController::class, 'search_product']);
@@ -56,6 +59,8 @@ Route::middleware(['auth','role:admin,superadmin,cashier'])->group(function() {
     Route::post('sale/sale/return_sale', [SaleController::class, 'return_sale'])->name('sale.sale.return_sale');
     Route::post('store/inventory/proccess_out/{income_detail_id}', [InventoryController::class, 'proccess_out'])->name('store.inventory.proccess_out');
 });
+
+
 
 
 

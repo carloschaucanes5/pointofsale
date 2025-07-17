@@ -67,7 +67,9 @@
                         <tr>
                             <td>
                                 <a href="{{route('user.edit',$us->id)}}" class="btn btn-warning btn-sm"><i class="bi bi-pen"></i></a>
+                                @if(Auth::user()->role == "superadmin")
                                 <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#modal-delete-{{$us->id}}"><i class="bi bi-trash"></i></button>
+                                @endif
                             </td>
                             <td>{{$us->id}}</td>
                             <td>{{$us->name}}</td>
