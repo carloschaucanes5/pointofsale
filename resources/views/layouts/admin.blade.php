@@ -360,6 +360,12 @@
                                         <p>Venta</p>
                                     </a>
                                 </li>
+                                <li class="nav-item ms-3">
+                                    <a href="{{route('cash_opening.index')}}" class="nav-link">
+                                        <i class="bi bi-door-open"></i> 
+                                        <p>Apertura Caja</p>
+                                    </a>
+                                </li>
                             </ul>
                         </li>
                         <li class="nav-item">

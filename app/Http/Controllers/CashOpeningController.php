@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Log;
+use Symfony\Component\HttpFoundation\Response;
 
 class CashOpeningController extends Controller
 {
@@ -21,10 +22,9 @@ class CashOpeningController extends Controller
        public function index(Request $request)
         {
             $search = $request->get('searchText');
-            $openings = CashOpening::
-                when($search, function ($query, $search) {
-                    return $query->where('cashbox_name', 'like', "%$search%");
-                })
+            $openings = DB::table("cash_opening as co")
+                ->join("users as us","us.id","=","co.users_id")
+                ->select()
                 ->orderBy('opened_at', 'desc')
                 ->paginate(5);
 
@@ -51,33 +51,59 @@ class CashOpeningController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-public function store(Request $request)
-{
-    try {
-        $request->validate([
-            'start_amount' => 'required|numeric|min:0',
-            'cashbox_name' => 'required|string|max:100',
-            'location' => 'nullable|string|max:100',
-            'observations' => 'nullable|string',
-        ]);
-        $cash = new CashOpening();
-        $cash->users_id = auth()->user()->id;
-        $cash->start_amount = $request->start_amount;
-        $cash->end_amount = 0;
-        $cash->opened_at = date("Y-m-d H:s:i");
-        $cash->cashbox_name = $request->cashbox_name;
-        $cash->location = $request->location;
-        $cash->observations = $request->observations;
-        $cash->status = 'open';
-        $cash->save();
-        return redirect()->route('cash_opening.index');
-    } catch (ValidationException $e) {
-        return back()->withErrors($e->validator)->withInput();
-    } catch (Exception $e) {
-        Log::error('Error al abrir caja: ' . $e->getMessage());
-        return back()->withErrors(['error' => 'Ocurrió un error al abrir la caja.'])->withInput();
+    public function store(Request $request)
+    {
+        try {
+            $request->validate([
+                'start_amount' => 'required|numeric|min:0',
+                'cashbox_name' => 'required|string|max:100',
+                'location' => 'nullable|string|max:100',
+                'observations' => 'nullable|string',
+            ]);
+            $cash = new CashOpening();
+            $cash->users_id = auth()->user()->id;
+            $cash->start_amount = $request->start_amount;
+            $cash->end_amount = 0;
+            $cash->opened_at = date("Y-m-d H:s:i");
+            $cash->cashbox_name = $request->cashbox_name;
+            $cash->location = $request->location;
+            $cash->observations = $request->observations;
+            $cash->status = 'open';
+            $cash->save();
+            return redirect()->route('sale.create');
+        } catch (ValidationException $e) {
+            return back()->withErrors($e->validator)->withInput();
+        } catch (Exception $e) {
+            Log::error('Error al abrir caja: ' . $e->getMessage());
+            return back()->withErrors(['error' => 'Ocurrió un error al abrir la caja.'])->withInput();
+        }
     }
-}
+
+    public function validate_cash_opening(Request $request, $id){
+        try{
+                $cash_opened = DB::table("cash_opening as co")
+                       ->where("co.users_id","=",auth()->user()->id)
+                       ->where("co.status","=",'open')
+                       ->first();
+                if($cash_opened){
+                    return response()->json(([
+                        "success"=>true,
+                        "message"=>$cash_opened
+                    ]),200);
+                }else{
+                    return response()->json(([
+                        "success"=>false,
+                        "message"=>null
+                    ]),200);
+                }
+        }catch(Exception $error){
+            return response()->json(([
+                "success"=>false,
+                "message"=>$error
+            ]),200);
+        }   
+
+    } 
 
     /**
      * Display the specified resource.

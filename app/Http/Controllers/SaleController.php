@@ -126,46 +126,64 @@ class SaleController extends Controller
      */
     public function create()
     {
-        $payment_methods =DB::table('config')
-                          ->where("key","=","payment_methods")
-                          ->get()
-                          ->first();
-        
-        $payment_forms =DB::table('config')
-                    ->where("key","=","payment_forms")
-                    ->get()
-                    ->first();
+        $cash_opened = DB::table("cash_opening as co")
+                ->where("co.users_id","=",auth()->user()->id)
+                ->where("co.status","=",'open')
+                ->first();
+            if($cash_opened)
+            {
+                $payment_methods =DB::table('config')
+                                ->where("key","=","payment_methods")
+                                ->get()
+                                ->first();
+                
+                $payment_forms =DB::table('config')
+                            ->where("key","=","payment_forms")
+                            ->get()
+                            ->first();
 
-        $logo = DB::table('config')
-                          ->where("key","=","logo")
-                          ->get()
-                          ->first();
+                $logo = DB::table('config')
+                                ->where("key","=","logo")
+                                ->get()
+                                ->first();
 
-        //extraer la infomacion de compania donde el key tiene como base la palabra company_name
-        $company = DB::table('config')
-                    ->where("key","like","company%")
-                    ->select('key','value','alias')
-                    ->get()
-                    ->keyBy('key');
+                //extraer la infomacion de compania donde el key tiene como base la palabra company_name
+                $company = DB::table('config')
+                            ->where("key","like","company%")
+                            ->select('key','value','alias')
+                            ->get()
+                            ->keyBy('key');
 
-        $persons = DB::table("person")->where('person_type','=','customer')->get();
-        $sales = Sale::all();
-        $products = DB::table("product as p")
-                    ->join("income_detail as ide","ide.product_id","=","p.id")
-                    ->select(DB::raw('CONCAT(p.code," ",p.name) as article'),'p.stock','p.id',DB::raw('avg(ide.sale_price) as average'))
-                    ->where('p.status','=',1)
-                    ->where('p.stock','>','0')
-                    ->groupBy('article','p.id','p.stock')
-                    ->get();
-        return view('sale.sale.create',[
-        'persons'=>$persons,
-        'products'=>$products,
-        'payment_methods'=>explode(",",$payment_methods->value),
-        'payment_forms'=>explode(",",$payment_forms->value),
-        'logo'=>$logo,
-        'company'=>$company
-        ]
-    );            
+                $persons = DB::table("person")->where('person_type','=','customer')->get();
+                $sales = Sale::all();
+                $products = DB::table("product as p")
+                            ->join("income_detail as ide","ide.product_id","=","p.id")
+                            ->select(DB::raw('CONCAT(p.code," ",p.name) as article'),'p.stock','p.id',DB::raw('avg(ide.sale_price) as average'))
+                            ->where('p.status','=',1)
+                            ->where('p.stock','>','0')
+                            ->groupBy('article','p.id','p.stock')
+                            ->get();
+                        return view('sale.sale.create',[
+                        'persons'=>$persons,
+                        'products'=>$products,
+                        'payment_methods'=>explode(",",$payment_methods->value),
+                        'payment_forms'=>explode(",",$payment_forms->value),
+                        'logo'=>$logo,
+                        'company'=>$company
+                        ]
+                        );      
+            }
+            else
+            {
+            $cash_registers = DB::table('config')
+                            ->where('key','=','cash_registers')
+                            ->first();
+
+            $cash_locations = DB::table('config')
+                            ->where('key','=','cash_locations')
+                            ->first();
+                 return view('sale.cash.create',["cash_registers"=>explode(",",$cash_registers->value),"cash_locations"=>explode(",",$cash_locations->value)]);
+            }      
     }
 
     /**

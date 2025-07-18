@@ -79,10 +79,10 @@
                                     <td>{{ $open->location }}</td>
                                     <td>{{ $open->observations }}</td>
                                     <td>
-                                        <span class="badge bg-{{ $open->status == 'open' ? 'success' : 'secondary' }}">{{ ucfirst($open->status) }}</span>
+                                        <span class="badge bg-{{ $open->status == 'open' ? 'success' : 'secondary' }}">{{ $open->status}}</span>
                                     </td>
                                     <td>{{ \Carbon\Carbon::parse($open->opened_at)->format('d/m/Y H:i') }}</td>
-                                    <td>{{ $open->user->name ?? 'N/A' }}</td>
+                                    <td>{{ $open->name  }}</td>
                                 </tr>
                                 @endforeach
                             </tbody>

@@ -54,6 +54,8 @@ Route::middleware(['auth','check.session','role:admin,superadmin,cashier,user'])
 
     Route::put('segurity/user/{id}/{person_id?}', [UserController::class, 'update'])->name('user.update');
 
+
+    Route::get('sale/cash_opening/validate_cash_opening/{id}', [CashOpeningController::class, 'validate_cash_opening'])->name('sale.cash_opening.validate_cash_opening');
     Route::get('purchase/income/search_product/{codeOrName}', [IncomeController::class, 'search_product']);
     Route::get('purchase/income/view_voucher/{voucherId}', [IncomeController::class, 'view_voucher']);
     Route::get('sale/sale/search_product/{codeName}', [SaleController::class, 'search_product']);
