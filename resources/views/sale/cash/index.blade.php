@@ -61,9 +61,10 @@
                                     <th>Caja</th>
                                     <th>Monto Inicial</th>
                                     <th>Ubicación</th>
-                                    <th>Observaciones</th>
                                     <th>Estado</th>
                                     <th>Fecha Apertura</th>
+                                    <th>Monto Final</th>
+                                    <th>Fecha Cierre</th>
                                     <th>Usuario</th>
                                 </tr>
                             </thead>
@@ -76,7 +77,6 @@
                                     <td>{{ $open->cashbox_name }}</td>
                                     <td>${{ number_format($open->start_amount, 0, ',', '.') }}</td>
                                     <td>{{ $open->location }}</td>
-                                    <td>{{ $open->observations }}</td>
                                     <td>
                                         <span class="badge bg-{{ $open->status == 'open' ? 'success' : 'secondary' }}">
                                             @if($open->status=="open")
@@ -87,6 +87,8 @@
                                         </span>
                                     </td>
                                     <td>{{ \Carbon\Carbon::parse($open->opened_at)->format('d/m/Y H:i') }}</td>
+                                    <td>${{number_format($open->end_amount,0,',','.')}}</td>
+                                    <td>{{$open->closed_at?$open->closed_at:"-"}}</td>
                                     <td>{{ $open->name  }}</td>
                                 </tr>
                                 @endforeach

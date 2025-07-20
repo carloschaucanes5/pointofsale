@@ -24,7 +24,7 @@ class CashOpeningController extends Controller
             $search = $request->get('searchText');
             $openings = DB::table("cash_opening as co")
                 ->join("users as us","us.id","=","co.users_id")
-                ->select("co.id","co.opened_at","co.start_amount","co.cashbox_name","co.location","co.observations","co.status","co.end_amount","co.closed_at","us.name")
+                ->select("co.id","co.opened_at","co.start_amount","co.cashbox_name","co.end_amount","co.closed_at","co.location","co.observations","co.status","co.end_amount","co.closed_at","us.name")
                 ->orderBy('opened_at', 'desc')
                 ->paginate(5);
 
@@ -137,8 +137,36 @@ class CashOpeningController extends Controller
         //
     }
 
-   public function cash_close(Request $request,$id=null)
+    public function cash_close(Request $request,$id=null)
     {
-        return view('sale.cash.close');
+        if(strcmp($request->getMethod(),"GET")==0){
+            $cash = CashOpening::
+             where("users_id","=",auth()->user()->id)
+             ->where("status","=","open")
+             ->orderBy('created_at', 'desc')
+             ->first();
+            if($cash){
+                return view('sale.cash.close');
+            }
+            else
+            {
+                return view('sale.cash');
+            }
+        }else{
+            $cash = CashOpening::where("users_id","=",auth()->user()->id)
+             ->orderBy('created_at', 'desc')
+             ->first();
+             if($cash){
+                $cash->summary = json_encode($request->only(['m50','m100','m200','m500','m1000','b2000','b5000','b10000','b20000','b50000','b100000']));
+                $cash->status = "close";
+                $cash->closed_at = date('Y-m-d H:i:s');
+                $cash->end_amount = $request->post("total_close_value");
+                $cash->update();
+                return response()->redirectTo("sale.cash_opening",200);
+             }
+        }
+        
     }
+
+
 }

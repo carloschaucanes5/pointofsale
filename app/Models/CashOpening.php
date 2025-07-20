@@ -23,7 +23,8 @@ class CashOpening extends Model
         'cashbox_name',
         'location',
         'observations',
-        'status'
+        'status',
+        'summary'
     ];
 
     protected $guarded = [];
