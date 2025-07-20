@@ -66,9 +66,11 @@
                                             <th><h4 id="total">$ 0.00</h4><input type="hidden"  name="sale_total" id="sale_total"/></th>
                                             <th></th>
                                         </tfoot>
+
                                         <tbody>
                                         </tbody> 
                                     </table>
+                                    <a href="{{ route('sale.cash_close') }}" class="btn btn-primary">Cerrar Caja</a>
                                 </div>
                             </div>
                         </div>
@@ -145,15 +147,12 @@
                                             </tr>
                                         </tfoot>
                                     </table>
-                            </div>
+                        </div>                 
+                    </div>
+                </div>
+               
 
-                    </div>
-                    <hr/>
-                </div>
-                <div class="form-group">
-                    <div class="card-footer">
-                    </div>
-                </div>
+               
                
             </form>
              @include('sale.sale.receipt')
@@ -879,6 +878,7 @@ async function toinvoice(){
             myModal.hide();
 
         }
+
     </script>
 @endpush
 

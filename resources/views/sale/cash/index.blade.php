@@ -8,7 +8,7 @@
     <div class="container-fluid">
         <div class="row mb-2">
             <div class="col-sm-6">
-                <h1 class="m-0">LISTADO DE APERTURAS DE CAJA</h1>
+                <h1 class="m-2">APERTURAS DE CAJA</h1>
             </div>
             <div class="col-sm-6">
                 <ol class="breadcrumb float-sm-right">
@@ -71,15 +71,20 @@
                                 @foreach($openings as $open)
                                 <tr>
                                     <td>
-                                        <a href="{{ route('cash_opening.edit', $open->id) }}" class="btn btn-warning btn-sm"><i class="bi bi-pen"></i></a>
-                                        <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#modal-delete-{{ $open->id }}"><i class="bi bi-trash"></i></button>
+                                        <a href="{{ route('cash_opening.edit', $open->id) }}" class="btn btn-warning btn-sm"><i class="bi bi-eye"></i></a>
                                     </td>
                                     <td>{{ $open->cashbox_name }}</td>
                                     <td>${{ number_format($open->start_amount, 0, ',', '.') }}</td>
                                     <td>{{ $open->location }}</td>
                                     <td>{{ $open->observations }}</td>
                                     <td>
-                                        <span class="badge bg-{{ $open->status == 'open' ? 'success' : 'secondary' }}">{{ $open->status}}</span>
+                                        <span class="badge bg-{{ $open->status == 'open' ? 'success' : 'secondary' }}">
+                                            @if($open->status=="open")
+                                                Abierta
+                                            @else
+                                                Cerrada
+                                            @endif
+                                        </span>
                                     </td>
                                     <td>{{ \Carbon\Carbon::parse($open->opened_at)->format('d/m/Y H:i') }}</td>
                                     <td>{{ $open->name  }}</td>

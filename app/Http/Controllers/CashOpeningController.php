@@ -24,7 +24,7 @@ class CashOpeningController extends Controller
             $search = $request->get('searchText');
             $openings = DB::table("cash_opening as co")
                 ->join("users as us","us.id","=","co.users_id")
-                ->select()
+                ->select("co.id","co.opened_at","co.start_amount","co.cashbox_name","co.location","co.observations","co.status","co.end_amount","co.closed_at","us.name")
                 ->orderBy('opened_at', 'desc')
                 ->paginate(5);
 
@@ -135,5 +135,10 @@ class CashOpeningController extends Controller
     public function destroy(string $id)
     {
         //
+    }
+
+   public function cash_close(Request $request,$id=null)
+    {
+        return view('sale.cash.close');
     }
 }

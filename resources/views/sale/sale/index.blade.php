@@ -93,9 +93,9 @@
                 </table>
                     {{$sales->links('pagination::bootstrap-5')}}
             </div>
+           
         </div>
     </section>
-    
  @include('sale.sale.receipt')
 @endsection
 
