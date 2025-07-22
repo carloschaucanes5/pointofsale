@@ -16,7 +16,7 @@ class Movement extends Model
         'users_id',
         'cash_opening_id',
         'type',
-        'category',
+        'movement_type_id',
         'description',
         'amount',
         'payment_method'

@@ -31,7 +31,7 @@
             </div>
 
             <div class="col-md-6">
-                <label for="movement_type_id" class="form-label">Cateria Movimiento</label>
+                <label for="movement_type_id" class="form-label">Categoria Movimiento</label>
                 <div class="mb-3">
                     
                     <select name="movement_type_id" id="movement_type_id" class="form-select" required>
@@ -39,11 +39,6 @@
                     </select>
                 </div>
             </div>
-        </div>
-
-        <div class="mb-3">
-            <label for="description" class="form-label">Descripción</label>
-            <textarea name="description" id="description" class="form-control" rows="3"></textarea>
         </div>
 
         <div class="row mb-3">
@@ -54,13 +49,20 @@
 
             <div class="col-md-6">
                 <label for="payment_method" class="form-label">Método de Pago</label>
-                <input type="text" name="payment_method" id="payment_method" class="form-control" placeholder="Efectivo, Tarjeta, Transferencia">
+                <select id="payment_method" name="payment_method" class="form-control">
+                    <option value="">Seleccionar un medio de pago</option>
+                    @foreach($methods as $method)
+                        @if($method != 'credito')
+                            <option value="{{$method}}">{{$method}}</option>
+                        @endif
+                    @endforeach
+                </select>
             </div>
         </div>
 
         <div class="mb-3">
-            <label for="cash_opening_id" class="form-label">ID de Apertura de Caja (opcional)</label>
-            <input type="number" name="cash_opening_id" id="cash_opening_id" class="form-control">
+            <label for="description" class="form-label">Descripción</label>
+            <textarea name="description" id="description" class="form-control" rows="3"></textarea>
         </div>
 
         <div class="d-flex justify-content-between">

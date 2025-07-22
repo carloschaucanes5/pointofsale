@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class MovementType extends Model
 {
     use HasFactory;
- use HasFactory;
+    use HasFactory;
 
     protected $primaryKey = "id";
     public  $timesstamp = false;
@@ -20,7 +20,7 @@ class MovementType extends Model
         'code',
         'name',
         'type',
-        'affects_cash',
+        'affects_cash'
     ];
 
   protected $guarded = [];

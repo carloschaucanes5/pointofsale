@@ -23,14 +23,30 @@ class MovementController extends Controller
 
        public function index(Request $request)
         {
-               $from = $request->input('from') . ' 00:00:00';
-               $to = $request->input('to') . ' 23:59:59';
-            $movements = Movement::
-                where('created_at','>=',$from)
-                ->where('created_at','<=',$to)
-                ->orderBy('created_at', 'desc')
-                ->paginate(10);
-            return view('movement.movement.index',['movements'=>$movements]);
+            $type = $request->input('type')?$request->input('type'):"";
+            $from = $request->input('from') . ' 00:00:00';
+            $to = $request->input('to') . ' 23:59:59';
+            if($request->input('from')=="" &&  $request->input('to')==""){
+                $from = date('Y-m-d').$from;
+                $to = date('Y-m-d').$to;
+            }
+            $movements = DB::table('movement as m')
+                ->join('movement_types as mt','mt.id','=','m.movement_type_id')
+                ->join('users as us','us.id',"=","m.users_id")
+                ->select('m.type','m.created_at','mt.name as movement_type','m.amount','m.payment_method','us.name as username')
+                ->where('m.created_at','>=',$from)
+                ->where('m.created_at','<=',$to)
+                ->where(function($query) use ($type){
+                    $query->where('m.type','like','%'.$type.'%');
+                })
+                ->orderBy('m.created_at', 'desc')
+                ->paginate(7);
+            return view('movement.movement.index',
+                ['movements'=>$movements,
+                 'from'=>explode(' ',$from)[0],
+                 'to'=>explode(' ',$to)[0],'type'=>$type],
+                 
+                 );
         }
     
 
@@ -39,12 +55,17 @@ class MovementController extends Controller
      */
     public function create()
     {
-        return view('movement.movement.create');
+        $methods = DB::table('config')
+                   ->where('key','=','payment_methods')
+                   ->first();
+        return view('movement.movement.create',['methods'=>explode(',',$methods->value)]);
     }
 
     public function getTypesByCategory($type)
     {
-        $types = MovementType::where('type', $type)->orderBy('name')->get();
+        $types = DB::table('movement_types')
+        ->where('type', $type)
+        ->orderBy('name')->get();
         return response()->json($types);
     }
 
@@ -55,28 +76,37 @@ class MovementController extends Controller
     {
         try{
             $validated = $request->validate([
-            'type' => 'required|in:income,expense',
-            'category' => 'nullable|string|max:100',
+            'type' => 'required|in:egreso,ingreso',
+            'movement_type_id' => 'required|string|min:0',
             'description' => 'nullable|string',
             'amount' => 'required|numeric|min:0.01',
-            'payment_method' => 'nullable|string|max:50',
-            'cash_opening_id' => 'nullable|exists:cash_openings,id',
+            'payment_method' => 'required|string|max:50',
             ]);
             $validated['users_id'] = auth()->user()->id;
+            $cash = DB::table('cash_opening')
+                    ->where('users_id','=',auth()->user()->id)
+                    ->where('status','=','open')
+                    ->first();
+            if($cash){
+                $validated['cash_opening_id'] = $cash->id;
+                $movement = Movement::create($validated);
+                /*return response()->json([
+                    'success' => true,
+                    'message' => 'Movimiento registrado correctamente',
+                    'data' => $movement
+                ]);*/
+                return redirect()->route('movement.index');
+            }
+            else
+            {
+                return back()->withErrors(['error' => 'El usuario no ha realizado apertura de caja'])->withInput();
+            }
 
-            $movement = Movement::create($validated);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Movimiento registrado correctamente',
-                'data' => $movement
-            ]);
-            return redirect()->route('movement.movement.index');
         } catch (ValidationException $e) {
             return back()->withErrors($e->validator)->withInput();
         } catch (Exception $e) {
             Log::error('Error al abrir caja: ' . $e->getMessage());
-            return back()->withErrors(['error' => 'Ocurrió un error al abrir la caja.'])->withInput();
+            return back()->withErrors(['error' => 'Ocurrió un error'])->withInput();
         }
     }
 
@@ -135,37 +165,5 @@ public function filterByDate(Request $request)
     {
         //
     }
-
-    public function cash_close(Request $request,$id=null)
-    {
-        if(strcmp($request->getMethod(),"GET")==0){
-            $cash = CashOpening::
-             where("users_id","=",auth()->user()->id)
-             ->where("status","=","open")
-             ->orderBy('created_at', 'desc')
-             ->first();
-            if($cash){
-                return view('sale.cash.close');
-            }
-            else
-            {
-                return view('sale.cash');
-            }
-        }else{
-            $cash = CashOpening::where("users_id","=",auth()->user()->id)
-             ->orderBy('created_at', 'desc')
-             ->first();
-             if($cash){
-                $cash->summary = json_encode($request->only(['m50','m100','m200','m500','m1000','b2000','b5000','b10000','b20000','b50000','b100000']));
-                $cash->status = "close";
-                $cash->closed_at = date('Y-m-d H:i:s');
-                $cash->end_amount = $request->post("total_close_value");
-                $cash->update();
-                return response()->redirectTo("sale.cash_opening",200);
-             }
-        }
-        
-    }
-
 
 }
