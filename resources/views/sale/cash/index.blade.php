@@ -75,7 +75,7 @@
                                         <a href="{{ route('cash_opening.edit', $open->id) }}" class="btn btn-warning btn-sm"><i class="bi bi-eye"></i></a>
                                     </td>
                                     <td>{{ $open->cashbox_name }}</td>
-                                    <td>${{ number_format($open->start_amount, 0, ',', '.') }}</td>
+                                    <td>${{number_format($open->start_amount, 0, ',', '.')}}</td>
                                     <td>{{ $open->location }}</td>
                                     <td>
                                         <span class="badge bg-{{ $open->status == 'open' ? 'success' : 'secondary' }}">

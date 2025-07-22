@@ -385,6 +385,23 @@
                                 </li>
                             </ul>
                         </li>
+                        <li class="nav-item">
+                            <a href="#" class="nav-link">
+                                <i class="nav-icon bi bi-arrow-left-right"></i>
+                                <p>
+                                    Movimientos
+                                     <i class="nav-arrow bi bi-chevron-right"></i>
+                                </p>
+                            </a>
+                            <ul class="nav nav-treeview">
+                                <li class="nav-item ms-3">
+                                    <a href="{{route('movement.index')}}" class="nav-link">
+                                        <i class="nav-icon bi-arrow-left-right"></i>
+                                        <p>Lista</p>
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
 
                         <li class="nav-item">
                             <a href="#" class="nav-link">

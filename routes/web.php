@@ -15,6 +15,7 @@ use App\http\Controllers\UserController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\CashOpeningController;
+use App\Http\Controllers\MovementController;
 use App\Models\Voucher;
 
 /*
@@ -51,6 +52,7 @@ Route::middleware(['auth','check.session','role:admin,superadmin,cashier,user'])
     Route::resource('purchase/voucher', VoucherController::class);
     Route::resource('segurity/user', UserController::class);
     Route::resource('sale/cash_opening', CashOpeningController::class);
+    Route::resource('movement', MovementController::class);
 
     Route::put('segurity/user/{id}/{person_id?}', [UserController::class, 'update'])->name('user.update');
 
@@ -63,7 +65,10 @@ Route::middleware(['auth','check.session','role:admin,superadmin,cashier,user'])
     Route::get('sale/sale/receipt/{sale_id}', [SaleController::class, 'receipt']);
     Route::post('sale/sale/return_sale', [SaleController::class, 'return_sale'])->name('sale.sale.return_sale');
     Route::post('store/inventory/proccess_out/{income_detail_id}', [InventoryController::class, 'proccess_out'])->name('store.inventory.proccess_out');
-});
+    Route::get('movement/filter', [MovementController::class, 'filterByDate'])->name('movement.filter');
+    Route::get('movement/types/{type}', [MovementController::class, 'getTypesByCategory']);
+
+    });
 
 
 
