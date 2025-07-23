@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\VoucherFormRequest;
+use App\Models\Movement;
 use App\Models\Voucher;
 use App\Models\Supplier;
 use Illuminate\Http\Request;
@@ -56,6 +57,10 @@ if ($request) {
      */
     public function create()
     {
+        $payment_methods =DB::table('config')
+            ->where("key","=","payment_methods")
+            ->get()
+            ->first();
         $suppliers = Supplier::where('person_type', 'supplier')
             ->where('status', 1)
             ->orderBy('name', 'asc')
@@ -70,7 +75,7 @@ if ($request) {
         } else {
             $status_payment_array = [];
         }
-        return view("purchase.voucher.create", ["suppliers" => $suppliers,"status_payment" => $status_payment_array]);
+        return view("purchase.voucher.create", ["suppliers" => $suppliers,"status_payment" => $status_payment_array,'payment_methods'=>explode(",",$payment_methods->value)]);
        
     }
 
@@ -91,6 +96,8 @@ if ($request) {
             $voucher->users_id = auth()->user()->id;
             $voucher->status = 1;
             $voucher->save();
+            
+            //registrar movimientos de caja
             if ($request->hasFile('photo') && $request->file('photo')->isValid()) {
                 $photo = $request->file('photo');
                 $folder = public_path('images/purchase/voucher');
@@ -116,7 +123,6 @@ if ($request) {
                         'success' => false,
                         'message' => 'No existe la ruta de la imagen o no se ha podido mover el archivo.'
                     ], 500);
-                
                 }       
             }
             else

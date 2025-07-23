@@ -13,7 +13,7 @@
             @csrf
             <div class="card-body">
                 <div class="form-group">
-                    <label for="supplier_id">Proveedor</label>
+                    <label for="supplier_id"><b>Proveedor</b></label>
                     <select name="supplier_id" id="supplier_id" class="form-control">
                         @foreach ($suppliers as $per)
                         <option value="{{$per->id}}">{{$per->name}}</option>   
@@ -21,7 +21,11 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="status_payment">Estado Pago</label>
+                    <label for="voucher_number"><b>Numero de Factura</b></label>
+                    <input type="text" class="form-control" name="voucher_number" id="voucher_number" required>
+                </div>
+                <div class="form-group">
+                    <label for="status_payment"><b>Estado Pago</b></label>
                     <select name="status_payment" id="status_payment" class="form-control">
                         @foreach ($status_payment as $pay)
                         <option value="{{$pay}}">{{$pay}}</option>   
@@ -29,11 +33,35 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="voucher_number">Numero de Factura</label>
-                    <input type="text" class="form-control" name="voucher_number" id="voucher_number" required>
+                    <label for="payment_method"><b>Medio de Pago</b></label>
+                    <select name="payment_method" id="payment_method" class="form-control">
+                        @foreach($payment_methods as $method)
+                            <option value="{{$method}}">{{$method}}</option>
+                        @endforeach
+                    </select>           
                 </div>
                 <div class="form-group">
-                    <label for="total">Valor</label>
+                    <div class="row">
+                        <div class="col-md-8">
+                            <input type="number" class="form-control" value="0" min="0" id="payment_value" placeholder="Ingrese valor" />
+                        </div>
+                        <div class="col-md-4">
+                            <button type="button" class="btn btn-primary" onclick="add_payment()"><i class="bi bi-plus-circle"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <table id="table_payments" class=" table table-hover mb-1 table-sm table-striped table-hover table-bordered align-middle">
+                        <thead>
+                            <th>Medio</th><th>Valor</th><th></th>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="form-group">
+                    <label for="total"><b>Valor</b></label>
                     <input type="number" step="0.001" class="form-control" name="total" id="total" required>
                 </div>
                 <div class="form-group">
@@ -166,5 +194,41 @@
         }
         }, 'image/png');
     });
+
+    function add_payment(){
+            const method = document.getElementById('payment_method').value;
+            const value = document.getElementById('payment_value').value;
+            if(value.trim()!="" && value!=0){
+                const table_payments = document.querySelector("#table_payments tbody");
+                const tr = document.createElement("tr");
+                const td1 = document.createElement("td");
+                td1.textContent = method;
+                const td2 = document.createElement("td");
+                td2.textContent = value;
+                const td3 = document.createElement("td");
+                td3.innerHTML = `<a href="#" onclick="deletePayment(this)" class="text-danger"><i class="bi bi-trash"></i></a>`;
+                tr.appendChild(td1);
+                tr.appendChild(td2);
+                tr.appendChild(td3);
+                table_payments.appendChild(tr);
+                updateTotalChange();
+                document.getElementById('payment_method').value="{{$payment_methods[0]}}";
+                document.getElementById('payment_value').value=0;
+            }
+            else
+            {
+                Swal.fire({
+                    title:"Mensaje",
+                    text:"Valor inválido",
+                    icon:"warning"
+                })
+            }          
+        }
+
+        function deletePayment(ele){
+            const tr = ele.closest("tr");
+            tr.remove();
+            updateTotalChange();
+        } 
 </script>
 @endsection

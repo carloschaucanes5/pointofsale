@@ -23,6 +23,10 @@ class MovementController extends Controller
 
        public function index(Request $request)
         {
+            $payment_methods = DB::table("config")
+                               ->where('key',"=","payment_methods")
+                               ->first();
+
             $type = $request->input('type')?$request->input('type'):"";
             $from = $request->input('from') . ' 00:00:00';
             $to = $request->input('to') . ' 23:59:59';
@@ -30,6 +34,17 @@ class MovementController extends Controller
                 $from = date('Y-m-d').$from;
                 $to = date('Y-m-d').$to;
             }
+
+            $movements_sale = DB::table('sale as s')
+                ->join('users as u', 'u.id', '=', 's.users_id')
+                ->join('payment as p', 'p.sale_id', '=', 's.id')
+                ->where('s.created_at', '>=', $from)
+                ->where('s.created_at', '<=', $to)
+                ->select('p.method', 'u.name as username', DB::raw('SUM(p.value) as amount'))
+                ->groupBy('p.method', 'u.name')
+                ->get();
+
+
             $movements = DB::table('movement as m')
                 ->join('movement_types as mt','mt.id','=','m.movement_type_id')
                 ->join('users as us','us.id',"=","m.users_id")
@@ -42,11 +57,15 @@ class MovementController extends Controller
                 ->orderBy('m.created_at', 'desc')
                 ->paginate(7);
             return view('movement.movement.index',
-                ['movements'=>$movements,
-                 'from'=>explode(' ',$from)[0],
-                 'to'=>explode(' ',$to)[0],'type'=>$type],
-                 
-                 );
+                [
+                    'movements'=>$movements,
+                    'from'=>explode(' ',$from)[0],
+                    'to'=>explode(' ',$to)[0],
+                    'type'=>$type,
+                    'payment_methods'=>explode(",",$payment_methods->value),
+                    'movements_sale'=>$movements_sale
+                 ]
+            );
         }
     
 
