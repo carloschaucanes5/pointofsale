@@ -32,37 +32,41 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="form-group">
-                    <label for="payment_method"><b>Medio de Pago</b></label>
-                    <select name="payment_method" id="payment_method" class="form-control">
-                        @foreach($payment_methods as $method)
-                            <option value="{{$method}}">{{$method}}</option>
-                        @endforeach
-                    </select>           
-                </div>
-                <div class="form-group">
-                    <div class="row">
-                        <div class="col-md-8">
-                            <input type="number" class="form-control" value="0" min="0" id="payment_value" placeholder="Ingrese valor" />
+                <div style="background-color:bisque;padding:5%">          
+
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <label for="payment_method"><b>Medio de Pago</b></label>
+                                <select name="payment_method" id="payment_method" class="form-control">
+                                    @foreach($payment_methods as $method)
+                                        <option value="{{$method}}">{{$method}}</option>
+                                    @endforeach
+                                </select> 
+                            </div>
+                            <div class="col-md-6">
+                                <label></label>
+                                <input type="number" class="form-control"  value="0" min="0" id="payment_value" placeholder="Ingrese valor" />
+                            </div>
+                            <div class="col-md-2">
+                                <label></label><br/>
+                                <button type="button" class="btn btn-primary" onclick="add_payment()"><i class="bi bi-plus-circle"></i></button>
+                            </div>
                         </div>
-                        <div class="col-md-4">
-                            <button type="button" class="btn btn-primary" onclick="add_payment()"><i class="bi bi-plus-circle"></i></button>
+                        <div class="form-group">
+                            <table id="table_payments" class=" table table-hover mb-1 table-sm table-striped table-hover table-bordered align-middle">
+                                <thead>
+                                    <th>Medio</th><th>Valor</th><th></th>
+                                </thead>
+                                <tbody>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
-
-                <div class="form-group">
-                    <table id="table_payments" class=" table table-hover mb-1 table-sm table-striped table-hover table-bordered align-middle">
-                        <thead>
-                            <th>Medio</th><th>Valor</th><th></th>
-                        </thead>
-                        <tbody>
-                        </tbody>
-                    </table>
-                </div>
                 <div class="form-group">
                     <label for="total"><b>Valor</b></label>
-                    <input type="number" step="0.001" class="form-control" name="total" id="total" required>
+                    <input type="number" step="0.001" class="form-control" value="0" readonly name="total" id="total" required>
                 </div>
                 <div class="form-group">
                     <label for="description">Descripcion</label>
@@ -130,12 +134,25 @@
     // Enviar formulario con imagen
     form.addEventListener('submit', function (e) {
         e.preventDefault();
+        //metodos de pago
+            const table_payments = document.querySelectorAll("#table_payments tbody tr");
+            let methods = [];
+            let cc = 0;
+            for (let i = 0; i < table_payments.length; i++) {
+                let valorPayment = parseFloat(table_payments[i].children[1].textContent);
+                let methodPayment = table_payments[i].children[0].textContent;
+                if(methodPayment=="credito")cc++;
+                const obj = {method:methodPayment,value:valorPayment};
+                methods.push(obj);
+            }
+        //
         const formData = new FormData();
         formData.append('voucher_number', document.getElementById('voucher_number').value);
         formData.append('total', document.getElementById('total').value);
         formData.append('description', document.getElementById('description').value);
         formData.append('supplier_id', document.getElementById('supplier_id').value);
         formData.append('status_payment', document.getElementById('status_payment').value);
+        formData.append('methods',JSON.stringify(methods));
         // Convertir canvas a blob
         canvas.toBlob(function(blob) {
             const photoInput = document.getElementById('photo');
@@ -229,6 +246,18 @@
             const tr = ele.closest("tr");
             tr.remove();
             updateTotalChange();
-        } 
+        }
+        
+        function updateTotalChange() {
+            const table_payments = document.querySelectorAll("#table_payments tbody tr");
+            let sum_total = 0;
+            if(table_payments.length > 0){
+                for (let i = 0; i < table_payments.length; i++) {
+                    const valorPayment = parseFloat(table_payments[i].children[1].textContent) || 0;
+                    sum_total += valorPayment;
+                } 
+                document.getElementById('total').value = sum_total;
+            }
+        }
 </script>
 @endsection
