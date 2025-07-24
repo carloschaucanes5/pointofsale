@@ -17,15 +17,15 @@
         <select name="type" class="form-control" value="{{ $type }}">
             
             @if($type =='egreso')
-                <option value="">Seleccionar tipo</option>
+                <option value="">Todos</option>
                 <option value="egreso" selected>egreso</option>
                 <option value="ingreso">ingreso</option>
             @elseif($type=="ingreso")
-                <option value="">Seleccionar tipo</option>
+                <option value="">Todos</option>
                 <option value="egreso">egreso</option>
                 <option value="ingreso" selected>ingreso</option>
             @else
-                <option value="" selected>Seleccionar tipo</option>
+                <option value="" selected>Todos</option>
                 <option value="egreso">egreso</option>
                 <option value="ingreso">ingreso</option>
             @endif
@@ -63,7 +63,7 @@
                             <span class="badge bg-danger">Egreso</span>
                         @endif
                     </td>
-                    <td>{{ $movement->movement_type }}</td>
+                    <td>{{ $movement->movement_type }}<small style="font-size: 12px;"> {{$movement->description}}</small></td>
                         @foreach($payment_methods as $method)
                             @if($method ==$movement->payment_method)
                                 <td>${{ number_format($movement->amount, 2) }}</td>
@@ -75,32 +75,28 @@
                     <td>{{ $movement->username ? $movement->username:'---' }}</td>
                 </tr>
             @empty
-                <tr>
-                    <td colspan="6" class="text-center">No hay movimientos registrados.</td>
-                </tr>
             @endforelse
-            @forelse ($movements_sale as $mov)
-                <tr>
-                    <td>{{ $from}}-{{ $to}}</td>
-                    <td>
-                        <span class="badge bg-success">Ingreso</span>
-                    </td>
-                    <td>Venta</td>
-                        @foreach($payment_methods as $method)
-                            @if($method ==$mov->method)
-                                <td>${{ number_format($mov->amount, 2) }}</td>
-                            @else
-                                <td></td>
-                            @endif
-                        @endforeach
+            @if($type=="ingreso" || $type=="")
+                @forelse ($movements_sale as $mov)
+                    <tr>
+                        <td>{{ $from}}-{{ $to}}</td>
+                        <td>
+                            <span class="badge bg-success">Ingreso</span>
+                        </td>
+                        <td>Venta</td>
+                            @foreach($payment_methods as $method)
+                                @if($method ==$mov->method)
+                                    <td>${{ number_format($mov->amount, 2) }}</td>
+                                @else
+                                    <td></td>
+                                @endif
+                            @endforeach
 
-                    <td>{{ $mov->username ? $mov->username:'---' }}</td>
-                </tr>
-            @empty
-                <tr>
-                    <td colspan="6" class="text-center">No hay movimientos registrados.</td>
-                </tr>
-            @endforelse
+                        <td>{{ $mov->username ? $mov->username:'---' }}</td>
+                    </tr>
+                @empty
+                @endforelse
+            @endif
         </tbody>
     </table>
     {{-- Paginación --}}

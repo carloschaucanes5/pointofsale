@@ -91,12 +91,37 @@ if ($request) {
             $voucher->voucher_number = $request->get('voucher_number');
             $voucher->total = $request->get('total');
             $voucher->description = $request->get('description');
-            $voucher->supplier_id = $request->get('supplier_id');
+            $voucher->supplier_id = explode("-",$request->get('supplier_id'))[0];
             $voucher->status_payment = $request->get('status_payment');
             $voucher->users_id = auth()->user()->id;
             $voucher->status = 1;
             $voucher->save();
             
+            $cash = DB::table('cash_opening')
+                    ->where('users_id','=',auth()->user()->id)
+                    ->where('status','=','open')
+                    ->first();
+            if(!$cash){
+                DB::rollBack();
+                return response()->json([
+                        'success' => false,
+                        'message' => 'No has abierto caja aún'
+                ], 500);
+                 
+            }
+            $methods = json_decode($request->get("methods"));
+            foreach($methods as $met){
+                $movement = new Movement();
+                $movement->users_id = auth()->user()->id;
+                $movement->cash_opening_id = $cash->id;
+                $movement->type="egreso";
+                $movement->movement_type_id = 6;
+                $movement->description = explode("-",$request->get('supplier_id'))[1]."(".$request->get('voucher_number').")";
+                $movement->amount = $met->value;
+                $movement->payment_method = $met->method;
+                $movement->save();
+            }
+
             //registrar movimientos de caja
             if ($request->hasFile('photo') && $request->file('photo')->isValid()) {
                 $photo = $request->file('photo');

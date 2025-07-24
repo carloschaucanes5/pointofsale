@@ -16,7 +16,7 @@
                     <label for="supplier_id"><b>Proveedor</b></label>
                     <select name="supplier_id" id="supplier_id" class="form-control">
                         @foreach ($suppliers as $per)
-                        <option value="{{$per->id}}">{{$per->name}}</option>   
+                        <option value="{{$per->id}}-{{$per->name}}">{{$per->name}}</option>   
                         @endforeach
                     </select>
                 </div>

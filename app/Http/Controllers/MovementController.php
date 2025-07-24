@@ -44,11 +44,13 @@ class MovementController extends Controller
                 ->groupBy('p.method', 'u.name')
                 ->get();
 
+            
+
 
             $movements = DB::table('movement as m')
                 ->join('movement_types as mt','mt.id','=','m.movement_type_id')
                 ->join('users as us','us.id',"=","m.users_id")
-                ->select('m.type','m.created_at','mt.name as movement_type','m.amount','m.payment_method','us.name as username')
+                ->select('m.type','m.created_at','mt.name as movement_type','m.description','m.amount','m.payment_method','us.name as username')
                 ->where('m.created_at','>=',$from)
                 ->where('m.created_at','<=',$to)
                 ->where(function($query) use ($type){
