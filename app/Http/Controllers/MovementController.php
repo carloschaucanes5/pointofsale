@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
+use Termwind\Components\Raw;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class MovementController extends Controller
 {
@@ -35,37 +37,98 @@ class MovementController extends Controller
                 $to = date('Y-m-d').$to;
             }
 
-            $movements_sale = DB::table('sale as s')
-                ->join('users as u', 'u.id', '=', 's.users_id')
-                ->join('payment as p', 'p.sale_id', '=', 's.id')
-                ->where('s.created_at', '>=', $from)
-                ->where('s.created_at', '<=', $to)
-                ->select('p.method', 'u.name as username', DB::raw('SUM(p.value) as amount'))
-                ->groupBy('p.method', 'u.name')
-                ->get();
+            // Parámetros de paginación
+            $page = request('page', 1);
+            $perPage = 6;
+            $offset = ($page - 1) * $perPage;
 
-            
+            // Consulta paginada
+            $sql = "
+                SELECT * FROM (
+                    SELECT 
+                        m.type COLLATE utf8mb4_unicode_ci AS type,
+                        m.created_at,
+                        mt.name COLLATE utf8mb4_unicode_ci AS movement_type,
+                        m.description COLLATE utf8mb4_unicode_ci AS description,
+                        m.amount,
+                        m.payment_method COLLATE utf8mb4_unicode_ci AS payment_method,
+                        us.name COLLATE utf8mb4_unicode_ci AS username
+                    FROM movement m
+                    JOIN movement_types mt ON mt.id = m.movement_type_id
+                    JOIN users us ON us.id = m.users_id
+                    WHERE m.created_at >= ? AND m.created_at <= ? AND m.type LIKE ?
+                    
+                    UNION ALL
+                    
+                    SELECT 
+                        'ingreso' COLLATE utf8mb4_unicode_ci AS type,
+                        '' COLLATE utf8mb4_unicode_ci AS created_at,
+                        'Venta' COLLATE utf8mb4_unicode_ci AS movement_type,
+                        '' COLLATE utf8mb4_unicode_ci AS description,
+                        SUM(p.value) AS amount,
+                        p.method COLLATE utf8mb4_unicode_ci AS payment_method,
+                        u.name COLLATE utf8mb4_unicode_ci AS username
+                    FROM sale s
+                    JOIN users u ON u.id = s.users_id
+                    JOIN payment p ON p.sale_id = s.id
+                    WHERE s.created_at >= ? AND s.created_at <= ?
+                    GROUP BY  p.method, u.name
+                ) AS union_result
+                ORDER BY created_at DESC
+                LIMIT $perPage OFFSET $offset
+            ";
 
+            // Parámetros del query
+            $params = [
+                $from, $to, "%$type%", // para movement
+                $from, $to             // para sale
+            ];
 
-            $movements = DB::table('movement as m')
-                ->join('movement_types as mt','mt.id','=','m.movement_type_id')
-                ->join('users as us','us.id',"=","m.users_id")
-                ->select('m.type','m.created_at','mt.name as movement_type','m.description','m.amount','m.payment_method','us.name as username')
-                ->where('m.created_at','>=',$from)
-                ->where('m.created_at','<=',$to)
-                ->where(function($query) use ($type){
-                    $query->where('m.type','like','%'.$type.'%');
-                })
-                ->orderBy('m.created_at', 'desc')
-                ->paginate(7);
+            // Ejecutar consulta paginada
+            $results = collect(DB::select($sql, $params));
+
+            // Consulta para contar total de resultados sin LIMIT
+            $countSql = "
+                SELECT COUNT(*) AS total FROM (
+                    SELECT m.created_at
+                    FROM movement m
+                    WHERE m.created_at >= ? AND m.created_at <= ? AND m.type LIKE ?
+                    
+                    UNION ALL
+                    
+                    SELECT s.created_at
+                    FROM sale s
+                    WHERE s.created_at >= ? AND s.created_at <= ?
+                    GROUP BY s.created_at, s.users_id
+                ) AS total_result
+            ";
+
+            $total = DB::selectOne($countSql, [
+                $from, $to, "%$type%",
+                $from, $to
+            ])->total;
+
+            // Crear el paginador manual
+            $paginator = new LengthAwarePaginator(
+                $results,
+                $total,
+                $perPage,
+                $page,
+                [
+                    'path' => request()->url(),
+                    'query' => request()->query(),
+                ]
+            );
+
             return view('movement.movement.index',
                 [
-                    'movements'=>$movements,
+                    'movements'=>$results,
                     'from'=>explode(' ',$from)[0],
                     'to'=>explode(' ',$to)[0],
                     'type'=>$type,
                     'payment_methods'=>explode(",",$payment_methods->value),
-                    'movements_sale'=>$movements_sale
+                    'movements_sale'=>[],
+                    'paginator'=>$paginator
                  ]
             );
         }
@@ -76,6 +139,13 @@ class MovementController extends Controller
      */
     public function create()
     {
+        $cash = DB::table('cash_opening')
+                    ->where('users_id','=',auth()->user()->id)
+                    ->where('status','=','open')
+                    ->first();
+        if(!$cash){
+            return back()->withErrors(['error' => 'El usuario no ha realizado apertura de caja'])->withInput();
+        }
         $methods = DB::table('config')
                    ->where('key','=','payment_methods')
                    ->first();

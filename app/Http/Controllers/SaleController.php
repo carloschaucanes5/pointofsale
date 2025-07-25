@@ -193,11 +193,21 @@ class SaleController extends Controller
     {
         try{
             if(isset(auth()->user()->id)){
-                 DB::beginTransaction();
+            $cash_opened = DB::table("cash_opening as co")
+                ->where("co.users_id","=",auth()->user()->id)
+                ->where("co.status","=",'open')
+                ->first();
+            if(!$cash_opened){
+                return response()->json(
+                ["success"=>false,"message"=>"No has iniciado apertura de caja"],401);
+            }
+
+                DB::beginTransaction();
                 $sale = new Sale();
                 $sale->customer_id = explode("-",$request->post('customer_id'))[0];
                 $sale->tax = 16;
                 $sale->status = 1;
+                $sale->cash_opening_id = $cash_opened->id;
 
                 $sale->payment_form = $request->post('payment_form');
 

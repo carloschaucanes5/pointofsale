@@ -19,7 +19,8 @@ class Movement extends Model
         'movement_type_id',
         'description',
         'amount',
-        'payment_method'
+        'payment_method',
+        'table_identifier'
     ];
 
     protected $guarded = [];

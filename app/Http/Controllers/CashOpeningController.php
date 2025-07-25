@@ -150,7 +150,14 @@ class CashOpeningController extends Controller
             }
             else
             {
-                return view('sale.cash');
+                $cash_registers = DB::table('config')
+                          ->where('key','=','cash_registers')
+                          ->first();
+
+                $cash_locations = DB::table('config')
+                                ->where('key','=','cash_locations')
+                                ->first();
+                return view('sale.cash.create',["cash_registers"=>explode(",",$cash_registers->value),"cash_locations"=>explode(",",$cash_locations->value)]);
             }
         }else{
             $cash = CashOpening::where("users_id","=",auth()->user()->id)
@@ -162,7 +169,7 @@ class CashOpeningController extends Controller
                 $cash->closed_at = date('Y-m-d H:i:s');
                 $cash->end_amount = $request->post("total_close_value");
                 $cash->update();
-                return response()->redirectTo("sale.cash_opening",200);
+                return response()->redirectTo("sale/cash_opening");
              }
         }
         

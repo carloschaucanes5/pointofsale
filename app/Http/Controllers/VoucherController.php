@@ -57,6 +57,14 @@ if ($request) {
      */
     public function create()
     {
+        $cash = DB::table('cash_opening')
+                    ->where('users_id','=',auth()->user()->id)
+                    ->where('status','=','open')
+                    ->first();
+        if(!$cash){
+            return back()->withErrors(['error' => 'El usuario no ha realizado apertura de caja'])->withInput();
+        }
+
         $payment_methods =DB::table('config')
             ->where("key","=","payment_methods")
             ->get()
@@ -119,6 +127,7 @@ if ($request) {
                 $movement->description = explode("-",$request->get('supplier_id'))[1]."(".$request->get('voucher_number').")";
                 $movement->amount = $met->value;
                 $movement->payment_method = $met->method;
+                $movement->table_identifier = "voucher-".$voucher->id;
                 $movement->save();
             }
 

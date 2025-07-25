@@ -39,7 +39,11 @@
         <a href="{{ route('movement.create') }}" class="btn btn-success">+ Nuevo </a>
     </div>
 </form>
-
+    @if ($errors->has('error'))
+        <div class="alert alert-danger">
+            {{ $errors->first('error') }}
+        </div>
+    @endif
     <table class="table table-bordered table-hover">
         <thead class="table-dark">
             <tr>
@@ -76,32 +80,11 @@
                 </tr>
             @empty
             @endforelse
-            @if($type=="ingreso" || $type=="")
-                @forelse ($movements_sale as $mov)
-                    <tr>
-                        <td>{{ $from}}-{{ $to}}</td>
-                        <td>
-                            <span class="badge bg-success">Ingreso</span>
-                        </td>
-                        <td>Venta</td>
-                            @foreach($payment_methods as $method)
-                                @if($method ==$mov->method)
-                                    <td>${{ number_format($mov->amount, 2) }}</td>
-                                @else
-                                    <td></td>
-                                @endif
-                            @endforeach
-
-                        <td>{{ $mov->username ? $mov->username:'---' }}</td>
-                    </tr>
-                @empty
-                @endforelse
-            @endif
         </tbody>
     </table>
     {{-- Paginación --}}
-    <div class="d-flex justify-content-center">
-        {{ $movements->links('pagination::bootstrap-5') }}
+    <div class="d-flex justify-content-between">
+        {{ $paginator->links() }}
     </div>
 </div>
 @endsection

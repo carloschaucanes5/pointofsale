@@ -49,6 +49,11 @@
             </div>
         </div>
         <div class="card-content">
+            @if ($errors->has('error'))
+                <div class="alert alert-danger">
+                    {{ $errors->first('error') }}
+                </div>
+            @endif
             <div class="card-body">
             </div>
             <div class="table-responsive">
