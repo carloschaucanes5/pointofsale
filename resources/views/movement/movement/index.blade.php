@@ -70,7 +70,7 @@
                     <td>{{ $movement->movement_type }}<small style="font-size: 12px;"> {{$movement->description}}</small></td>
                         @foreach($payment_methods as $method)
                             @if($method ==$movement->payment_method)
-                                <td>${{ number_format($movement->amount, 2) }}</td>
+                                <td>${{number_format($movement->amount, 2, ',','.') }}</td>
                             @else
                                 <td></td>
                             @endif
@@ -83,8 +83,41 @@
         </tbody>
     </table>
     {{-- Paginación --}}
-    <div class="d-flex justify-content-between">
+    <div class="d-flex justify-content-end">
         {{ $paginator->links() }}
     </div>
+    <div class="d-flex justify-content-center">
+        <table class="table table-bordered table-hover">
+            <tr>
+                
+                @foreach($payment_methods as $method)
+                    <th>Total {{$method}}</th>
+                @endforeach
+            </tr>
+            <tr>
+                
+                @foreach($payment_methods as $method)
+                    @php
+                        $b = 0;
+                        $found = 0;
+                    @endphp
+                    @foreach($array_sums as $sum )
+                        @if($method ==$sum->payment_method)
+                            @php
+                                $b = 1;
+                                $found = $sum->total; 
+                            @endphp
+                        @endif
+                    @endforeach
+                    @if($b==1)
+                        <td>${{number_format($found,2,',','.')}}</td>
+                    @else
+                        <th></th>
+                    @endif
+                @endforeach
+            </tr>
+        </table>
+    </div>
+
 </div>
 @endsection

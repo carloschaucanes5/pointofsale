@@ -37,15 +37,24 @@ class CashOpeningController extends Controller
      */
     public function create()
     {
-        $cash_registers = DB::table('config')
+        $cash_opened = DB::table("cash_opening as co")
+                ->where("co.users_id","=",auth()->user()->id)
+                ->where("co.status","=",'open')
+                ->first();
+                    if(!$cash_opened){
+                        $cash_registers = DB::table('config')
                           ->where('key','=','cash_registers')
                           ->first();
-
-        $cash_locations = DB::table('config')
+                        $cash_locations = DB::table('config')
                           ->where('key','=','cash_locations')
                           ->first();
+                        return view('sale.cash.create',["cash_registers"=>explode(",",$cash_registers->value),"cash_locations"=>explode(",",$cash_locations->value)]);
+                    }
+                    else
+                    {
+                        return back()->withErrors(["Ya existe una apertura de caja en estado abierta"])->withInput();
+                    }
 
-        return view('sale.cash.create',["cash_registers"=>explode(",",$cash_registers->value),"cash_locations"=>explode(",",$cash_locations->value)]);
     }
 
     /**

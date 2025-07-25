@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 use Termwind\Components\Raw;
 use Illuminate\Pagination\LengthAwarePaginator;
+use stdClass;
 
 class MovementController extends Controller
 {
@@ -45,6 +46,21 @@ class MovementController extends Controller
             // Consulta paginada
             $sql = "
                 SELECT * FROM (
+
+                    SELECT 
+                        'ingreso' COLLATE utf8mb4_unicode_ci AS type,
+                        ac.opened_at  AS created_at,
+                        'Apertura de Caja' COLLATE utf8mb4_unicode_ci AS movement_type,
+                         ac.observations COLLATE utf8mb4_unicode_ci AS description,
+                         ac.start_amount as amount,
+                         'efectivo' COLLATE utf8mb4_unicode_ci AS payment_method,
+                         us.name COLLATE utf8mb4_unicode_ci AS username
+                    FROM cash_opening ac
+                    JOIN users us ON us.id = ac.users_id
+                    WHERE ac.opened_at >= ? AND ac.opened_at <= ? AND 'ingreso' LIKE ?
+
+                    UNION ALL
+
                     SELECT 
                         m.type COLLATE utf8mb4_unicode_ci AS type,
                         m.created_at,
@@ -71,7 +87,7 @@ class MovementController extends Controller
                     FROM sale s
                     JOIN users u ON u.id = s.users_id
                     JOIN payment p ON p.sale_id = s.id
-                    WHERE s.created_at >= ? AND s.created_at <= ?
+                    WHERE s.created_at >= ? AND s.created_at <= ? AND 'ingreso' LIKE ?
                     GROUP BY  p.method, u.name
                 ) AS union_result
                 ORDER BY created_at DESC
@@ -80,16 +96,26 @@ class MovementController extends Controller
 
             // Parámetros del query
             $params = [
+                $from, $to, "%$type%",
                 $from, $to, "%$type%", // para movement
-                $from, $to             // para sale
+                $from, $to, "%$type%"            // para sale
             ];
 
             // Ejecutar consulta paginada
             $results = collect(DB::select($sql, $params));
 
+
+
             // Consulta para contar total de resultados sin LIMIT
             $countSql = "
                 SELECT COUNT(*) AS total FROM (
+                    
+                    SELECT ac.created_at
+                    FROM cash_opening ac
+                    WHERE ac.created_at >= ? AND ac.created_at <= ? AND 'ingreso' LIKE  ?
+
+                    UNION ALL
+
                     SELECT m.created_at
                     FROM movement m
                     WHERE m.created_at >= ? AND m.created_at <= ? AND m.type LIKE ?
@@ -98,15 +124,57 @@ class MovementController extends Controller
                     
                     SELECT s.created_at
                     FROM sale s
-                    WHERE s.created_at >= ? AND s.created_at <= ?
+                    WHERE s.created_at >= ? AND s.created_at <= ? AND 'ingreso' LIKE  ?
                     GROUP BY s.created_at, s.users_id
                 ) AS total_result
             ";
-
             $total = DB::selectOne($countSql, [
                 $from, $to, "%$type%",
-                $from, $to
+                $from, $to, "%$type%",
+                $from, $to, "%$type%"
             ])->total;
+
+            $sumSql = "
+                SELECT payment_method, SUM(amount) AS total
+                FROM (
+                    -- Aperturas de caja
+                    SELECT 
+                        'efectivo' COLLATE utf8mb4_unicode_ci AS payment_method,
+                        ac.start_amount AS amount
+                    FROM cash_opening ac
+                    WHERE ac.created_at BETWEEN ? AND ?
+                    AND 'ingreso' like ?
+
+                    UNION ALL
+
+                    -- Movimientos
+                    SELECT 
+                        m.payment_method COLLATE utf8mb4_unicode_ci AS payment_method,
+                        m.amount
+                    FROM movement m
+                    WHERE m.created_at BETWEEN ? AND ?
+                    AND m.type like ?
+
+                    UNION ALL
+
+                    -- Ventas
+                    SELECT 
+                        p.method COLLATE utf8mb4_unicode_ci AS payment_method,
+                        p.value AS amount
+                    FROM sale s
+                    JOIN payment p ON p.sale_id = s.id
+                    WHERE s.created_at BETWEEN ? AND ?
+                    AND 'ingreso' like ?
+                ) AS all_movements
+                GROUP BY payment_method
+            ";
+            $sums = DB::select($sumSql, [
+                $from, $to, '%'.$type.'%',   // cash_opening
+                $from, $to, '%'.$type.'%',   // movement
+                $from, $to, '%'.$type.'%'    // sale
+            ]);
+
+
 
             // Crear el paginador manual
             $paginator = new LengthAwarePaginator(
@@ -120,6 +188,7 @@ class MovementController extends Controller
                 ]
             );
 
+
             return view('movement.movement.index',
                 [
                     'movements'=>$results,
@@ -127,7 +196,7 @@ class MovementController extends Controller
                     'to'=>explode(' ',$to)[0],
                     'type'=>$type,
                     'payment_methods'=>explode(",",$payment_methods->value),
-                    'movements_sale'=>[],
+                    'array_sums'=>$sums,
                     'paginator'=>$paginator
                  ]
             );
@@ -174,6 +243,10 @@ class MovementController extends Controller
             'payment_method' => 'required|string|max:50',
             ]);
             $validated['users_id'] = auth()->user()->id;
+            if($request->post("type") == "egreso"){
+                $validated['amount'] = floatval($request->post("amount") * (-1));
+            }
+            
             $cash = DB::table('cash_opening')
                     ->where('users_id','=',auth()->user()->id)
                     ->where('status','=','open')

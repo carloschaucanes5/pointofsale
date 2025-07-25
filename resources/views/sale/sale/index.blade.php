@@ -55,6 +55,13 @@
             </div>
         </div>
         <div class="card-content">
+            @if($errors->any())
+                <div class="alert alert-danger">
+                    @foreach($errors->all() as $error)
+                        {{$error}}
+                    @endforeach
+                </div>
+            @endif
             <div class="card-body">
             </div>
             <div class="table-responsive">
