@@ -4,7 +4,7 @@
 
 @section('content')
 <div class="container mt-4">
-    <h4><i class="bi bi-arrow-left-right"></i> Registrar Movimiento de Dinero</h4>
+    <h4>Registrar Movimiento de Dinero</h4>
 
     @if ($errors->any())
         <div class="alert alert-danger">
@@ -21,7 +21,7 @@
         @csrf
 
         <div class="row mb-3">
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <label for="type" class="form-label">Tipo de Movimiento</label>
                 <select name="type" id="type" class="form-select" required>
                     <option value="">Seleccione</option>
@@ -30,12 +30,23 @@
                 </select>
             </div>
 
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <label for="movement_type_id" class="form-label">Categoria Movimiento</label>
                 <div class="mb-3">
                     
                     <select name="movement_type_id" id="movement_type_id" class="form-select" required>
                         <option value="">Seleccione una opción</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <label for="cash_id" class="form-label">Afecta a</label>
+                <div class="mb-3">
+                    
+                    <select name="cash_id" id="cash_id" class="form-select" required>
+                        @foreach($cashes as $cash)
+                            <option value="{{$cash->id}}">{{$cash->name}}</option>
+                        @endforeach
                     </select>
                 </div>
             </div>

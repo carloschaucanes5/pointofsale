@@ -208,6 +208,11 @@ class MovementController extends Controller
      */
     public function create()
     {
+        $cashes = DB::table('cash as c')
+                  ->select("c.id","c.name")
+                  ->get();   
+
+
         $cash = DB::table('cash_opening')
                     ->where('users_id','=',auth()->user()->id)
                     ->where('status','=','open')
@@ -218,7 +223,7 @@ class MovementController extends Controller
         $methods = DB::table('config')
                    ->where('key','=','payment_methods')
                    ->first();
-        return view('movement.movement.create',['methods'=>explode(',',$methods->value)]);
+        return view('movement.movement.create',['methods'=>explode(',',$methods->value),'cashes'=>$cashes]);
     }
 
     public function getTypesByCategory($type)
@@ -241,6 +246,7 @@ class MovementController extends Controller
             'description' => 'nullable|string',
             'amount' => 'required|numeric|min:0.01',
             'payment_method' => 'required|string|max:50',
+            'cash_id'=>'required|numeric'
             ]);
             $validated['users_id'] = auth()->user()->id;
             if($request->post("type") == "egreso"){

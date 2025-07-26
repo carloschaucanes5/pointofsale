@@ -5,9 +5,9 @@
 @section('content')
 <div class="container mt-1">
     <div class="row">
-        <form action="{{ route('sale.cash_close') }}" method="POST" id="form_cash_close">
+        <div class="col-md-7">
+            <form action="{{ route('sale.cash_close') }}" method="POST" id="form_cash_close">
             @csrf
-        <div class="col-md-8">
             <div class="card shadow-sm">
                 <div class="card-header bg-primary text-white d-flex align-items-center">
                     <i class="bi bi-cash-coin me-2 fs-4"></i>
@@ -115,9 +115,49 @@
                     <input type="submit"  value="Cerrar Caja" class="btn btn-warning" />
                 </div>
             </div>
-
+            </form>
         </div>
-        </form>
+        <div class="col-md-5">
+            <table class="table table-bordered table-striped">
+                <tr>
+                    <th>Egresos</th><th>SubTotal</th>
+                </tr>
+                @foreach($movements as $mov)
+                    @if($mov->type == 'egreso')
+                    <tr>
+                        <td>{{$mov->description}}<small><i>({{$mov->payment_method}})</i></small></td><td>{{number_format($mov->amount,'2',',','.')}}</td>
+                    </tr>
+                    @endif
+                @endforeach
+                <tr>
+                    <th>Ingresos</th><th>SubTotal</th>
+                </tr>
+                @foreach($movements as $mov)
+                    @if($mov->type == 'ingreso')
+                    <tr>
+                        <td>{{$mov->description}}<small><i>({{$mov->payment_method}})</i></small></td><td>{{number_format($mov->amount,'2',',','.')}}</td>
+                    </tr>
+                    @endif
+                @endforeach
+            </table>
+<table class="table table-bordered table-striped">
+    <tr>
+        <th rowspan="{{ count($totals) }}">Totales Por Medio de Pago</th>
+        <td>{{ $totals[0]->payment_method ?? '' }}</td>
+        <td>{{ $totals[0]->total ?? '' }}</td>
+    </tr>
+
+    @foreach($totals as $index => $tot)
+        @if($index == 0)
+            @continue
+        @endif
+        <tr>
+            <td>{{ $tot->payment_method }}</td>
+            <td>{{ $tot->total }}</td>
+        </tr>
+    @endforeach
+</table>
+        </div>
     </div>
 </div>
 <script>

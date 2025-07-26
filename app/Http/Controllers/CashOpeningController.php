@@ -146,8 +146,117 @@ class CashOpeningController extends Controller
         //
     }
 
+    function summary_cash_close(){
+        // Consulta paginada
+        $users_id = auth()->user()->id;
+        $cash_opening_id = CashOpening::where("users_id","=",auth()->user()->id)
+             ->orderBy('created_at', 'desc')
+             ->first()->id;
+            $sql = "
+            SELECT * FROM (
+
+                SELECT 
+                    'ingreso' COLLATE utf8mb4_unicode_ci AS type,
+                    ac.opened_at  AS created_at,
+                    'Apertura de Caja' COLLATE utf8mb4_unicode_ci AS movement_type,
+                        ac.observations COLLATE utf8mb4_unicode_ci AS description,
+                        ac.start_amount as amount,
+                        'efectivo' COLLATE utf8mb4_unicode_ci AS payment_method,
+                        us.name COLLATE utf8mb4_unicode_ci AS username
+                FROM cash_opening ac
+                JOIN users us ON us.id = ac.users_id
+                WHERE us.id = ? AND ac.id = ?
+
+                UNION ALL
+
+                SELECT 
+                    m.type COLLATE utf8mb4_unicode_ci AS type,
+                    m.created_at,
+                    mt.name COLLATE utf8mb4_unicode_ci AS movement_type,
+                    m.description COLLATE utf8mb4_unicode_ci AS description,
+                    m.amount,
+                    m.payment_method COLLATE utf8mb4_unicode_ci AS payment_method,
+                    us.name COLLATE utf8mb4_unicode_ci AS username
+                FROM movement m
+                JOIN movement_types mt ON mt.id = m.movement_type_id
+                JOIN users us ON us.id = m.users_id
+                WHERE us.id = ? AND m.cash_opening_id = ? 
+                
+                UNION ALL
+                
+                SELECT 
+                    'ingreso' COLLATE utf8mb4_unicode_ci AS type,
+                    '' COLLATE utf8mb4_unicode_ci AS created_at,
+                    'Venta' COLLATE utf8mb4_unicode_ci AS movement_type,
+                    'Venta' COLLATE utf8mb4_unicode_ci AS description,
+                    SUM(p.value) AS amount,
+                    p.method COLLATE utf8mb4_unicode_ci AS payment_method,
+                    u.name COLLATE utf8mb4_unicode_ci AS username
+                FROM sale s
+                JOIN users u ON u.id = s.users_id
+                JOIN payment p ON p.sale_id = s.id
+                WHERE u.id = ? AND s.cash_opening_id = ? 
+                GROUP BY  p.method, u.name
+            ) AS union_result
+            ORDER BY created_at DESC
+        ";
+
+        // Parámetros del query
+        $params = [
+            $users_id, $cash_opening_id, 
+            $users_id, $cash_opening_id,  
+            $users_id, $cash_opening_id,      
+        ];
+        // Ejecutar consulta paginada
+        $results = collect(DB::select($sql, $params));
+
+            $sumSql = "
+            SELECT payment_method, SUM(amount) AS total
+            FROM (
+                -- Aperturas de caja
+                SELECT 
+                    'efectivo' COLLATE utf8mb4_unicode_ci AS payment_method,
+                    ac.start_amount AS amount
+                FROM cash_opening ac
+                WHERE ac.users_id = ? AND ac.id = ?
+                
+
+                UNION ALL
+
+                -- Movimientos
+                SELECT 
+                    m.payment_method COLLATE utf8mb4_unicode_ci AS payment_method,
+                    m.amount
+                FROM movement m
+                WHERE m.users_id = ? AND m.cash_opening_id = ?
+
+                UNION ALL
+
+                -- Ventas
+                SELECT 
+                    p.method COLLATE utf8mb4_unicode_ci AS payment_method,
+                    p.value AS amount
+                FROM sale s
+                JOIN payment p ON p.sale_id = s.id
+                WHERE s.users_id = ? AND s.cash_opening_id = ?
+            ) AS all_movements
+            GROUP BY payment_method
+        ";
+        $sums = DB::select($sumSql, [
+            $users_id, $cash_opening_id, 
+            $users_id, $cash_opening_id,  
+            $users_id, $cash_opening_id   
+        ]);
+
+        $payment_methods = DB::table("config")
+                    ->where('key',"=","payment_methods")
+                    ->first();
+        return view('sale.cash.close',['movements'=>$results,'totals'=>$sums, 'payment_methods'=>$payment_methods]);
+    } 
+
     public function cash_close(Request $request,$id=null)
     {
+        
         if(strcmp($request->getMethod(),"GET")==0){
             $cash = CashOpening::
              where("users_id","=",auth()->user()->id)
@@ -155,7 +264,7 @@ class CashOpeningController extends Controller
              ->orderBy('created_at', 'desc')
              ->first();
             if($cash){
-                return view('sale.cash.close');
+                return $this->summary_cash_close();
             }
             else
             {
