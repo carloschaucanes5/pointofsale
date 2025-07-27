@@ -152,7 +152,7 @@
                 showSpinner();
                 fetch("{{route('sale.cash_opening.validate_cash_opening',1)}}")
                 .then(response => response.json())
-                .then(data => {
+                .then((data) => {
                     if(data.success) {
                         window.location.href = "{{route('sale.create')}}";
                     }else{

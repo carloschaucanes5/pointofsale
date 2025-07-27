@@ -51,6 +51,16 @@
                         </div>
 
                         <div class="mb-3">
+                            <label for="cash_id" class="form-label"> Afecta a</label>
+                            <select  name="cash_id" class="form-control">
+                                @foreach($cashes as $cash)
+                                  <option value="{{$cash->id}}">{{$cash->name}}</option>  
+                                @endforeach
+                            </select>
+                        </div>
+
+
+                        <div class="mb-3">
                             <label for="observations" class="form-label">📝 Observaciones (opcional)</label>
                             <textarea name="observations" class="form-control" rows="1"></textarea>
                         </div>

@@ -73,26 +73,26 @@ INSERT INTO movement_types (code, name, type, affects_cash) VALUES
 
 DELIMITER $$
 
-CREATE TRIGGER trg_after_insert_cash_movement
-AFTER INSERT ON cash_movements
+CREATE TRIGGER trg_after_insert_movement
+AFTER INSERT ON movement
 FOR EACH ROW
 BEGIN
     DECLARE existing_balance_id INT;
 
     -- Verificar si ya existe una fila con la caja y el método de pago
     SELECT id INTO existing_balance_id
-    FROM cash_balances
-    WHERE cash_id = NEW.cash_id AND method = NEW.method
+    FROM cash_balance
+    WHERE cash_id = NEW.cash_id AND method = NEW.payment_method
     LIMIT 1;
 
     IF existing_balance_id IS NOT NULL THEN
         -- Actualiza el saldo sumando el amount (ya viene con signo correcto)
-        UPDATE cash_balances
+        UPDATE cash_balance
         SET balance = balance + NEW.amount
         WHERE id = existing_balance_id;
     ELSE
         -- Inserta nuevo registro con el amount directamente
-        INSERT INTO cash_balances (cash_id, method, balance, created_at, updated_at)
-        VALUES (NEW.cash_id, NEW.method, NEW.amount, NOW(), NOW());
+        INSERT INTO cash_balance (cash_id, method, balance, created_at, updated_at)
+        VALUES (NEW.cash_id, NEW.payment_method, NEW.amount, NOW(), NOW());
     END IF;
 END$$

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 
 use App\Models\CashOpening;
+use App\Models\CashBalance;
 use App\Models\Movement;
 use App\Models\MovementType;
 use Exception;
@@ -48,20 +49,6 @@ class MovementController extends Controller
                 SELECT * FROM (
 
                     SELECT 
-                        'ingreso' COLLATE utf8mb4_unicode_ci AS type,
-                        ac.opened_at  AS created_at,
-                        'Apertura de Caja' COLLATE utf8mb4_unicode_ci AS movement_type,
-                         ac.observations COLLATE utf8mb4_unicode_ci AS description,
-                         ac.start_amount as amount,
-                         'efectivo' COLLATE utf8mb4_unicode_ci AS payment_method,
-                         us.name COLLATE utf8mb4_unicode_ci AS username
-                    FROM cash_opening ac
-                    JOIN users us ON us.id = ac.users_id
-                    WHERE ac.opened_at >= ? AND ac.opened_at <= ? AND 'ingreso' LIKE ?
-
-                    UNION ALL
-
-                    SELECT 
                         m.type COLLATE utf8mb4_unicode_ci AS type,
                         m.created_at,
                         mt.name COLLATE utf8mb4_unicode_ci AS movement_type,
@@ -96,7 +83,6 @@ class MovementController extends Controller
 
             // Parámetros del query
             $params = [
-                $from, $to, "%$type%",
                 $from, $to, "%$type%", // para movement
                 $from, $to, "%$type%"            // para sale
             ];
@@ -109,13 +95,7 @@ class MovementController extends Controller
             // Consulta para contar total de resultados sin LIMIT
             $countSql = "
                 SELECT COUNT(*) AS total FROM (
-                    
-                    SELECT ac.created_at
-                    FROM cash_opening ac
-                    WHERE ac.created_at >= ? AND ac.created_at <= ? AND 'ingreso' LIKE  ?
-
-                    UNION ALL
-
+                
                     SELECT m.created_at
                     FROM movement m
                     WHERE m.created_at >= ? AND m.created_at <= ? AND m.type LIKE ?
@@ -130,22 +110,12 @@ class MovementController extends Controller
             ";
             $total = DB::selectOne($countSql, [
                 $from, $to, "%$type%",
-                $from, $to, "%$type%",
                 $from, $to, "%$type%"
             ])->total;
 
             $sumSql = "
                 SELECT payment_method, SUM(amount) AS total
                 FROM (
-                    -- Aperturas de caja
-                    SELECT 
-                        'efectivo' COLLATE utf8mb4_unicode_ci AS payment_method,
-                        ac.start_amount AS amount
-                    FROM cash_opening ac
-                    WHERE ac.created_at BETWEEN ? AND ?
-                    AND 'ingreso' like ?
-
-                    UNION ALL
 
                     -- Movimientos
                     SELECT 
@@ -169,7 +139,6 @@ class MovementController extends Controller
                 GROUP BY payment_method
             ";
             $sums = DB::select($sumSql, [
-                $from, $to, '%'.$type.'%',   // cash_opening
                 $from, $to, '%'.$type.'%',   // movement
                 $from, $to, '%'.$type.'%'    // sale
             ]);
@@ -245,26 +214,40 @@ class MovementController extends Controller
             'movement_type_id' => 'required|string|min:0',
             'description' => 'nullable|string',
             'amount' => 'required|numeric|min:0.01',
-            'payment_method' => 'required|string|max:50',
-            'cash_id'=>'required|numeric'
+            'payment_method' => 'required|string|max:50'
             ]);
             $validated['users_id'] = auth()->user()->id;
+            $amount = floatval($request->post("amount"));
             if($request->post("type") == "egreso"){
-                $validated['amount'] = floatval($request->post("amount") * (-1));
+                 $amount = $amount * (-1);
             }
-            
-            $cash = DB::table('cash_opening')
+            $validated['amount'] = $amount;
+            $cash_opening = DB::table('cash_opening')
                     ->where('users_id','=',auth()->user()->id)
                     ->where('status','=','open')
                     ->first();
-            if($cash){
-                $validated['cash_opening_id'] = $cash->id;
+            if($cash_opening){
+                $validated['cash_opening_id'] = $cash_opening->id;
+
                 $movement = Movement::create($validated);
-                /*return response()->json([
-                    'success' => true,
-                    'message' => 'Movimiento registrado correctamente',
-                    'data' => $movement
-                ]);*/
+
+            $cash_balance = CashBalance::where('cash_id','=',$cash_opening->cash_id)
+                            ->where("method","=",$validated['payment_method'])
+                            ->first();
+            if($cash_balance){
+                $cash_balance->balance = $cash_balance->balance + $amount;
+                $cash_balance->save();
+            }
+            else
+            {
+                $cash_balance1 = new CashBalance();
+                $cash_balance1->cash_id = $cash_opening->cash_id;
+                $cash_balance1->method = $validated['payment_method'];
+                $cash_balance1->balance = $amount;
+                $cash_balance1->save();
+            }
+
+
                 return redirect()->route('movement.index');
             }
             else

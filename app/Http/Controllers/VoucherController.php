@@ -6,6 +6,7 @@ use App\Http\Requests\VoucherFormRequest;
 use App\Models\Movement;
 use App\Models\Voucher;
 use App\Models\Supplier;
+use App\Models\CashBalance;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redirect;
@@ -105,11 +106,11 @@ if ($request) {
             $voucher->status = 1;
             $voucher->save();
             
-            $cash = DB::table('cash_opening')
+            $cash_opening = DB::table('cash_opening')
                     ->where('users_id','=',auth()->user()->id)
                     ->where('status','=','open')
                     ->first();
-            if(!$cash){
+            if(!$cash_opening){
                 DB::rollBack();
                 return response()->json([
                         'success' => false,
@@ -119,16 +120,33 @@ if ($request) {
             }
             $methods = json_decode($request->get("methods"));
             foreach($methods as $met){
+                $amount = floatval($met->value) * (-1);
                 $movement = new Movement();
                 $movement->users_id = auth()->user()->id;
-                $movement->cash_opening_id = $cash->id;
+                $movement->cash_opening_id = $cash_opening->id;
                 $movement->type="egreso";
                 $movement->movement_type_id = 6;
                 $movement->description = explode("-",$request->get('supplier_id'))[1]."(".$request->get('voucher_number').")";
-                $movement->amount = $met->value;
+                $movement->amount = $amount;
                 $movement->payment_method = $met->method;
                 $movement->table_identifier = "voucher-".$voucher->id;
                 $movement->save();
+
+                $cash_balance = CashBalance::where('cash_id','=',$cash_opening->cash_id)
+                            ->where("method","=",$met->method)
+                            ->first();
+                    if($cash_balance){
+                        $cash_balance->balance = $cash_balance->balance + $amount;
+                        $cash_balance->save();
+                    }
+                    else
+                    {
+                        $cash_balance1 = new CashBalance();
+                        $cash_balance1->cash_id = $cash_opening->cash_id;
+                        $cash_balance1->method = $met->method;
+                        $cash_balance1->balance = $amount;
+                        $cash_balance1->save();
+                    }
             }
 
             //registrar movimientos de caja

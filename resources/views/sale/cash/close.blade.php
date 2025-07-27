@@ -120,6 +120,9 @@
         <div class="col-md-5">
             <table class="table table-bordered table-striped">
                 <tr>
+                    <th>Apertura de Caja({{$cash_opening->created_at}})</th><td>{{number_format($cash_opening->start_amount,"2",",",".")}}</td>
+                </tr>
+                <tr>
                     <th>Egresos</th><th>SubTotal</th>
                 </tr>
                 @foreach($movements as $mov)

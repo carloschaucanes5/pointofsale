@@ -7,6 +7,7 @@ use App\Models\IncomeDetail;
 use App\Models\IncomeDetailHistorical;
 use App\Models\Payment;
 use App\Models\ReturnSale;
+use App\Models\CashBalance;
 use Exception;
 use Symfony\Component\Console\Input\Input;
 use Illuminate\Support\Carbon;
@@ -242,6 +243,23 @@ class SaleController extends Controller
                     $payment->value = $pay->value;
                     $payment->status = 1;
                     $payment->save();
+
+                     $cash_balance = CashBalance::where('cash_id','=',$cash_opened->cash_id)
+                            ->where("method","=",$pay->method)
+                            ->first();
+                    if($cash_balance){
+                        $cash_balance->balance = $cash_balance->balance + floatval($pay->value);
+                        $cash_balance->save();
+                    }
+                    else
+                    {
+                        $cash_balance1 = new CashBalance();
+                        $cash_balance1->cash_id = $cash_opened->cash_id;
+                        $cash_balance1->method = $pay->method;
+                        $cash_balance1->balance = floatval($pay->value);
+                        $cash_balance1->save();
+                    }
+
                 }
 
                 DB::commit();
