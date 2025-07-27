@@ -112,6 +112,11 @@
                             <hr/>
                             <div class="row form-group" >
                                     <table id="table_payments" class=" table table-hover mb-1 table-sm table-striped table-hover table-bordered align-middle">
+                                        <colgroup>
+                                                <col>
+                                                <col style="display: none">
+                                                <col>
+                                        </colgroup>
                                         <thead>
                                             <th>Medio</th><th>Valor</th><th></th>
                                         </thead>
@@ -690,39 +695,81 @@
         }
         //funcion para eliminar un medio de pago
         function deletePayment(ele){
+            /*
             const tr = ele.closest("tr");
-            tr.remove();
+            tr.remove();*/
+            const table_payments = document.querySelector("#table_payments tbody");
+            table_payments.innerHTML = "";
             updateTotalChange();
         } 
         //funcion que me permita adicionar un nuevo metodo de pago
         function add_payment(){
-            const method = document.getElementById('payment_method').value;
-            const value = document.getElementById('payment_value').value;
-            if(value.trim()!="" && value!=0){
-                const table_payments = document.querySelector("#table_payments tbody");
-                const tr = document.createElement("tr");
-                const td1 = document.createElement("td");
-                td1.textContent = method;
-                const td2 = document.createElement("td");
-                td2.textContent = value;
-                const td3 = document.createElement("td");
-                td3.innerHTML = `<a href="#" onclick="deletePayment(this)" class="text-danger"><i class="bi bi-trash"></i></a>`;
-                tr.appendChild(td1);
-                tr.appendChild(td2);
-                tr.appendChild(td3);
-                table_payments.appendChild(tr);
-                updateTotalChange();
-                document.getElementById('payment_method').value="{{$payment_methods[0]}}";
-                document.getElementById('payment_value').value=0;
+            const value = parseFloat(document.getElementById('payment_value').value);
+            const sale_total = parseFloat(document.getElementById('sale_total').value);
+            if(value=="" && value == 0){
+                Swal.fire({"icon":"warning",'text':"valor inválido"});
+                return;
             }
-            else
-            {
-                Swal.fire({
-                    title:"Mensaje",
-                    text:"Valor inválido",
-                    icon:"warning"
-                })
-            }          
+
+            const method = document.getElementById('payment_method').value;
+            const table_payments = document.querySelector("#table_payments tbody");
+            const tr_payments = document.querySelectorAll("#table_payments tbody tr");
+
+            const tr = document.createElement("tr");
+            const td1 = document.createElement("td");
+            td1.textContent = method;
+            const td2 = document.createElement("td");
+            td2.textContent = value;
+            const td3 = document.createElement("td");
+            td3.innerHTML = `<a href="#" onclick="deletePayment(this)" class="text-danger"><i class="bi bi-trash"></i></a>`;
+            if(tr_payments.length == 0){
+                if(value >= sale_total){
+                    const td4 = document.createElement("td");
+                    td4.textContent = sale_total;
+                    tr.appendChild(td1);
+                    tr.appendChild(td2);
+                    tr.appendChild(td3);
+                    tr.appendChild(td4);
+                    table_payments.appendChild(tr);
+                }else{
+                    const td4 = document.createElement("td");
+                    td4.textContent = value;
+                    tr.appendChild(td1);
+                    tr.appendChild(td2);
+                    tr.appendChild(td3);
+                    tr.appendChild(td4);
+                    table_payments.appendChild(tr);  
+                }
+            }else{
+                let sum = 0;
+                for(let i = 0; i<tr_payments.length; i++){
+                    $pay = parseFloat(tr_payments[i].children[1].textContent);
+                    sum = sum + $pay;
+                }
+                if((sum + value) <= sale_total){
+                    const td4 = document.createElement("td");
+                    td4.textContent = value;
+                    tr.appendChild(td1);
+                    tr.appendChild(td2);
+                    tr.appendChild(td3);
+                    tr.appendChild(td4);
+                    table_payments.appendChild(tr);
+                }else{
+                    const td4 = document.createElement("td");
+                    td4.textContent = sale_total-sum;
+                    tr.appendChild(td1);
+                    tr.appendChild(td2);
+                    tr.appendChild(td3);
+                    tr.appendChild(td4);
+                    table_payments.appendChild(tr);
+                }
+                
+            }
+
+            updateTotalChange();
+            document.getElementById('payment_method').value="{{$payment_methods[0]}}";
+            document.getElementById('payment_value').value=0;
+  
         }
         //Actualizar el total a pagar y el cambio
 function updateTotalChange() {
