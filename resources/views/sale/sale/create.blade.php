@@ -112,13 +112,8 @@
                             <hr/>
                             <div class="row form-group" >
                                     <table id="table_payments" class=" table table-hover mb-1 table-sm table-striped table-hover table-bordered align-middle">
-                                        <colgroup>
-                                                <col>
-                                                <col style="display: none">
-                                                <col>
-                                        </colgroup>
                                         <thead>
-                                            <th>Medio</th><th>Valor</th><th></th>
+                                            <th>Medio</th><th>Paga</th><th></th><th>Valor</th>
                                         </thead>
                                         <tbody>
                                         </tbody>
@@ -636,6 +631,7 @@
                 <td>{{$payment_methods[0]}}</td>
                 <td>${total.toFixed(2)}</td>
                 <td><a href="#" onclick="deletePayment(this)" class="text-danger"><i class="bi bi-trash"></i></a></td>
+                <td>${total.toFixed(2)}</td>
                 `;
                 const totalPayment = document.querySelector('#totalPayment');
                 totalPayment.textContent = formatCurrency.format(total.toFixed(0));
@@ -835,7 +831,7 @@ async function toinvoice(){
             let methods = [];
             let cc = 0;
             for (let i = 0; i < table_payments.length; i++) {
-                let valorPayment = parseFloat(table_payments[i].children[1].textContent);
+                let valorPayment = parseFloat(table_payments[i].children[3].textContent);
                 let methodPayment = table_payments[i].children[0].textContent;
                 if(methodPayment=="credito")cc++;
                 const obj = {method:methodPayment,value:valorPayment};
