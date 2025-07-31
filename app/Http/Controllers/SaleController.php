@@ -422,7 +422,7 @@ class SaleController extends Controller
                 $movement->cash_opening_id = $cash_opening->id;
                 $movement->type = "ingreso";
                 $movement->movement_type_id = 3;
-                $movement->description = "Pago a crédito de la venta con id: POS".$sale_id;
+                $movement->description = "Pago de venta a credito (Venta No:POS".$sale_id.")";
                 $movement->amount = $request->post("value");
                 $movement->users_id = auth()->user()->id;
                 $movement->payment_method = $request->post("method");
@@ -433,6 +433,13 @@ class SaleController extends Controller
                 $sale->payment_form = 'contado';
                 $sale->update();
 
+                $cash_balance = CashBalance::where('cash_id','=',$cash_opening->cash_id)
+                            ->where("method","=",'credito')
+                            ->first();
+                if($cash_balance){
+                    $cash_balance->balance = $cash_balance->balance - floatval($request->post("value"));
+                    $cash_balance->save();
+                }
 
                 DB::commit();
                 return response()->json(

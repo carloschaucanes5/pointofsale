@@ -72,7 +72,7 @@
                                 @foreach($openings as $open)
                                 <tr>
                                     <td>
-                                        <a href="{{ route('cash_opening.edit', $open->id) }}" class="btn btn-warning btn-sm"><i class="bi bi-eye"></i></a>
+                                        <a href="{{ route('cash_opening.show', $open->id) }}" class="btn btn-warning btn-sm"><i class="bi bi-eye"></i></a>
                                     </td>
                                     <td>{{ $open->cashbox_name }}</td>
                                     <td>${{number_format($open->start_amount, 0, ',', '.')}}</td>
@@ -86,9 +86,13 @@
                                             @endif
                                         </span>
                                     </td>
-                                    <td>{{ \Carbon\Carbon::parse($open->opened_at)->format('d/m/Y H:i') }}</td>
+                                    <td>{{ \Carbon\Carbon::parse($open->opened_at)->format('d/m/Y h:i A') }}</td>
                                     <td>${{number_format($open->end_amount,0,',','.')}}</td>
-                                    <td>{{$open->closed_at?$open->closed_at:"-"}}</td>
+                                    @if($open->closed_at)
+                                    <td>{{ \Carbon\Carbon::parse($open->closed_at)->format('d/m/Y h:i A') }}</td>
+                                    @else
+                                    <td>-</td>
+                                    @endif       
                                     <td>{{ $open->name  }}</td>
                                 </tr>
                                 @endforeach

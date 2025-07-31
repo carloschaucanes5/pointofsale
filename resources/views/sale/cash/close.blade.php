@@ -166,7 +166,7 @@
                     <th colspan="5" ></th>
                 </tr>
                 <tr>
-                    <td>{{$cash_opening->cash_name}} Anterior</td>
+                    <td>{{$cash_opening->cash_name}} Inicial</td>
                 @foreach($payment_methods as $method)
                     @php
                         $b = 0;
