@@ -25,7 +25,8 @@ class CashOpening extends Model
         'observations',
         'status',
         'summary',
-        'cash_id'
+        'cash_id',
+        'last_balances'
     ];
 
     protected $guarded = [];

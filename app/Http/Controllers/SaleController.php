@@ -46,6 +46,7 @@ class SaleController extends Controller
                             date($start_date." 00:00:00"),
                             date($end_date." 23:59:59")
                        ])
+                       
                        ->select("sal.id","sal.change","sal.created_at","pe.name as customer_name","pe.address as customer_address","pe.phone as customer_phone","pe.email as customer_email","pe.document_type","pe.document_number","sal.tax","sal.sale_total","u.name as user_name","sal.payment_form")
                        ->orderBy('sal.id','desc')
                        ->paginate(6)
@@ -61,14 +62,17 @@ class SaleController extends Controller
                     ->join('product as pr', 'pr.id', '=', 'idh.product_id') 
                     ->join('person as pe', 'pe.id', '=', 'sal.customer_id')
                     ->join('users as u', 'u.id', '=', 'sal.users_id')
-                    ->where(function($query) use ($searchText) {
-                        $query->where('pr.name', 'like', '%' . $searchText . '%')
-                            ->orWhere('pr.code', 'like', '%' . $searchText . '%');
-                    })
                     ->whereBetween('sal.created_at', [
                         $start_date . ' 00:00:00',
                         $end_date . ' 23:59:59'
                     ])
+                    ->where(function($query) use ($searchText) {
+                        $query->where('pr.name', 'like', '%' . $searchText . '%')
+                            ->orWhere('pr.code', 'like', '%' . $searchText . '%')
+                            ->orWhere('u.name','like','%'.$searchText."%")
+                            ->orWhere('pe.name','like','%'.$searchText.'%')
+                            ->orWhere('sal.payment_form','like','%'.$searchText.'%');
+                    })
                     ->select(
                         'sal.id',
                         'sal.change',
@@ -376,6 +380,11 @@ class SaleController extends Controller
                         ->select(DB::raw("SUM(rs.return_total) as sum_return_total" ))
                         ->where("rs.sale_id","=",$sale_id)
                         ->first();
+
+        $payment_methods = DB::table('payment as p')
+            ->select('p.method', 'p.value', 'p.id','p.sale_id')
+            ->where('p.sale_id', '=', $sale_id)
+            ->get();
                         
         
         return view('sale.sale.show', [
@@ -383,7 +392,8 @@ class SaleController extends Controller
             'details' => $details,
             'total'=>$total,
             'return_sales'=>$return_sales,
-            'sum_return_total'=>$return_total->sum_return_total
+            'sum_return_total'=>$return_total->sum_return_total,
+            'payment_methods' => $payment_methods
         ]);
     }
 

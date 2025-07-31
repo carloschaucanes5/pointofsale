@@ -76,6 +76,11 @@ class CashOpeningController extends Controller
                 'cash_id' => 'required|numeric',
                 'observations' => 'nullable|string',
             ]);
+            
+            $last_balances = DB::table("cash_balance")
+                             ->where("cash_id","=",$request->cash_id)
+                             ->get();
+
             $cash_opening = new CashOpening();
             $cash_opening->users_id = auth()->user()->id;
             $cash_opening->start_amount = $request->start_amount;
@@ -86,6 +91,7 @@ class CashOpeningController extends Controller
             $cash_opening->observations = $request->observations;
             $cash_opening->cash_id = $request->cash_id;
             $cash_opening->status = 'open';
+            $cash_opening->last_balances = json_encode($last_balances);
             $cash_opening->save();
 
             return redirect()->route('sale.create');
@@ -158,9 +164,13 @@ class CashOpeningController extends Controller
     function summary_cash_close(){
         // Consulta paginada
         $users_id = auth()->user()->id;
-        $cash_opened = CashOpening::where("users_id","=",auth()->user()->id)
+        $cash_opened = DB::table('cash_opening as co')
+              ->join('cash as c','c.id','=','co.cash_id')
+              ->where("co.users_id","=",auth()->user()->id)
+              ->select("c.name as cash_name","co.id","co.users_id","co.start_amount","co.opened_at","co.observations","co.status","co.created_at","co.cash_id","co.last_balances")
              ->orderBy('created_at', 'desc')
              ->first();
+        $last_balances = json_decode($cash_opened->last_balances);
 
         $cash_opening_id =   $cash_opened->id;
             $sql = "
@@ -205,12 +215,9 @@ class CashOpeningController extends Controller
         ];
         // Ejecutar consulta paginada
         $results = collect(DB::select($sql, $params));
-
             $sumSql = "
             SELECT payment_method, SUM(amount) AS total
             FROM (
-
-
                 -- Movimientos
                 SELECT 
                     m.payment_method COLLATE utf8mb4_unicode_ci AS payment_method,
@@ -238,7 +245,18 @@ class CashOpeningController extends Controller
         $payment_methods = DB::table("config")
                     ->where('key',"=","payment_methods")
                     ->first();
-        return view('sale.cash.close',['movements'=>$results,'totals'=>$sums, 'payment_methods'=>$payment_methods,'cash_opening'=>$cash_opened]);
+
+        $current_cash_balance = CashBalance::where("cash_id","=",$cash_opened->cash_id)
+                        ->get();
+
+        return view('sale.cash.close',
+        ['movements'=>$results,
+        'totals'=>$sums,
+        'payment_methods'=>explode(",",$payment_methods->value),
+        'cash_opening'=>$cash_opened,
+        'last_balances'=>$last_balances,
+        'current_balances'=>$current_cash_balance
+    ]);
     } 
 
     public function cash_close(Request $request,$id=null)
@@ -272,7 +290,7 @@ class CashOpeningController extends Controller
                 $cash->summary = json_encode($request->only(['m50','m100','m200','m500','m1000','b2000','b5000','b10000','b20000','b50000','b100000']));
                 $cash->status = "close";
                 $cash->closed_at = date('Y-m-d H:i:s');
-                $cash->end_amount = $request->post("total_close_value");
+                $cash->end_amount = $request->post("total_close_amount");
                 $cash->update();
                 return response()->redirectTo("sale/cash_opening");
              }

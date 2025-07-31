@@ -822,7 +822,7 @@ function deleteItem(item){
 }
 
 async function toinvoice(){
-            
+
             let payment_form = document.getElementById("payment_form").value;            
             
             let form = document.getElementById('form-sale');

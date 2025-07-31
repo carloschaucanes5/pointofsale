@@ -434,6 +434,7 @@
                 <!--begin::Container-->
                 <div class="container-fluid">
                     @yield('content')
+                    @yield('content-modal')
                 </div>
                 <!--end::Container-->
             </div>

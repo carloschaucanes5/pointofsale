@@ -1,20 +1,25 @@
 @extends('layouts.admin')
 
 @section('title', 'Mostrar Ingreso')
-
+<style>
+  .no-padding td,
+  .no-padding th {
+    padding: 0 !important;
+  }
+</style>
 @section('content')
 <div class="container mt-1">
     <div class="row">
-        <div class="col-md-7">
-            <form action="{{ route('sale.cash_close') }}" method="POST" id="form_cash_close">
+        <div class="col-md-5">
+            <form action="{{ route('sale.cash_close') }}"  method="POST" id="form_cash_close">
             @csrf
             <div class="card shadow-sm">
                 <div class="card-header bg-primary text-white d-flex align-items-center">
-                    <i class="bi bi-cash-coin me-2 fs-4"></i>
-                    <h5 class="mb-0">Cerrar Caja</h5>
+                    <i class="bi bi-cash-coin me-2 fs-6"></i>
+                    <h5 class="mb-0">Arqueo de Caja</h5>
                 </div>
 
-                <div class="card-body">
+                <div class="card-body fs-6">
                     {{-- Mostrar errores de validación --}}
                     @if ($errors->any())
                         <div class="alert alert-danger">
@@ -26,8 +31,8 @@
                         </div>
                     @endif
                     <div class="row">
-                        <div class="col-md-6 bg-light">
-                            <div class="row ">
+                        <div class="col-md-12 bg-light">
+                            <div class="row">
                                 <h3>MONEDAS</h3>
                                 <div class="col-md-4">
                                     <div class="form-group">
@@ -64,7 +69,9 @@
                                 <div class="col-md-4"></div>
                             </div>
                         </div>
-                        <div class="col-md-6">
+                    </div>
+                    <div class="row">    
+                        <div class="col-md-12">
                             <div class="row">
                                 <h3>BILLETES</h3>
                                 <div class="col-md-4">
@@ -109,62 +116,191 @@
                         </div>
                     </div>
                 </div>
-                <input type="hidden" id="total_close_value" name="total_close_value"/>
-                <div class="card-footer d-flex justify-content-between align-items-center">
-                    <b>TOTAL: $<span id="total_close">0</span></b>
-                    <input type="submit"  value="Cerrar Caja" class="btn btn-warning" />
+                <div class="card-footer ">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <b>Total</b><br/>
+                            <span id="total_close">$10.000</span>
+                            <input type="hidden" id="total_close_amount" name="total_close_amount"/>
+                        </div>
+                        <div class="col-md-4">
+                             <b>Efectivo Turno:</b><br/>
+                            <span id="total_close">
+                              @php
+                                $collection = collect($totals);
+                                $assoc = $collection->keyBy('payment_method');
+                                $total_cash = $assoc['efectivo']->total + $cash_opening->start_amount;
+                              @endphp
+                              ${{number_format($total_cash,0,',','.')}}  
+                            </span>
+                            <input type="hidden" id="total_cash" name="total_cash" value="{{$assoc['efectivo']->total}}"/>
+                        </div>
+                        <div class="col-md-4">
+                            <b id="text_incomplete" ></b><br/>
+                            <span id="amount_incomplete" ></span>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12 d-flex justify-content-start">
+                            <br/><br/>
+                            <input type="submit"  value="Cerrar Caja" class="btn btn-sm btn-warning"/>
+                        </div>
+                    </div>
                 </div>
             </div>
             </form>
         </div>
-        <div class="col-md-5">
-            <table class="table table-bordered table-striped">
-                <tr>
-                    <th>Apertura de Caja({{$cash_opening->created_at}})</th><td>{{number_format($cash_opening->start_amount,"2",",",".")}}</td>
-                </tr>
-                <tr>
-                    <th>Egresos</th><th>SubTotal</th>
-                </tr>
-                @foreach($movements as $mov)
-                    @if($mov->type == 'egreso')
-                    <tr>
-                        <td>{{$mov->description}}<small><i>({{$mov->payment_method}})</i></small></td><td>{{number_format($mov->amount,'2',',','.')}}</td>
-                    </tr>
-                    @endif
-                @endforeach
-                <tr>
-                    <th>Ingresos</th><th>SubTotal</th>
-                </tr>
-                @foreach($movements as $mov)
-                    @if($mov->type == 'ingreso')
-                    <tr>
-                        <td>{{$mov->description}}<small><i>({{$mov->payment_method}})</i></small></td><td>{{number_format($mov->amount,'2',',','.')}}</td>
-                    </tr>
-                    @endif
-                @endforeach
-            </table>
-<table class="table table-bordered table-striped">
-    <tr>
-        <th rowspan="{{ count($totals) }}">Totales Por Medio de Pago</th>
-        <td>{{ $totals[0]->payment_method ?? '' }}</td>
-        <td>{{ $totals[0]->total ?? '' }}</td>
-    </tr>
+        <div class="col-md-7">
 
-    @foreach($totals as $index => $tot)
-        @if($index == 0)
-            @continue
-        @endif
-        <tr>
-            <td>{{ $tot->payment_method }}</td>
-            <td>{{ $tot->total }}</td>
-        </tr>
-    @endforeach
-</table>
+
+            <table class="table table-bordered table-striped fs-6 no-padding">
+                <tbody>
+                <tr>
+                    <th>Descripción</th>
+                    @foreach($payment_methods as $method)
+                        <th>{{$method}}</th>
+                    @endforeach
+                </tr>
+
+                <tr>
+                    <th colspan="5" ></th>
+                </tr>
+                <tr>
+                    <td>{{$cash_opening->cash_name}} Anterior</td>
+                @foreach($payment_methods as $method)
+                    @php
+                        $b = 0;
+                        $pay = 0;
+                    @endphp
+                    @foreach($last_balances as $balance)
+                        @if($balance->method == $method)
+                        @php 
+                            $b = 1;
+                            $pay = $balance->balance;
+                        @endphp
+                        @endif
+                    @endforeach
+                    @if($b==1)
+                        <td>{{number_format($pay,0,',','.')}}</td>
+                    @else
+                        <td></td>
+                    @endif
+                @endforeach
+                </tr> 
+                <tr><td class="text-center" colspan="4">------------- o -------------</td><td></td><td></td></tr>
+                <tr>
+                    @foreach($last_balances as $balance)
+                        
+                    @endforeach
+                </tr>
+                <tr>
+                    <td>Saldo Apertura({{$cash_opening->created_at}})</td>
+                    <td>{{number_format($cash_opening->start_amount,"2",",",".")}}</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                @foreach($movements as $mov)
+                @php
+                    $bg_cell = "text-success";
+                    if($mov->type == "egreso"){
+                        $bg_cell = "text-danger";
+                    }
+                    
+                @endphp
+                <tr>
+                    <td>{{$mov->description}}</td>
+                    @foreach($payment_methods as $method)
+                        @if($method == $mov->payment_method)
+                            <td class="{{$bg_cell}}">{{number_format($mov->amount,2,',','.')}}</td>
+                        @else
+                            <td></td>
+                        @endif
+                    @endforeach 
+                </tr>
+                @endforeach
+                <tr>
+                <th>Totales Turno</th>
+                @foreach($payment_methods as $method)
+                    @php
+                        $b = 0;
+                        $pay = 0;
+                        $method_selected = "";
+                    @endphp
+                    @foreach($totals as $tot)
+                        @if($tot->payment_method == $method)
+                        @php 
+                            $b = 1;
+                            $method_selected = $method;
+                            $pay = $method=='efectivo'?($tot->total + $cash_opening->start_amount):$tot->total;
+                        @endphp
+                        @endif
+                    @endforeach
+                    @if($b==1)
+                        @if($method == 'efectivo')
+                            <td class="bg-warning">{{number_format($pay,0,',','.')}}</td>
+                        @else
+                            <td>{{number_format($pay,0,',','.')}}</td>
+                        @endif
+                    @else
+                        <td></td>
+                    @endif
+                @endforeach
+                </tr>
+                <tr><td class="text-center" colspan="4">------------- o -------------</td><td></td><td></td></tr>
+                <tr>
+                    <td>{{$cash_opening->cash_name}} Actual</td>
+                @foreach($payment_methods as $method)
+                    @php
+                        $b = 0;
+                        $pay = 0;
+                    @endphp
+                    @foreach($current_balances as $balance)
+                        @if($balance->method == $method)
+                        @php 
+                            $b = 1;
+                            $pay = $balance->balance;
+                        @endphp
+                        @endif
+                    @endforeach
+                    @if($b==1)
+                        <td>{{number_format($pay,0,',','.')}}</td>
+                    @else
+                        <td></td>
+                    @endif
+                @endforeach
+                </tr> 
+
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
 <script>
     //necesito una funcion que me cuente el valor en plata y que me calcule el valor automaticamente
+    document.addEventListener('DOMContentLoaded',function(){
+       
+        const form = document.getElementById('form_cash_close');
+        form.addEventListener('submit',function(e){
+            e.preventDefault();
+            let spare = parseFloat(document.getElementById('amount_incomplete').textContent);
+            if(spare > 0){
+                Swal.fire({
+                    'icon':'warning',
+                    'text':'Le sobra ' + spare
+                });
+            }else if(spare < 0){
+                Swal.fire({
+                    'icon':'warning',
+                    'text':'Le falta ' + spare
+                });
+            }else{
+                this.submit();
+            }
+        });
+    });
+
+
     function calcularTotal() {
         // Definir los valores de cada denominación
         const denominaciones = {
@@ -188,13 +324,30 @@
             const cantidad = parseInt(document.getElementById(id).value) || 0;
             total += cantidad * valor;
         }
-
+        
+        let total_movement_cash = parseFloat(document.getElementById('total_cash').value);
+        let total_cash =  total_movement_cash + parseFloat({{($cash_opening->start_amount)}});
         // Mostrar el total en el elemento con id="total_close"
         document.getElementById('total_close').textContent = total.toLocaleString();
-        document.getElementById('total_close_value').value = total;
+        document.getElementById('total_close_amount').value = total;
+        let incomplete = total-total_cash;
+        let text_incomplete = document.getElementById('text_incomplete');
+        let amount_incomplete = document.getElementById('amount_incomplete');
+        text_incomplete.className = "";
+        if(incomplete < 0){
+            text_incomplete.textContent = 'falta';
+            text_incomplete.classList.add('text-danger');
+        }else if(incomplete > 0){
+            text_incomplete.textContent = "Sobra";
+            text_incomplete.classList.add('text-warning');
+        }else{
+            text_incomplete.textContent = "Completo";
+            text_incomplete.classList.add('text-success');
+        }
+        amount_incomplete.textContent = incomplete; 
     }
 
-    // Agregar eventos a todos los inputs para recalcular automáticamente
+    // Agregar eventos a todos los inputs para recalcular automáticamentes
     document.addEventListener('DOMContentLoaded', function() {
         const ids = [
             'm50', 'm100', 'm200', 'm500', 'm1000',

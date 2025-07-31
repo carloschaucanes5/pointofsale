@@ -74,7 +74,7 @@
                                         <td>{{$det->form_sale}}</td>
                                        <td>
                                             @if($det->quantity > 0)
-                                            <a  class="btn btn-warning btn-sm" title="Efectuar Devolución" data-bs-toggle="modal" data-bs-target="#modal-return-{{$det->income_detail_id}}"><i class="bi bi-arrow-return-left"></i></a> 
+                                            <a  class="btn btn-warning btn-sm" title="Efectuar Devolución" data-bs-toggle="modal" data-bs-target="#modal-return-{{$det->income_detail_id}}"><i class="bi bi-arrow-return-left">Devolver</i></a> 
                                             @endif
                                         </td> 
                                     </tr>
@@ -135,6 +135,46 @@
                     </div>
                 </div>
         </div>
+
+        <div class="card card-primary">
+            <div class="card-header">
+                <h3 class="card-title">Metodos de Pago</h3>
+            </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-12 table-responsive">
+                            <table class="table table-hover mb-1" id="detalles">
+                                <thead >
+                                    <tr>
+                                        <th>Metodo</th>
+                                        <th>valor</th>
+                                        <th>opciones</th>
+                                    </tr>
+                                </thead>
+                                <tfoot>
+                                    <th>Total:</th>
+                                    <th id="total">$ {{number_format($total->sale_total,0)}}</th>
+                                    
+                                </tfoot>
+                                <tbody>
+                                    
+                                  @foreach($payment_methods as $met)
+                                    <tr>
+                                        <td>{{$met->method}}</td>
+                                        <td>{{$met->value}}</td>
+                                        @if($met->method == 'credito')
+                                            <td><button type="button" class="btn btn-success btn-sm" onclick="pay_credit({{$sale->id}},{{$met->id}},{{$met->value}})"  data-bs-toggle="#"><i class="bi bi-credit-card" ></i>Pagar</button></td>
+                                        @else
+                                            <td></td>
+                                        @endif
+                                    </tr>
+                                  @endforeach
+                                </tbody> 
+                            </table>
+                        </div>
+                    </div>
+                </div>
+        </div>
     </div>
     @if ($errors->any())
     <div class="alert alert-danger">
@@ -147,4 +187,47 @@
    @endif
 
 @endsection
+
+<script>
+    function pay_credit(sale_id, payment_id, value) {
+        Swal.fire({
+            title: 'Confirmar Pago',
+            text: "¿Está seguro de que desea pagar el crédito?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Sí, pagar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: "{{ route('sale.pay_credit') }}",
+                    type: "POST",
+                    data: {
+                        sale_id: sale_id,
+                        payment_id: payment_id,
+                        value: value,
+                        _token: '{{ csrf_token() }}'
+                    },
+                    success: function(response) {
+                        Swal.fire(
+                            'Pagado!',
+                            'El pago se ha realizado correctamente.',
+                            'success'
+                        ).then(() => {
+                            location.reload();
+                        });
+                    },
+                    error: function(xhr) {
+                        Swal.fire(
+                            'Error!',
+                            'No se pudo realizar el pago. Inténtelo de nuevo.',
+                            'error'
+                        );
+                    }
+                });
+            }
+        });
+    }
+<script>
 

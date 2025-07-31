@@ -81,7 +81,8 @@
                         @forEach($sales as $sale)
                         <tr>
                             <td>
-                                <button type="button" class="btn btn-primary btn-sm" onclick="view_invoice({{$sale->id}})" data-bs-toggle="#"><i class="bi bi-eye"></i></button>
+                                <button type="button" class="btn btn-primary btn-sm" onclick="view_invoice({{$sale->id}})" data-bs-toggle="#"><i class="bi bi-receipt" title="imprimir factura"></i></button>
+                                <a href="{{ route('sale.show', $sale->id) }}" title="Ver detalle" class="btn btn-warning btn-sm"  data-bs-toggle="#"><i class="bi bi-eye"></i></a>
                                 @auth
                                     @if(Auth::user()->role=='admin')   
                                         <a  class="btn btn-warning btn-sm" title="Efectuar Devolución" href="{{route('sale.show',$sale->id)}}" ><i class="bi bi-arrow-return-left"></i></a>
