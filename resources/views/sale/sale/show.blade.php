@@ -148,27 +148,39 @@
                                     <tr>
                                         <th>Metodo</th>
                                         <th>valor</th>
+                                        <th>métodos</th>
                                         <th>opciones</th>
                                     </tr>
                                 </thead>
                                 <tfoot>
                                     <th>Total:</th>
                                     <th id="total">$ {{number_format($total->sale_total,0)}}</th>
-                                    
                                 </tfoot>
                                 <tbody>
-                                    
+                                 <form>
+                                    @csrf
                                   @foreach($payment_methods as $met)
                                     <tr>
                                         <td>{{$met->method}}</td>
                                         <td>{{$met->value}}</td>
-                                        @if($met->method == 'credito')
+                                        @if($met->method == 'credito' && $met->value > 0)
+                                            <td>
+                                                <select id="config_method" class="form-control" name="config_method">
+                                                    <option>Seleccionar</option>
+                                                    @foreach($config_methods as $key => $config_method)
+                                                        @if($config_method !='credito')
+                                                            <option value="{{$config_method}}">{{$config_method}}</option>
+                                                        @endif
+                                                    @endforeach
+                                                </select>
+                                            </td>
                                             <td><button type="button" class="btn btn-success btn-sm" onclick="pay_credit({{$sale->id}},{{$met->id}},{{$met->value}})"  data-bs-toggle="#"><i class="bi bi-credit-card" ></i>Pagar</button></td>
                                         @else
                                             <td></td>
                                         @endif
                                     </tr>
                                   @endforeach
+                                 </form>
                                 </tbody> 
                             </table>
                         </div>
@@ -185,49 +197,72 @@
         </ul>
     </div>
    @endif
+<script>
+function pay_credit(sale_id, payment_id, value) {
+    // Validar que el método de pago esté seleccionado
+    if (document.getElementById("config_method").value === "Seleccionar") {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Debe seleccionar un método de pago.',
+        });
+        return;
+    }
+    Swal.fire({
+        title: 'Confirmar Pago',
+        text: "¿Está seguro de que desea pagar el crédito?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Sí, pagar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch("{{ route('sale.pay_credit') }}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": "{{ csrf_token() }}"
+                },
+                body: JSON.stringify({
+                    sale_id: sale_id,
+                    payment_id: payment_id,
+                    value: value,
+                    method:document.getElementById("config_method").value,
+                    customer:'{{$sale->customer_name}}'
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Error en la solicitud");
+                }
+                return response.json();
+            })
+            .then(data => {
+                Swal.fire(
+                    'Pagado!',
+                    'El pago se ha realizado correctamente.',
+                    'success'
+                ).then(() => {
+                    location.reload();
+                });
+            })
+            .catch(error => {
+                Swal.fire(
+                    'Error!',
+                    'No se pudo realizar el pago. Inténtelo de nuevo.',
+                    'error'
+                );
+            });
+        }
+    });
+}
+</script>
+
+
+
 
 @endsection
 
-<script>
-    function pay_credit(sale_id, payment_id, value) {
-        Swal.fire({
-            title: 'Confirmar Pago',
-            text: "¿Está seguro de que desea pagar el crédito?",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
-            confirmButtonText: 'Sí, pagar'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                $.ajax({
-                    url: "{{ route('sale.pay_credit') }}",
-                    type: "POST",
-                    data: {
-                        sale_id: sale_id,
-                        payment_id: payment_id,
-                        value: value,
-                        _token: '{{ csrf_token() }}'
-                    },
-                    success: function(response) {
-                        Swal.fire(
-                            'Pagado!',
-                            'El pago se ha realizado correctamente.',
-                            'success'
-                        ).then(() => {
-                            location.reload();
-                        });
-                    },
-                    error: function(xhr) {
-                        Swal.fire(
-                            'Error!',
-                            'No se pudo realizar el pago. Inténtelo de nuevo.',
-                            'error'
-                        );
-                    }
-                });
-            }
-        });
-    }
-<script>
-
+    
+    

@@ -8,6 +8,7 @@ use App\Models\IncomeDetailHistorical;
 use App\Models\Payment;
 use App\Models\ReturnSale;
 use App\Models\CashBalance;
+use App\Models\Movement;
 use Exception;
 use Symfony\Component\Console\Input\Input;
 use Illuminate\Support\Carbon;
@@ -385,7 +386,10 @@ class SaleController extends Controller
             ->select('p.method', 'p.value', 'p.id','p.sale_id')
             ->where('p.sale_id', '=', $sale_id)
             ->get();
-                        
+        
+        $config_methods = DB::table("config")
+                    ->where('key',"=","payment_methods")
+                    ->first();
         
         return view('sale.sale.show', [
             'sale' => $sale,
@@ -393,8 +397,58 @@ class SaleController extends Controller
             'total'=>$total,
             'return_sales'=>$return_sales,
             'sum_return_total'=>$return_total->sum_return_total,
-            'payment_methods' => $payment_methods
+            'payment_methods' => $payment_methods,
+            'config_methods' => explode(",",$config_methods->value)
         ]);
+    }
+
+    public function pay_credit(Request $request){
+        try{
+            if(isset(auth()->user()->id)){
+                DB::beginTransaction();
+                $sale_id = $request->post("sale_id");
+                $payment = Payment::where('id','=',$request->post("payment_id"))
+                                    ->where('sale_id','=',$request->post("sale_id"))
+                                    ->first();
+                $payment->value = 0;
+                $payment->update();
+
+                $cash_opening = DB::table("cash_opening as co")
+                    ->where("co.users_id","=",auth()->user()->id)
+                    ->where("co.status","=",'open')
+                    ->first();
+
+                $movement = new Movement();
+                $movement->cash_opening_id = $cash_opening->id;
+                $movement->type = "ingreso";
+                $movement->movement_type_id = 3;
+                $movement->description = "Pago a crédito de la venta con id: POS".$sale_id;
+                $movement->amount = $request->post("value");
+                $movement->users_id = auth()->user()->id;
+                $movement->payment_method = $request->post("method");
+                $movement->table_identifier = "sale-".$sale_id;
+                $movement->save();  
+
+                $sale = Sale::find($sale_id);
+                $sale->payment_form = 'contado';
+                $sale->update();
+
+
+                DB::commit();
+                return response()->json(
+                    ["success"=>true,"message"=>"Pago a crédito registrado con éxito"
+                ],201);
+            }else{
+                return response()->json(
+                ["success"=>false,"message"=>"La sesión a caducado, reinicia la sesión"
+                ],501);
+            }
+        }catch(Exception $err){
+            DB::rollBack();
+            return response()->json(
+            ["success"=>false,"message"=>$err->getMessage()
+            ],501);
+        }
     }
 
     public function return_sale(Request $request){
