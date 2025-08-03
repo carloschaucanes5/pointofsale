@@ -62,8 +62,12 @@ Route::middleware(['auth','check.session','role:admin,superadmin,cashier,user'])
     Route::post('sale/cash_close/{id?}', [CashOpeningController::class, 'cash_close'])->name('sale.cash_close');
     Route::get('sale/cash_opening/validate_cash_opening/{id}', [CashOpeningController::class, 'validate_cash_opening'])->name('sale.cash_opening.validate_cash_opening');
     Route::get('purchase/income/search_product/{codeOrName}', [IncomeController::class, 'search_product']);
+    Route::get('purchase/income/search_product_historical/{codeName}', [IncomeController::class, 'search_product_historical']);
     Route::get('purchase/income/view_voucher/{voucherId}', [IncomeController::class, 'view_voucher']);
+
     Route::get('sale/sale/search_product/{codeName}', [SaleController::class, 'search_product']);
+    Route::get('purchase/startinventory', [IncomeController::class, 'startinventory'])->name('purchase.startinventory');
+
     Route::get('sale/sale/receipt/{sale_id}', [SaleController::class, 'receipt']);
     Route::post('sale/sale/return_sale', [SaleController::class, 'return_sale'])->name('sale.sale.return_sale');
     Route::post('store/inventory/proccess_out/{income_detail_id}', [InventoryController::class, 'proccess_out'])->name('store.inventory.proccess_out');

@@ -129,11 +129,12 @@
                               @php
                                 $collection = collect($totals);
                                 $assoc = $collection->keyBy('payment_method');
-                                $total_cash = $assoc['efectivo']->total + $cash_opening->start_amount;
+                                $efectivo = isset($assoc['efectivo'])?$assoc['efectivo']->total:0;
+                                $total_cash = $efectivo + $cash_opening->start_amount;
                               @endphp
                               ${{number_format($total_cash,0,',','.')}}  
                             </span>
-                            <input type="hidden" id="total_cash" name="total_cash" value="{{$assoc['efectivo']->total}}"/>
+                            <input type="hidden" id="total_cash" name="total_cash" value="{{$efectivo}}"/>
                         </div>
                         <div class="col-md-4">
                             <b id="text_incomplete" ></b><br/>

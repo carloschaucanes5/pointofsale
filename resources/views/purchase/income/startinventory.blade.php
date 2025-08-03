@@ -18,9 +18,9 @@
                 @csrf
                 <div class="card-body">
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-6 col-sm-12">
                             <div class="row">
-                                <div class="col-md-11">
+                                <div class="col-md-12">
                                     <div class="form-group">
                                         <label for="voucher_id">Factura</label>
                                         <select name="voucher_id" id="voucher_id" class="form-control">
@@ -31,24 +31,22 @@
                                         <input type="hidden" name="voucher_total" id="voucher_total" value="{{isset($vouchers[0]->total)?$vouchers[0]->total:0}}"/>
                                     </div>
                                 </div>
-                                <div class="col-md-1">
-                                    <div class="form-group">
-                                        <br/>
-                                        <button type="button"
-                                        class="btn btn-outline-info btn-sm btn-view-voucher"
-                                        data-id="{{ isset($vouchers[0])? $vouchers[0]->id : ''}}">
-                                        <i class="bi bi-eye"></i>
-                                        </button>
-                                    </div>
-                                </div>
                             </div>
                             <div class="row">
-                                <div class="col-md-12">
+                                <div class="col-md-8 col-sm-12">
                                     <div class="form-group">
                                         <label for="product_id">Producto</label>
                                         <input type="text" id="product_search" class="form-control" placeholder="Buscar producto...">
                                         <input type="hidden" name="product_id" id="product_id">
                                     </div>
+                                </div>
+                                <div class="col-md-2 col-sm-12">
+                                    <label for="btn_buscar"></label><br/>
+                                    <input type="button" id="btn_search" onclick="fun_search_product()" value="buscar" class="btn btn-info"/>
+                                </div>
+                                <div class="col-md-2 col-sm-12">
+                                    <label for="btn_scan"></label><br/>
+                                    <input type="button" id="btn_scan" onclick="scan_code_bar()" value="Escan" class="btn btn-warning"/>
                                 </div>
                             </div> 
                         </div>
@@ -129,7 +127,9 @@
                                         <th>Precio/U</th>
                                         <th>Precio/T</th>
                                         <th>Utilidad</th>
-                                        <th>F. Venc.</th> 
+                                        <th>F. Venc.</th>
+                                        <th>Lote</th>
+                                        <th>Invima</th>  
                                     </tr>
                                 </thead>
                                 <tfoot>
@@ -140,6 +140,8 @@
                                     <th></th>
                                     <th id="total_sale">$ 0</th>
                                     <th id="total_profit">$ 0</th>
+                                    <th></th>
+                                    <th></th>
                                 </tfoot>
                                 <tbody>
                                 </tbody> 
@@ -173,6 +175,60 @@
 
 @push("scripts")
 <script>
+
+    function fun_search_product(){
+        //buscar el producto por codigo o nombre
+        let search = document.getElementById('product_search').value;   
+        if (search.length > 0) {
+            showSpinner();
+            fetch("{{url('purchase/income/search_product')}}/" + encodeURIComponent(search))
+                .then(response => response.json())
+                .then(data => {
+                    let productInfo = document.getElementById('product_info');
+                    if (!productInfo) {
+                        productInfo = document.createElement('div');
+                        productInfo.id = 'product_info';
+                        productInfo.classList.add('mt-2');
+                        document.getElementById('row_add').parentNode.appendChild(productInfo);
+                    }
+                    if (data.length > 0) {
+                        let product = data[0];
+                        document.getElementById('product_id').value = product.id+"_"+product.code+"_"+product.name+" "+product.concentration+" "+product.presentation;
+                        productInfo.innerHTML =`
+                        <div class="alert alert-success text-sm">
+                            <h6>Información del Producto</h6>
+                            <b style='font-size:0.9rem'>${product.name} ${product.concentration} ${product.presentation}</b><br>
+                            <b style='font-size:0.9rem'>${product.code}</b><br>     
+                            <a href="#" onclick="view_information_historical(${product.code})">Ver Historico Costos y Precios</a>
+                        </div>
+                            `;
+                        document.getElementById('row_add').style.display = '';
+                    } else {
+                        productInfo.innerHTML = '<span class="text-danger">Producto no encontrado.</span>';
+                        document.getElementById('product_id').value = '';
+                    }
+                })
+                .catch(() => {
+
+                }).finally(()=>{
+                    hideSpinner();
+                });
+        }
+    }
+
+    function onScanSuccess(decodedText, decodedResult) {
+        document.getElementById('result').innerText = `Código escaneado: ${decodedText}`;
+        // Puedes detener el escáner si quieres:
+        const productSearch = document.getElementById('product_search');  
+        productSearch.value = decodedText;  
+        html5QrcodeScanner.clear();
+    }
+
+    const html5QrcodeScanner = new Html5QrcodeScanner(
+        "reader", { fps: 10, qrbox: 250 });
+    html5QrcodeScanner.render(onScanSuccess);
+
+
     document.addEventListener('DOMContentLoaded', function() {
         //evento buscar producto
         document.getElementById('product_search').focus();
@@ -275,40 +331,49 @@ document.querySelector('.btn-view-voucher').addEventListener('click', function()
 
 });
 
+function scan_code_bar() {
+    Swal.fire({
+        title: 'Escanear Código de Barras',
+        html: '<div id="reader" style="width: 300px; height: 300px;"></div><div id="result" class="mt-2"></div>',
+        showConfirmButton: true,
+        didOpen: () => {
+            const html5QrcodeScanner = new Html5QrcodeScanner(
+                "reader", { fps: 10, qrbox: 250 });
+            html5QrcodeScanner.render(onScanSuccess);
+        }
+    });
+}
 function view_information_historical(code){
     showSpinner();
     fetch("{{url('purchase/income/search_product_historical')}}/" + encodeURIComponent(code))
         .then(response => response.json())
         .then(data => {
             if (data.length > 0) {
-                let table = `<table class="table table-sm table-bordered">
+                let table = `<div class="table-responsive">
+                                <table class="table table-sm table-bordered table-striped table-hover ">
                                 <thead>
                                     <tr>
                                         <th>Fecha</th>
-                                        <th>Cantidad</th>
-                                        <th>Precio Compra</th>
-                                        <th>Precio Venta</th>
-                                        <th>Forma Venta</th>
-                                        <th>Lote</th>
-                                        <th>Invima</th>
+                                        <th>Costo</th>
+                                        <th>Precio</th>
+                                        <th>F.Venta</th>
                                         <th></th>
                                     </tr>
                                 </thead>
                                 <tbody>`;
                 data.forEach(item => {
                     let item_t = JSON.stringify(item).replace(/"/g, '&quot;');
+                    let price = item.sale_price ? formatCurrency.format(item.sale_price) : 'N/A';
                     table += `<tr>
                                 <td>${item.created_at}</td>
-                                <td>${item.quantity}</td>
                                 <td>${item.purchase_price}</td>
-                                <td>${item.sale_price}</td>
+                                <td>${price}</td>
                                 <td>${item.form_sale}</td>
-                                <td>${item.lote}</td>
-                                <td>${item.invima}</td>
-                                <td><button class="btn btn-warning btn-sm" onclick="selection('${item_t}')">Seleccionar</button></td>
+
+                                <td><button class="btn btn-warning btn-sm" onclick="selection('${item_t}')"><i class="bi bi-plus"></i></button></td>
                               </tr>`;
                 });
-                table += `</tbody></table>`;
+                table += `</tbody></table></div>`;
                 Swal.fire({
                     title: 'Histórico de Precios y Costos',
                     html: table,
@@ -333,8 +398,12 @@ function selection(item){
     document.getElementById('purchase_price').value = item1.purchase_price;
     document.getElementById('sale_price').value = item1.sale_price;
     document.getElementById('form_sale').value = item1.form_sale;
+    document.getElementById('expiration_date').value = item1.expiration_date;
     document.getElementById('lote').value = item1.lote;
     document.getElementById('invima').value = item1.invima;
+    //cerrar el modal
+   Swal.close();
+
 }
 
 function parseAmount(value) {
@@ -379,11 +448,11 @@ function saveIncome(){
                 hideSpinner();
                 if (data.success) {
                     Swal.fire({
-                        icon: 'success',
+                        icon: 'success',    
                         title: 'Éxito',
                         text: data.message,
                     }).then(() => {
-                        window.location.href = "{{route('income.index')}}";
+                        window.location.href = "{{route('purchase.startinventory')}}"; // Redirigir a la página de inicio de inventario
                     });
                 } else {
                     let errorsList = document.getElementById('errorsList');
@@ -544,7 +613,7 @@ function updateTotal(){
 
     const voucherTotal = document.getElementById('voucher_total').value;
     const totalPurchase = document.getElementById('total_purchase_hidden').value;
-    if (parseFloat(voucherTotal) === parseFloat(totalPurchase)) {
+    if (parseFloat(voucherTotal) > 0) {
         document.getElementById('save').style.display = "";
     } else {
         document.getElementById('save').style.display = "none";
@@ -575,6 +644,10 @@ function limpiar(){
     document.getElementById('quantity').value = "";
     document.getElementById('purchase_price').value = "";
     document.getElementById('sale_price').value = "";
+    document.getElementById('form_sale').value = "";
+    document.getElementById('expiration_date').value = "";
+    document.getElementById('lote').value = "";
+    document.getElementById('invima').value = "";
 }
 
 

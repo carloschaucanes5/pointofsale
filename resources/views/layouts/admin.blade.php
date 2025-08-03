@@ -337,6 +337,12 @@
                                         <p>Facturas</p>
                                     </a>
                                 </li>
+                                <li class="nav-item ms-3">
+                                    <a href="{{ route('purchase.startinventory') }}" class="nav-link">
+                                        <i class="bi bi-eye"></i>
+                                        <p>Factura Inicial</p>
+                                    </a>
+                                </li>
                             </ul>
                         </li>
                         <li class="nav-item ">
@@ -484,6 +490,7 @@
     <script src="/pointofsale/public/js/bootstrap-select.min.js"></script>
     <script src="/pointofsale/public/js/sweetalert2@11.js"></script>
     <script src="/pointofsale/public/js/panzoom.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     @stack('scripts')
 
     <!--end::Required Plugin(AdminLTE)--><!--begin::OverlayScrollbars Configure-->

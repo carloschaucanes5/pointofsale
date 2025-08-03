@@ -104,7 +104,7 @@
     const form = document.getElementById('voucherForm');
 
     // Iniciar cámara
-    navigator.mediaDevices.getUserMedia({ video: true })
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false})
         .then(stream => {
             video.srcObject = stream;
         })

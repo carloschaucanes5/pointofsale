@@ -73,9 +73,60 @@ class IncomeController extends Controller
         return response()->json($products);
     }
 
+    public function search_product_historical($codeOrName){
+
+        $information_historical = DB::table('income_detail_historical as idh')
+            ->join('product as p', 'idh.product_id', '=', 'p.id')
+            ->select('idh.product_id', 'idh.quantity', 'idh.purchase_price', 'idh.sale_price', 'idh.form_sale', 'idh.expiration_date','idh.created_at','idh.lote','idh.invima')
+            ->where('p.code', 'like', '%' . $codeOrName . '%')
+            ->orderBy('idh.created_at', 'desc')
+            ->limit(5)
+            ->get();
+
+        return response()->json($information_historical);
+    }
+
     /**
      * Show the form for creating a new resource.
      */
+
+    public function startinventory(Request $request)
+    {
+         $config = DB::table('config')
+            ->select('key','value')
+            ->where('key','=','company_nit')
+            ->first();
+
+         $vouchers = DB::table("voucher")
+        ->join('person', 'voucher.supplier_id', '=', 'person.id')
+        ->join('users', 'voucher.users_id', '=', 'users.id')
+        ->select(
+            'voucher.id',
+            'voucher.voucher_number',
+            'voucher.description',
+            'voucher.total',
+            'voucher.photo',
+            'voucher.status',
+            'person.document_number',
+            'person.name as supplier_name',
+            'voucher.status_payment',
+            'voucher.updated_at',
+            'users.name as user_name'
+        )
+        ->where('person.document_number', '=', $config->value)
+        ->orderBy('voucher.id', 'desc')
+        ->get();
+
+        $forms = DB::table("formsale")->get();
+        $persons = DB::table("person")->where('person_type','=','supplier')->get();
+        $incomes = Income::all();
+        $products = DB::table("product as p")
+                    ->select(DB::raw('CONCAT(p.code," ",p.name) as article'),'p.stock','p.id')
+                    ->where('p.status','=',1)
+                    ->get();
+        return view('purchase.income.startinventory',['persons'=>$persons,'incomes'=>$incomes,'products'=>$products, 'forms'=>$forms, 'vouchers'=>$vouchers]);       
+    }
+
     public function create()
     {
          $vouchers = DB::table("voucher")
@@ -128,6 +179,8 @@ class IncomeController extends Controller
                 $sale_prices = $request->post('sale_prices');
                 $forms_sale = $request->post('forms_sale');
                 $expiration_dates = $request->post('expiration_dates');
+                $lotes = $request->post('lotes');
+                $invimas = $request->post('invimas');
                 
                 $cont = 0;
                 while($cont < count($products)){
@@ -139,6 +192,8 @@ class IncomeController extends Controller
                     $detail->sale_price = $sale_prices[$cont];
                     $detail->form_sale = $forms_sale[$cont];
                     $detail->expiration_date = Carbon::parse($expiration_dates[$cont])->format('Y-m-d');
+                    $detail->lote = $lotes[$cont];
+                    $detail->invima = $invimas[$cont];
                     $detail->save();
 
                     $detailhistorical = new IncomeDetailHistorical();
@@ -150,6 +205,8 @@ class IncomeController extends Controller
                     $detailhistorical->sale_price = $sale_prices[$cont];
                     $detailhistorical->form_sale = $forms_sale[$cont];
                     $detailhistorical->expiration_date = Carbon::parse($expiration_dates[$cont])->format('Y-m-d');
+                    $detailhistorical->lote = $lotes[$cont];
+                    $detailhistorical->invima = $invimas[$cont];
 
                     $detailhistorical->save();
 

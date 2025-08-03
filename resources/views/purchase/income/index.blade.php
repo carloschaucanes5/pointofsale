@@ -68,7 +68,6 @@
                         <tr>
                             <td>
                                 <a href="{{route('income.show',$inc->id)}}" class="btn btn-warning btn-sm"><i class="bi bi-eye"></i></a>
-                                <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="#"><i class="bi bi-trash"></i></button>
                                 <button type="button"
                                 class="btn btn-outline-info btn-sm btn-view-voucher"
                                 data-id="{{ $inc->voucher_id}}">
