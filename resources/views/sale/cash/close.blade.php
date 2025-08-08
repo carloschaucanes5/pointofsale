@@ -233,6 +233,7 @@
                         @php 
                             $b = 1;
                             $method_selected = $method;
+                            $entregar = $method=='efectivo'?$tot->total:0;
                             $pay = $method=='efectivo'?($tot->total + $cash_opening->start_amount):$tot->total;
                         @endphp
                         @endif
@@ -247,6 +248,13 @@
                         <td></td>
                     @endif
                 @endforeach
+                </tr>
+                <tr>
+                    <th>Total a Entregar(Efectivo)</th>
+                    <td>{{$entregar}}</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
                 </tr>
                 <tr><td class="text-center" colspan="4">------------- o -------------</td><td></td><td></td></tr>
                 <tr>
