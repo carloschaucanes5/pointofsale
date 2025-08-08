@@ -60,17 +60,21 @@ class IncomeController extends Controller
         }
     }
 
-    public function search_product($codeOrName){
+    public function search_product(Request $request, $codeOrName)
+    {
         $products = DB::table('product')
             ->where(function($query) use ($codeOrName) {
                 $query->where('name', 'like', '%' . $codeOrName . '%')
-                      ->orWhere('code', 'like', '%' . $codeOrName . '%');
+                    ->orWhere('code', 'like', '%' . $codeOrName . '%');
             })
             ->where('status', '=', 1)
-            ->select('id', 'code', 'name', 'stock','concentration', 'presentation')
-            ->get();
+            ->select('id', 'code', 'name', 'stock', 'concentration', 'presentation')
+            ->limit(20)
+            ->paginate(4);
 
-        return response()->json($products);
+        $html = view('purchase.income.tablehistorical', compact('products'))->render();
+
+        return response()->json(['html' => $html, 'countResult' => $products->total()]);
     }
 
     public function search_product_historical($codeOrName){
@@ -80,7 +84,7 @@ class IncomeController extends Controller
             ->select('idh.product_id', 'idh.quantity', 'idh.purchase_price', 'idh.sale_price', 'idh.form_sale', 'idh.expiration_date','idh.created_at','idh.lote','idh.invima')
             ->where('p.code', 'like', '%' . $codeOrName . '%')
             ->orderBy('idh.created_at', 'desc')
-            ->limit(5)
+            ->limit(6)
             ->get();
 
         return response()->json($information_historical);
@@ -113,7 +117,6 @@ class IncomeController extends Controller
             'voucher.updated_at',
             'users.name as user_name'
         )
-        ->where('person.document_number', '=', $config->value)
         ->orderBy('voucher.id', 'desc')
         ->get();
 

@@ -104,6 +104,7 @@ if ($request) {
             $voucher->status_payment = $request->get('status_payment');
             $voucher->users_id = auth()->user()->id;
             $voucher->status = 1;
+            $voucher->photo = '';
             $voucher->save();
             
             $cash_opening = DB::table('cash_opening')
@@ -147,8 +148,16 @@ if ($request) {
                         $cash_balance1->balance = $amount;
                         $cash_balance1->save();
                     }
+                     
             }
 
+                   DB::commit();
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Factura creada correctamente',
+                        'voucher' => $voucher
+                    ], 201);
+           /* 
             //registrar movimientos de caja
             if ($request->hasFile('photo') && $request->file('photo')->isValid()) {
                 $photo = $request->file('photo');
@@ -185,7 +194,8 @@ if ($request) {
                     'message' => 'No se ha subido la imagen correctamente. Por favor, inténtelo de nuevo.'
                 ], 500);
                 
-            }
+            }*/
+            
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([

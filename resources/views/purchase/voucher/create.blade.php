@@ -97,11 +97,12 @@
 </div>
 
 <script>
-    const video = document.getElementById('video');
+    const form = document.getElementById('voucherForm');
+   /* const video = document.getElementById('video');
     const canvas = document.getElementById('canvas');
     const preview = document.getElementById('preview');
     const captureButton = document.getElementById('capture');
-    const form = document.getElementById('voucherForm');
+    
 
     // Iniciar cámara
     navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false})
@@ -130,7 +131,7 @@
         preview.style.display = 'block';
         document.getElementById('photo').value = 1; // Indicar que se ha capturado una foto
     });
-
+*/
     // Enviar formulario con imagen
     form.addEventListener('submit', function (e) {
         e.preventDefault();
@@ -154,10 +155,10 @@
         formData.append('status_payment', document.getElementById('status_payment').value);
         formData.append('methods',JSON.stringify(methods));
         // Convertir canvas a blob
-        canvas.toBlob(function(blob) {
+        //canvas.toBlob(function(blob) {
             const photoInput = document.getElementById('photo');
-            if (blob && photoInput.value == 1) {
-                formData.append('photo', blob, 'captured.png'); 
+            //if (blob && photoInput.value == 1) {
+                //formData.append('photo', blob, 'captured.png'); 
                 showSpinner();
                 fetch("{{ route('voucher.store') }}", {
                     method: "POST",
@@ -195,21 +196,21 @@
                     console.log(error);
                     alert('Error al guardar');
                 });
-        }
-        else
-        {
-            Swal.fire({
-                title: 'Error',
-                text: 'No hay imagen capturada',
-                icon: 'error',
-                buttons: true,
-                dangerMode: true,
-                timer: 3000
-            }).then(() => {
-                document.getElementById('photo').value = 0; // Resetear valor de foto
-            });
-        }
-        }, 'image/png');
+            /*}
+            else
+            {
+                Swal.fire({
+                    title: 'Error',
+                    text: 'No hay imagen capturada',
+                    icon: 'error',
+                    buttons: true,
+                    dangerMode: true,
+                    timer: 3000
+                }).then(() => {
+                    document.getElementById('photo').value = 0; // Resetear valor de foto
+                });
+            }*/
+        //}, 'image/png');
     });
 
     function add_payment(){

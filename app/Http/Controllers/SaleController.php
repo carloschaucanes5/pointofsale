@@ -106,7 +106,7 @@ class SaleController extends Controller
      * Buscar el producto en inventario sea por nombre o codigo de barras
      */
 
-     public function search_product(string $textSearch=""){
+     public function search_product(Request $request,string $textSearch=""){
         try{
             $searchText = trim($textSearch);
             $incomes_detail = DB::table('product as p')
@@ -119,12 +119,15 @@ class SaleController extends Controller
             })
             ->where('ide.quantity','>',0)
             ->orderBy('p.name','asc')
-            ->paginate(2);
-            return response()->json(['incomes_detail'=>$incomes_detail]); 
+            ->paginate(4);
+            $html = view('sale.sale.tablesearch',['products'=>$incomes_detail])->render();
+            return response()->json(['html'=>$html,'countResult'=>$incomes_detail->total(),'products'=>$incomes_detail],200);
+        
         }catch(Exception $e){
             return response()->json(['error'=>$e->getMessage()],500);
         }
      }
+
 
 
     /**

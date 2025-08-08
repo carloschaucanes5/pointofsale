@@ -9,12 +9,14 @@
         overflow-x:hidden;
         overflow-y: auto;
         font-family: Verdana, Geneva, Tahoma, sans-serif !important;
-        font-size: 12px !important;
+        font-size: 9px !important;
     }
 
     .noprint {
         display: none;
     }
+
+
 
 </style>
 <div class="modal fade" id="modal-receipt-invoice" tabindex="-1" aria-hidden="true">
@@ -26,27 +28,26 @@
                 <button type="button" class="btn-close" data-dismiss="modal" aria-label="Cerrar"></button>
             </div>
             <div class="modal-body" id="content-receipt">
-                <div class="row ">
+                <div class="row">
                     <div class="col-md-12">
                         <center>
                             <img src="{{ $logo->value }}" alt="Logo" class="img-fluid mb-3" style="max-width: 100px;">
                             <article><i>{{$company['company_slogan']->value}}</i></article>
-                            <small class="text-muted mb-custom">{{ $company['company_name']->value }}</small><br>
-                            <small class="text-muted mb-custom">{{ $company['company_nit']->alias}}:{{ $company['company_nit']->value}}</small><br>
-                            <small class="text-muted mb-custom">{{ $company['company_reguimen']->alias}}:{{ $company['company_reguimen']->value}}</small><br>
-                            <small class="text-muted mb-custom">{{ $company['company_address']->value}}</small><br>
-                            <small class="text-muted mb-custom">{{ $company['company_municipality']->value}}-{{ $company['company_deparment']->value}}</small><br>
-                            <small id="date_sale"></small>
+                            <p class="text-muted mb-custom">{{ $company['company_nit']->alias}}:{{ $company['company_nit']->value}}</p>
+                            <p class="text-muted mb-custom">{{ $company['company_reguimen']->alias}}:{{ $company['company_reguimen']->value}}</p>
+                            <p class="text-muted mb-custom">{{ $company['company_address']->value}}</p>
+                            <p class="text-muted mb-custom">{{ $company['company_municipality']->value}}-{{ $company['company_deparment']->value}}</p>
+                            <p id="date_sale"></p>
                         </center>
                         <hr>
                         <table>
                             <tr>
                                 <td id="information_pos">
-                                    <small class="text-muted mb-custom">Factura de Venta: <b>POS</b><b id="sale_number"></b></small><br>
+                                    <p class="text-muted mb-custom">Factura de Venta: <b>POS</b><b id="sale_number"></b></p><br>
                                     <p id="information_customer"></p>
                                 </td>
                                 <td style="display:flex;flex-direction:column;justify-content:end" >
-                                    <strong>Atendido Por</strong><br><label id="employee"></label>
+                                    <p><b>Atendido Por:<label id="employee"></label></p>
                                 </td>
                             </tr>
                         </table>
@@ -55,7 +56,7 @@
                 <div class="row">
                     <div class="col-md-12" id="details">
                         <hr>
-                        <table>
+                        <table class="text-muted mb-custom">
                             <thead>
                                 <tr>
                                     <th class="text-center">Cant.</th>
@@ -71,7 +72,7 @@
                 </div>
                 <div class="row">
                     <div class="col-md-12">
-                        <table style="with:100%;justify-content:end">
+                        <table style="with:100%;justify-content:end text-muted mb-custom">
                             <tr>
                                 <td>
                                     <table>
@@ -114,9 +115,9 @@
                     <div class="col-md-12 text-center">
                         <hr>
                         <center> 
-                            <small class="text-muted mb-custom"><strong>...! GRACIAS POR SU COMPRA ¡...</strong></small><br>
-                            <small class="text-muted mb-custom text-center">{{$company["company_timetable"]->alias}}:{!!$company["company_timetable"]->value!!}</small><br>
-                            <small class="text-muted mb-custom text-center">{!!$company["company_information"]->value!!}</small><br> 
+                            <p class="text-muted mb-custom"><strong>...! GRACIAS POR SU COMPRA ¡...</strong></p>
+                            <p class="text-muted mb-custom text-center">{{$company["company_timetable"]->alias}}:{!!$company["company_timetable"]->value!!}</p>
+                            <p class="text-muted mb-custom text-center">{!!$company["company_information"]->value!!}</p>
                         </center>
                     </div>
                 </div>

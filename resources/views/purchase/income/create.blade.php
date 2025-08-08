@@ -47,6 +47,7 @@
                                     <div class="form-group">
                                         <label for="product_id">Producto</label>
                                         <input type="text" id="product_search" class="form-control" placeholder="Buscar producto...">
+                                        <div id="product_selected"></div>
                                         <input type="hidden" name="product_id" id="product_id">
                                     </div>
                                 </div>
@@ -61,7 +62,7 @@
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label for="quantity">Cantidad</label>
-                                <input type="number" class="form-control" name="quantity" id="quantity" placeholder="Cantidad">
+                                <input type="number" class="form-control form-control-sm" name="quantity" id="quantity" placeholder="Cantidad">
                             </div>
                         </div>
                         <div class="col-md-3">
@@ -177,45 +178,56 @@
         //evento buscar producto
         document.getElementById('product_search').focus();
         document.getElementById('product_search').addEventListener('keypress', function(e) {
-        if (e.which === 13 || e.keyCode === 13) {
-            e.preventDefault();
-            let search = this.value;
-            if (search.length > 0) {
-                showSpinner();
-                fetch("{{url('purchase/income/search_product')}}/" + encodeURIComponent(search))
-                    .then(response => response.json())
-                    .then(data => {
-                        let productInfo = document.getElementById('product_info');
-                        if (!productInfo) {
-                            productInfo = document.createElement('div');
-                            productInfo.id = 'product_info';
-                            productInfo.classList.add('mt-2');
-                            this.parentNode.parentNode.parentNode.appendChild(productInfo);
-                        }
-                        if (data.length > 0) {
-                            let product = data[0];
-                            document.getElementById('product_id').value = product.id+"_"+product.code+"_"+product.name+" "+product.concentration+" "+product.presentation;
-                            productInfo.innerHTML =`
-                            <div class="alert alert-success text-sm">
-                                <h6>Información del Producto</h6>
-                                <b style='font-size:0.9rem'>${product.name} ${product.concentration} ${product.concentration}</b><br>    
-                                <a href="#" onclick="view_information_historical(${product.code})">Ver Historico Costos y Precios</a>
-                            </div>
-                                `;
-                            document.getElementById('row_add').style.display = '';
-                        } else {
-                            productInfo.innerHTML = '<span class="text-danger">Producto no encontrado.</span>';
-                            document.getElementById('product_id').value = '';
-                        }
-                    })
-                    .catch(() => {
-
-                    }).finally(()=>{
-                        hideSpinner();
-                    });
+            if (e.which === 13 || e.keyCode === 13) {
+                e.preventDefault();
+                let search = this.value.trim();
+                if (search.length > 0) {
+                    showSpinner();
+                    let url = "{{ url('purchase/income/search_product') }}/" + encodeURIComponent(search);
+                    fetchProducts(url);
+                }
             }
+        });
+
+        function fetchProducts(url) {
+            fetch(url, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                const productInfo = document.getElementById('product_info');
+                productInfo.innerHTML = data.html;
+                if(data.countResult > 0) {
+                    document.getElementById('row_add').style.display = '';
+                } else {
+                    document.getElementById('row_add').style.display = 'none';
+                }
+                // Volver a asignar eventos de paginación
+                attachPaginationListeners();
+            })
+            .catch(() => {
+                alert('Error al buscar producto');
+            })
+            .finally(() => {
+                hideSpinner();
+            });
         }
-    });
+
+        function attachPaginationListeners() {
+            const links = document.querySelectorAll('#product_info .pagination a');
+            links.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const url = this.href;
+                    if (url) {
+                        showSpinner();
+                        fetchProducts(url);
+                    }
+                });
+            });
+        }
 
 
     //evento para calcular el precio sugerido
@@ -275,7 +287,14 @@ document.querySelector('.btn-view-voucher').addEventListener('click', function()
 
 });
 
-function view_information_historical(code){
+function view_information_historical(element){
+    let pro = element.getAttribute('data-product');
+    const product = JSON.parse(pro);
+    let code = product.code;
+    document.getElementById('product_id').value = product.id+"_"+product.code+"_"+product.name+" "+product.concentration+" "+product.presentation;
+    const productSelected = document.getElementById('product_selected');
+    productSelected.innerHTML = `<p class="alert alert-info">${product.name} ${product.concentration} ${product.presentation} (${product.code})</p>`;
+   
     showSpinner();
     fetch("{{url('purchase/income/search_product_historical')}}/" + encodeURIComponent(code))
         .then(response => response.json())
@@ -335,6 +354,8 @@ function selection(item){
     document.getElementById('form_sale').value = item1.form_sale;
     document.getElementById('lote').value = item1.lote;
     document.getElementById('invima').value = item1.invima;
+    document.getElementById('expiration_date').value = item1.expiration_date;
+    Swal.close();
 }
 
 function parseAmount(value) {
@@ -357,7 +378,6 @@ function parseAmount(value) {
 }
 
 function saveIncome(){
-
             let form = document.getElementById('incomeform');
             let formData = new FormData(form);
             let voucher_id = document.getElementById('voucher_id').value;
@@ -544,7 +564,8 @@ function updateTotal(){
 
     const voucherTotal = document.getElementById('voucher_total').value;
     const totalPurchase = document.getElementById('total_purchase_hidden').value;
-    if (parseFloat(voucherTotal) === parseFloat(totalPurchase)) {
+
+    if (parseFloat(totalPurchase) > 0) { 
         document.getElementById('save').style.display = "";
     } else {
         document.getElementById('save').style.display = "none";
@@ -575,6 +596,13 @@ function limpiar(){
     document.getElementById('quantity').value = "";
     document.getElementById('purchase_price').value = "";
     document.getElementById('sale_price').value = "";
+    document.getElementById('form_sale').value = "";
+    document.getElementById('lote').value = ""; 
+    document.getElementById('invima').value = "";
+    document.getElementById('expiration_date').value = "";
+    document.getElementById('product_id').value = "";
+    document.getElementById('product_selected').innerHTML = "";
+    document.getElementById('row_add').style.display = "none";
 }
 
 
