@@ -77,6 +77,20 @@ class IncomeController extends Controller
         return response()->json(['html' => $html, 'countResult' => $products->total()]);
     }
 
+    public function search_product_unit(Request $request, $codeOrName)
+    {
+        $products = DB::table('product')
+            ->where(function($query) use ($codeOrName) {
+                $query->where('name', 'like', '%' . $codeOrName . '%')
+                    ->orWhere('code', 'like', '%' . $codeOrName . '%');
+            })
+            ->where('status', '=', 1)
+            ->select('id', 'code', 'name', 'stock', 'concentration', 'presentation')
+            ->limit(20)
+            ->get();
+        return response()->json($products);
+    }
+
     public function search_product_historical($codeOrName){
 
         $information_historical = DB::table('income_detail_historical as idh')
@@ -117,6 +131,7 @@ class IncomeController extends Controller
             'voucher.updated_at',
             'users.name as user_name'
         )
+        ->where('voucher.id','=',1)
         ->orderBy('voucher.id', 'desc')
         ->get();
 

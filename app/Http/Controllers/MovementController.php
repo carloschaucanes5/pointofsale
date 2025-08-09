@@ -211,50 +211,37 @@ class MovementController extends Controller
         try{
             $validated = $request->validate([
             'type' => 'required|in:egreso,ingreso',
-            'movement_type_id' => 'required|string|min:0',
+            'movement_type_id' => 'required|numeric|min:0',
             'description' => 'nullable|string',
             'amount' => 'required|numeric|min:0.01',
-            'payment_method' => 'required|string|max:50'
+            'payment_method' => 'required|string|max:50',
+            'cash_id' => 'required|numeric|min:1',
             ]);
             $validated['users_id'] = auth()->user()->id;
             $amount = floatval($request->post("amount"));
             if($request->post("type") == "egreso"){
                  $amount = $amount * (-1);
             }
-            $validated['amount'] = $amount;
-            $cash_opening = DB::table('cash_opening')
-                    ->where('users_id','=',auth()->user()->id)
-                    ->where('status','=','open')
-                    ->first();
-            if($cash_opening){
-                $validated['cash_opening_id'] = $cash_opening->id;
-
-                $movement = Movement::create($validated);
-
-            $cash_balance = CashBalance::where('cash_id','=',$cash_opening->cash_id)
+            $validated['amount'] = $amount;          
+            $movement = Movement::create($validated);
+            if($movement){
+                $cash_balance = CashBalance::where('cash_id','=',$movement->cash_id)
                             ->where("method","=",$validated['payment_method'])
                             ->first();
-            if($cash_balance){
-                $cash_balance->balance = $cash_balance->balance + $amount;
-                $cash_balance->save();
+                if($cash_balance){
+                    $cash_balance->balance = $cash_balance->balance + $amount;
+                    $cash_balance->save();
+                }
+                else
+                {
+                    $cash_balance1 = new CashBalance();
+                    $cash_balance1->cash_id = $movement->cash_id;
+                    $cash_balance1->method = $validated['payment_method'];
+                    $cash_balance1->balance = $amount;
+                    $cash_balance1->save();
+                }
             }
-            else
-            {
-                $cash_balance1 = new CashBalance();
-                $cash_balance1->cash_id = $cash_opening->cash_id;
-                $cash_balance1->method = $validated['payment_method'];
-                $cash_balance1->balance = $amount;
-                $cash_balance1->save();
-            }
-
-
-                return redirect()->route('movement.index');
-            }
-            else
-            {
-                return back()->withErrors(['error' => 'El usuario no ha realizado apertura de caja'])->withInput();
-            }
-
+            return redirect()->route('movement.index');
         } catch (ValidationException $e) {
             return back()->withErrors($e->validator)->withInput();
         } catch (Exception $e) {

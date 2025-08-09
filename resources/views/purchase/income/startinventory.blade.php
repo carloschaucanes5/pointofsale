@@ -181,7 +181,7 @@
         let search = document.getElementById('product_search').value;   
         if (search.length > 0) {
             showSpinner();
-            fetch("{{url('purchase/income/search_product')}}/" + encodeURIComponent(search))
+            fetch("{{url('purchase/income/search_product_unit')}}/" + encodeURIComponent(search))
                 .then(response => response.json())
                 .then(data => {
                     let productInfo = document.getElementById('product_info');

@@ -153,8 +153,12 @@
         </div>
         <div class="col-md-7">
 
-
             <table class="table table-bordered table-striped fs-6 no-padding">
+                <thead>
+                    <tr>
+                        <th colspan="6" class="text-center">Movimientos Caja Registradora</th>
+                    </tr>
+                </thead>
                 <tbody>
                 <tr>
                     <th>Descripción</th>
@@ -166,29 +170,6 @@
                 <tr>
                     <th colspan="5" ></th>
                 </tr>
-                <tr>
-                    <td>{{$cash_opening->cash_name}} Inicial</td>
-                @foreach($payment_methods as $method)
-                    @php
-                        $b = 0;
-                        $pay = 0;
-                    @endphp
-                    @foreach($last_balances as $balance)
-                        @if($balance->method == $method)
-                        @php 
-                            $b = 1;
-                            $pay = $balance->balance;
-                        @endphp
-                        @endif
-                    @endforeach
-                    @if($b==1)
-                        <td>{{number_format($pay,0,',','.')}}</td>
-                    @else
-                        <td></td>
-                    @endif
-                @endforeach
-                </tr> 
-                <tr><td class="text-center" colspan="4">------------- o -------------</td><td></td><td></td></tr>
                 <tr>
                     @foreach($last_balances as $balance)
                         
@@ -226,14 +207,12 @@
                     @php
                         $b = 0;
                         $pay = 0;
-                        $method_selected = "";
                     @endphp
                     @foreach($totals as $tot)
                         @if($tot->payment_method == $method)
                         @php 
                             $b = 1;
                             $method_selected = $method;
-                            $entregar = $method=='efectivo'?$tot->total:0;
                             $pay = $method=='efectivo'?($tot->total + $cash_opening->start_amount):$tot->total;
                         @endphp
                         @endif
@@ -250,36 +229,39 @@
                 @endforeach
                 </tr>
                 <tr>
-                    <th>Total a Entregar(Efectivo)</th>
-                    <td>{{$entregar}}</td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
+                    <th colspan="6" class="text-center">&nbsp;</th>
                 </tr>
-                <tr><td class="text-center" colspan="4">------------- o -------------</td><td></td><td></td></tr>
                 <tr>
-                    <td>{{$cash_opening->cash_name}} Actual</td>
-                @foreach($payment_methods as $method)
-                    @php
-                        $b = 0;
-                        $pay = 0;
-                    @endphp
-                    @foreach($current_balances as $balance)
-                        @if($balance->method == $method)
-                        @php 
-                            $b = 1;
-                            $pay = $balance->balance;
-                        @endphp
-                        @endif
+                    <th colspan="6" class="text-center">Movimientos Caja Menor</th>
+                </tr>
+                <tr>
+                    <th>Descripción</th>
+                    @foreach($payment_methods as $method)
+                        <th>{{$method}}</th>
                     @endforeach
-                    @if($b==1)
-                        <td>{{number_format($pay,0,',','.')}}</td>
-                    @else
-                        <td></td>
-                    @endif
+                </tr>
+                <tr>
+                    <th colspan="5" ></th>
+                </tr>
+                @foreach($petty_cash as $mov)
+                @php
+                    $bg_cell = "text-success";
+                    if($mov->type == "egreso"){
+                        $bg_cell = "text-danger";
+                    }
+                    
+                @endphp
+                <tr>
+                    <td>{{$mov->description}}</td>
+                    @foreach($payment_methods as $method)
+                        @if($method == $mov->payment_method)
+                            <td class="{{$bg_cell}}">{{number_format($mov->amount,2,',','.')}}</td>
+                        @else
+                            <td></td>
+                        @endif
+                    @endforeach 
+                </tr>
                 @endforeach
-                </tr> 
-
                 </tbody>
             </table>
         </div>

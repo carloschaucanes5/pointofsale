@@ -15,7 +15,8 @@ class Payment extends Model
     'sale_id',
     'method',
     'value',
-    'status'
+    'status',
+    'cash_id'
     ];
 
     protected $guarded = [];

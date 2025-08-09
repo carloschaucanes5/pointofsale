@@ -78,7 +78,6 @@ class CashOpeningController extends Controller
             ]);
             
             $last_balances = DB::table("cash_balance")
-                             ->where("cash_id","=",$request->cash_id)
                              ->get();
 
             $cash_opening = new CashOpening();
@@ -270,7 +269,6 @@ class CashOpeningController extends Controller
              ->first();
         $last_balances = json_decode($cash_opened->last_balances);
 
-        $cash_opening_id =   $cash_opened->id;
             $sql = "
             SELECT * FROM (
 
@@ -285,7 +283,7 @@ class CashOpeningController extends Controller
                 FROM movement m
                 JOIN movement_types mt ON mt.id = m.movement_type_id
                 JOIN users us ON us.id = m.users_id
-                WHERE us.id = ? AND m.cash_opening_id = ? 
+                WHERE us.id = ? AND m.cash_id = ? 
                 
                 UNION ALL
                 
@@ -300,7 +298,8 @@ class CashOpeningController extends Controller
                 FROM sale s
                 JOIN users u ON u.id = s.users_id
                 JOIN payment p ON p.sale_id = s.id
-                WHERE u.id = ? AND s.cash_opening_id = ? 
+                JOIN cash_opening co ON co.id = s.cash_opening_id
+                WHERE u.id = ? AND co.cash_id = ? 
                 GROUP BY  p.method, u.name
             ) AS union_result
             ORDER BY created_at DESC
@@ -308,8 +307,8 @@ class CashOpeningController extends Controller
 
         // Parámetros del query
         $params = [
-            $users_id, $cash_opening_id,  
-            $users_id, $cash_opening_id      
+            $users_id, $cash_opened->cash_id,  
+            $users_id, $cash_opened->cash_id    
         ];
         // Ejecutar consulta paginada
         $results = collect(DB::select($sql, $params));
@@ -321,7 +320,7 @@ class CashOpeningController extends Controller
                     m.payment_method COLLATE utf8mb4_unicode_ci AS payment_method,
                     m.amount
                 FROM movement m
-                WHERE m.users_id = ? AND m.cash_opening_id = ?
+                WHERE m.users_id = ? AND m.cash_id = ?
 
                 UNION ALL
 
@@ -331,14 +330,17 @@ class CashOpeningController extends Controller
                     p.value AS amount
                 FROM sale s
                 JOIN payment p ON p.sale_id = s.id
-                WHERE s.users_id = ? AND s.cash_opening_id = ?
+                JOIN cash_opening co ON co.id = s.cash_opening_id
+                WHERE s.users_id = ? AND co.cash_id = ?
             ) AS all_movements
             GROUP BY payment_method
         ";
         $sums = DB::select($sumSql, [
-            $users_id, $cash_opening_id,  
-            $users_id, $cash_opening_id   
+            $users_id, $cash_opened->cash_id,  
+            $users_id, $cash_opened->cash_id   
         ]);
+
+
 
         $payment_methods = DB::table("config")
                     ->where('key',"=","payment_methods")
@@ -347,6 +349,36 @@ class CashOpeningController extends Controller
         $current_cash_balance = CashBalance::where("cash_id","=",$cash_opened->cash_id)
                         ->get();
 
+
+        //verificar movimientos de caja menor
+        
+        $sqlMCM = " 
+            SELECT 
+                m.type COLLATE utf8mb4_unicode_ci AS type,
+                m.created_at,
+                mt.name COLLATE utf8mb4_unicode_ci AS movement_type,
+                m.description COLLATE utf8mb4_unicode_ci AS description,
+                m.amount,
+                m.payment_method COLLATE utf8mb4_unicode_ci AS payment_method,
+                us.name COLLATE utf8mb4_unicode_ci AS username
+            FROM movement m
+            JOIN movement_types mt ON mt.id = m.movement_type_id
+            JOIN users us ON us.id = m.users_id
+            JOIN cash ca ON ca.id = m.cash_id
+            WHERE us.id = ? 
+            AND m.created_at >= ? 
+            AND m.created_at <= ? 
+            AND m.cash_id = ?
+        "; 
+
+        $petty_cash = DB::select($sqlMCM, [
+            $users_id,
+            date("Y-m-d") . " 00:00:00",
+            date("Y-m-d") . " 23:59:59",
+            1
+        ]);
+
+
         return view('sale.cash.close',
         [
         'movements'=>$results,
@@ -354,7 +386,8 @@ class CashOpeningController extends Controller
         'payment_methods'=>explode(",",$payment_methods->value),
         'cash_opening'=>$cash_opened,
         'last_balances'=>$last_balances,
-        'current_balances'=>$current_cash_balance
+        'current_balances'=>$current_cash_balance,
+        'petty_cash'=>$petty_cash
         ]);
     } 
 

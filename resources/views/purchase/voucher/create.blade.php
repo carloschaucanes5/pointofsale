@@ -32,6 +32,16 @@
                         @endforeach
                     </select>
                 </div>
+                <div class="mb-3">
+                    <label for="cash_id" class="form-label"><b>Afecta a:</b></label>
+                    <select name="cash_id" id="cash_id" class="form-control" required>
+                        <option value="">Seleccione una caja</option>
+                        @foreach($cashes as $cash)
+                            <option value="{{$cash->id}}">{{$cash->name}}</option>
+                        @endforeach
+                    </select>
+                </div>
+                
                 <div style="background-color:bisque;padding:5%">          
 
                     <div class="form-group">
@@ -153,6 +163,7 @@
         formData.append('description', document.getElementById('description').value);
         formData.append('supplier_id', document.getElementById('supplier_id').value);
         formData.append('status_payment', document.getElementById('status_payment').value);
+        formData.append('cash_id', document.getElementById('cash_id').value);
         formData.append('methods',JSON.stringify(methods));
         // Convertir canvas a blob
         //canvas.toBlob(function(blob) {

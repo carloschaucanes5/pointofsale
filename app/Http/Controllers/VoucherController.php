@@ -58,6 +58,10 @@ if ($request) {
      */
     public function create()
     {
+        $cashes = DB::table('cash')
+            ->orderBy('name', 'asc')
+            ->get();
+            
         $cash = DB::table('cash_opening')
                     ->where('users_id','=',auth()->user()->id)
                     ->where('status','=','open')
@@ -84,7 +88,11 @@ if ($request) {
         } else {
             $status_payment_array = [];
         }
-        return view("purchase.voucher.create", ["suppliers" => $suppliers,"status_payment" => $status_payment_array,'payment_methods'=>explode(",",$payment_methods->value)]);
+        return view("purchase.voucher.create", [
+            "suppliers" => $suppliers,
+            "status_payment" => $status_payment_array,
+            'payment_methods'=>explode(",",$payment_methods->value),
+            'cashes' => $cashes]);
        
     }
 
@@ -107,24 +115,13 @@ if ($request) {
             $voucher->photo = '';
             $voucher->save();
             
-            $cash_opening = DB::table('cash_opening')
-                    ->where('users_id','=',auth()->user()->id)
-                    ->where('status','=','open')
-                    ->first();
-            if(!$cash_opening){
-                DB::rollBack();
-                return response()->json([
-                        'success' => false,
-                        'message' => 'No has abierto caja aún'
-                ], 500);
-                 
-            }
+
             $methods = json_decode($request->get("methods"));
             foreach($methods as $met){
                 $amount = floatval($met->value) * (-1);
                 $movement = new Movement();
                 $movement->users_id = auth()->user()->id;
-                $movement->cash_opening_id = $cash_opening->id;
+                $movement->cash_id = $request->get('cash_id');
                 $movement->type="egreso";
                 $movement->movement_type_id = 6;
                 $movement->description = explode("-",$request->get('supplier_id'))[1]."(".$request->get('voucher_number').")";
@@ -133,7 +130,7 @@ if ($request) {
                 $movement->table_identifier = "voucher-".$voucher->id;
                 $movement->save();
 
-                $cash_balance = CashBalance::where('cash_id','=',$cash_opening->cash_id)
+                $cash_balance = CashBalance::where('cash_id','=',$request->get('cash_id'))
                             ->where("method","=",$met->method)
                             ->first();
                     if($cash_balance){
@@ -143,7 +140,7 @@ if ($request) {
                     else
                     {
                         $cash_balance1 = new CashBalance();
-                        $cash_balance1->cash_id = $cash_opening->cash_id;
+                        $cash_balance1->cash_id = $request->get('cash_id');
                         $cash_balance1->method = $met->method;
                         $cash_balance1->balance = $amount;
                         $cash_balance1->save();

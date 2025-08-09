@@ -62,6 +62,7 @@ Route::middleware(['auth','check.session','role:admin,superadmin,cashier,user'])
     Route::post('sale/cash_close/{id?}', [CashOpeningController::class, 'cash_close'])->name('sale.cash_close');
     Route::get('sale/cash_opening/validate_cash_opening/{id}', [CashOpeningController::class, 'validate_cash_opening'])->name('sale.cash_opening.validate_cash_opening');
     Route::get('purchase/income/search_product/{codeOrName}', [IncomeController::class, 'search_product']);
+    Route::get('purchase/income/search_product_unit/{codeOrName}', [IncomeController::class, 'search_product_unit']);
     Route::get('purchase/income/search_product_historical/{codeName}', [IncomeController::class, 'search_product_historical']);
     Route::get('purchase/income/view_voucher/{voucherId}', [IncomeController::class, 'view_voucher']);
 

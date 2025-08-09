@@ -340,7 +340,7 @@
                                 <li class="nav-item ms-3">
                                     <a href="{{ route('purchase.startinventory') }}" class="nav-link">
                                         <i class="bi bi-eye"></i>
-                                        <p>Factura Inicial</p>
+                                        <p>Sobrepedidos</p>
                                     </a>
                                 </li>
                             </ul>
