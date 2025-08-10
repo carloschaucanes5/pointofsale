@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CashOpening;
 use App\Models\CashBalance;
+use App\Models\Movement;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -283,7 +284,7 @@ class CashOpeningController extends Controller
                 FROM movement m
                 JOIN movement_types mt ON mt.id = m.movement_type_id
                 JOIN users us ON us.id = m.users_id
-                WHERE us.id = ? AND m.cash_id = ? 
+                WHERE us.id = ? AND m.cash_id = ? AND m.table_identifier = ?
                 
                 UNION ALL
                 
@@ -299,7 +300,7 @@ class CashOpeningController extends Controller
                 JOIN users u ON u.id = s.users_id
                 JOIN payment p ON p.sale_id = s.id
                 JOIN cash_opening co ON co.id = s.cash_opening_id
-                WHERE u.id = ? AND co.cash_id = ? 
+                WHERE u.id = ? AND co.cash_id = ? AND  s.cash_opening_id = ? 
                 GROUP BY  p.method, u.name
             ) AS union_result
             ORDER BY created_at DESC
@@ -307,8 +308,8 @@ class CashOpeningController extends Controller
 
         // Parámetros del query
         $params = [
-            $users_id, $cash_opened->cash_id,  
-            $users_id, $cash_opened->cash_id    
+            $users_id, 3,"cash_opening-".$cash_opened->id,  
+            $users_id, 3 ,$cash_opened->id    
         ];
         // Ejecutar consulta paginada
         $results = collect(DB::select($sql, $params));
@@ -320,7 +321,7 @@ class CashOpeningController extends Controller
                     m.payment_method COLLATE utf8mb4_unicode_ci AS payment_method,
                     m.amount
                 FROM movement m
-                WHERE m.users_id = ? AND m.cash_id = ?
+                WHERE m.users_id = ? AND m.cash_id = ? and m.table_identifier = ?
 
                 UNION ALL
 
@@ -331,13 +332,13 @@ class CashOpeningController extends Controller
                 FROM sale s
                 JOIN payment p ON p.sale_id = s.id
                 JOIN cash_opening co ON co.id = s.cash_opening_id
-                WHERE s.users_id = ? AND co.cash_id = ?
+                WHERE s.users_id = ? AND co.cash_id = ? AND s.cash_opening_id = ?
             ) AS all_movements
             GROUP BY payment_method
         ";
         $sums = DB::select($sumSql, [
-            $users_id, $cash_opened->cash_id,  
-            $users_id, $cash_opened->cash_id   
+            $users_id, 3, "cash_opening-".$cash_opened->id,  
+            $users_id,3 ,$cash_opened->id   
         ]);
 
 
@@ -346,7 +347,7 @@ class CashOpeningController extends Controller
                     ->where('key',"=","payment_methods")
                     ->first();
 
-        $current_cash_balance = CashBalance::where("cash_id","=",$cash_opened->cash_id)
+        $current_cash_balance = CashBalance::where("cash_id","=",1)
                         ->get();
 
 
@@ -365,18 +366,18 @@ class CashOpeningController extends Controller
             JOIN movement_types mt ON mt.id = m.movement_type_id
             JOIN users us ON us.id = m.users_id
             JOIN cash ca ON ca.id = m.cash_id
-            WHERE us.id = ? 
-            AND m.created_at >= ? 
+            WHERE 
+             m.created_at >= ? 
             AND m.created_at <= ? 
             AND m.cash_id = ?
         "; 
 
         $petty_cash = DB::select($sqlMCM, [
-            $users_id,
             date("Y-m-d") . " 00:00:00",
             date("Y-m-d") . " 23:59:59",
             1
         ]);
+
 
 
         return view('sale.cash.close',
@@ -399,6 +400,8 @@ class CashOpeningController extends Controller
              ->orderBy('created_at', 'desc')
              ->first();
         
+
+
         if(strcmp($request->getMethod(),"GET")==0){
 
             if($cash_opening){
@@ -417,9 +420,9 @@ class CashOpeningController extends Controller
                 return view('sale.cash.create',["cash_registers"=>explode(",",$cash_registers->value),"cash_locations"=>explode(",",$cash_locations->value)]);
             }
         }else{
-
+            DB::beginTransaction();
             $end_balaces = DB::table("cash_balance")
-                            ->where("cash_id","=",$cash_opening->cash_id)
+                            ->where("cash_id","=",1)
                             ->get();
 
              if($cash_opening){
@@ -429,6 +432,86 @@ class CashOpeningController extends Controller
                  $cash_opening->end_amount = $request->post("total_close_amount");
                  $cash_opening->end_balances = json_encode($end_balaces);
                  $cash_opening->update();
+                //-----------------------------------------------------
+                $sumSql = "
+                    SELECT payment_method, SUM(amount) AS total
+                    FROM (
+                        -- Movimientos
+                        SELECT 
+                            m.payment_method COLLATE utf8mb4_unicode_ci AS payment_method,
+                            m.amount
+                        FROM movement m
+                        WHERE m.users_id = ? AND m.cash_id = ? AND m.table_identifier = ?
+
+                        UNION ALL
+
+                        -- Ventas
+                        SELECT 
+                            p.method COLLATE utf8mb4_unicode_ci AS payment_method,
+                            p.value AS amount
+                        FROM sale s
+                        JOIN payment p ON p.sale_id = s.id
+                        JOIN cash_opening co ON co.id = s.cash_opening_id
+                        WHERE s.users_id = ? AND co.cash_id = ? AND s.cash_opening_id = ?
+                    ) AS all_movements
+                    GROUP BY payment_method
+                ";
+                $sums = DB::select($sumSql, [
+                    auth()->user()->id, 3, "cash_opening-".$cash_opening->id, 
+                    auth()->user()->id, 3, $cash_opening->id  
+                ]);
+
+
+                foreach($sums as $sum){
+                    $movement = new Movement();
+                    $movement->users_id = auth()->user()->id;
+                    $movement->cash_id = 1;
+                    $movement->type = "ingreso";
+                    $movement->amount = $sum->total;
+                    $movement->payment_method = $sum->payment_method;
+                    $movement->description = "Cierre de caja por ". auth()->user()->name;
+                    $movement->movement_type_id = 1; // Ingreso
+                    $movement->save();
+                    if($movement){
+                        $cash_balance = CashBalance::where('cash_id','=',1)
+                                    ->where("method","=",$sum->payment_method)
+                                    ->first();
+                        if($cash_balance){
+                            $cash_balance->balance = $cash_balance->balance + $sum->total;
+                            $cash_balance->save();
+                        }
+                        else
+                        {
+                            $cash_balance1 = new CashBalance();
+                            $cash_balance1->cash_id = 1;
+                            $cash_balance1->method = $sum->payment_method;
+                            $cash_balance1->balance = $sum->total;
+                            $cash_balance1->save();
+                        }
+                     }
+                    else
+                    {
+                        DB::rollBack();
+                        return response()->json([
+                            "success"=>false,
+                            "message"=>"Error al registrar el movimiento de cierre de caja"
+                        ],Response::HTTP_INTERNAL_SERVER_ERROR);
+                    }
+
+                     $balances = CashBalance::where("cash_id","=",3)
+                                ->get();
+                    foreach($balances as $balance){
+                        $balance->balance = 0;
+                        $balance->update();
+                    }
+                    DB::commit();
+                }
+
+                
+
+                //-----------------------------------------------------
+                
+                
                 return response()->redirectTo("sale/cash_opening");
              }
         }

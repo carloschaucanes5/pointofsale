@@ -209,6 +209,7 @@ class MovementController extends Controller
     public function store(Request $request)
     {
         try{
+            DB::beginTransaction();
             $validated = $request->validate([
             'type' => 'required|in:egreso,ingreso',
             'movement_type_id' => 'required|numeric|min:0',
@@ -222,6 +223,19 @@ class MovementController extends Controller
             if($request->post("type") == "egreso"){
                  $amount = $amount * (-1);
             }
+            if( $validated['cash_id'] == 3){
+                $cash_opened = DB::table("cash_opening as co")
+                             ->where('co.users_id','=',auth()->user()->id)
+                             ->where('co.status','=','open')
+                             ->first();
+                $validated['table_identifier'] = "cash_opening-".$cash_opened->id;
+
+                if(!$cash_opened){
+                    DB::rollBack();
+                    return back()->withErrors(['error' => 'El usuario no ha realizado apertura de caja'])->withInput();
+
+                }
+            }
             $validated['amount'] = $amount;          
             $movement = Movement::create($validated);
             if($movement){
@@ -231,6 +245,7 @@ class MovementController extends Controller
                 if($cash_balance){
                     $cash_balance->balance = $cash_balance->balance + $amount;
                     $cash_balance->save();
+                    DB::commit();
                 }
                 else
                 {
@@ -239,7 +254,13 @@ class MovementController extends Controller
                     $cash_balance1->method = $validated['payment_method'];
                     $cash_balance1->balance = $amount;
                     $cash_balance1->save();
+                     DB::commit();
                 }
+            }
+            else
+            {
+                DB::rollBack();
+                return back()->withErrors(['error' => 'No se pudo registrar el movimiento'])->withInput();
             }
             return redirect()->route('movement.index');
         } catch (ValidationException $e) {

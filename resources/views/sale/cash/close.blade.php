@@ -202,7 +202,10 @@
                 </tr>
                 @endforeach
                 <tr>
-                <th>Totales Turno</th>
+                <th>Total Turno</th>
+                @php
+                    $payTotal = 0;
+                @endphp
                 @foreach($payment_methods as $method)
                     @php
                         $b = 0;
@@ -210,17 +213,25 @@
                     @endphp
                     @foreach($totals as $tot)
                         @if($tot->payment_method == $method)
-                        @php 
-                            $b = 1;
-                            $method_selected = $method;
-                            $pay = $method=='efectivo'?($tot->total + $cash_opening->start_amount):$tot->total;
-                        @endphp
+                            @php 
+                                $b = 1;
+                                $method_selected = $method;
+                                if($method=='efectivo'){
+                                    $pay = $tot->total + $cash_opening->start_amount;
+                                    $payTotal = $tot->total;
+                                }else{
+                                    $pay = $tot->total;
+                                }
+                            @endphp
                         @endif
                     @endforeach
                     @if($b==1)
                         @if($method == 'efectivo')
                             <td class="bg-warning">{{number_format($pay,0,',','.')}}</td>
                         @else
+                            @php
+                                
+                            @endphp
                             <td>{{number_format($pay,0,',','.')}}</td>
                         @endif
                     @else
@@ -228,6 +239,8 @@
                     @endif
                 @endforeach
                 </tr>
+                <tr>
+                    <th>Total a Entregar</th><th colspan="5" >{{number_format($payTotal?$payTotal:0,'0',',','.')}}</th>
                 <tr>
                     <th colspan="6" class="text-center">&nbsp;</th>
                 </tr>
@@ -238,6 +251,26 @@
                     <th>Descripción</th>
                     @foreach($payment_methods as $method)
                         <th>{{$method}}</th>
+                    @endforeach
+                </tr>
+                <tr>
+                    <td>Saldo Inicial Caja Menor</td>
+                    @foreach($payment_methods as $method)
+                        @php
+                            $b = 0;
+                            $pay = 0;
+                        @endphp
+                        @foreach($last_balances as $last_balance)
+                            @if($last_balance->method == $method)
+                                @php 
+                                    $b = 1;
+                                    $pay = $last_balance->balance;
+                                @endphp
+                            @endif
+                        @endforeach
+                        @if($b==1)
+                            <td class="bg-warning">{{number_format($pay,0,',','.')}}</td>
+                        @endif
                     @endforeach
                 </tr>
                 <tr>
@@ -262,6 +295,27 @@
                     @endforeach 
                 </tr>
                 @endforeach
+                    <tr>
+                        <td>Saldo Actual Caja Menor</td>
+                        @foreach($payment_methods as $method)
+                            @php
+                                $b = 0;
+                                $pay = 0;
+                            @endphp
+                            @foreach($current_balances as $current_balance)
+                                @if($current_balance->method == $method)
+                                    @php 
+                                        $b = 1;
+                                        $pay = $current_balance->balance;
+                                    @endphp
+                                @endif
+                            @endforeach
+                            @if($b==1)
+                                <td class="bg-warning">{{number_format($pay,0,',','.')}}</td>
+                            @endif
+                        @endforeach
+                    </tr>
+                    
                 </tbody>
             </table>
         </div>
