@@ -62,13 +62,7 @@ if ($request) {
             ->orderBy('name', 'asc')
             ->get();
             
-        $cash = DB::table('cash_opening')
-                    ->where('users_id','=',auth()->user()->id)
-                    ->where('status','=','open')
-                    ->first();
-        if(!$cash){
-            return back()->withErrors(['error' => 'El usuario no ha realizado apertura de caja'])->withInput();
-        }
+
 
         $payment_methods =DB::table('config')
             ->where("key","=","payment_methods")
@@ -104,6 +98,19 @@ if ($request) {
         try
         {
             DB::beginTransaction();
+            if($request->get('cash_id') == 3){
+                $cash = DB::table('cash_opening')
+                        ->where('users_id','=',auth()->user()->id)
+                        ->where('status','=','open')
+                        ->first();
+                if(!$cash){
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'No se ha abierto la caja para registrar el egreso.'
+                    ], 500);
+                }
+
+            }
             $voucher = new Voucher();
             $voucher->voucher_number = $request->get('voucher_number');
             $voucher->total = $request->get('total');

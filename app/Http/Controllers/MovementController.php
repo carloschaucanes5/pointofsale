@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 use Termwind\Components\Raw;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Redirect;
 use stdClass;
 
 class MovementController extends Controller
@@ -182,13 +183,13 @@ class MovementController extends Controller
                   ->get();   
 
 
-        $cash = DB::table('cash_opening')
+        /*$cash = DB::table('cash_opening')
                     ->where('users_id','=',auth()->user()->id)
                     ->where('status','=','open')
                     ->first();
         if(!$cash){
             return back()->withErrors(['error' => 'El usuario no ha realizado apertura de caja'])->withInput();
-        }
+        }*/
         $methods = DB::table('config')
                    ->where('key','=','payment_methods')
                    ->first();
@@ -198,7 +199,6 @@ class MovementController extends Controller
     public function getTypesByCategory($type)
     {
         $types = DB::table('movement_types')
-        ->where('type', $type)
         ->orderBy('name')->get();
         return response()->json($types);
     }
@@ -216,25 +216,29 @@ class MovementController extends Controller
             'description' => 'nullable|string',
             'amount' => 'required|numeric|min:0.01',
             'payment_method' => 'required|string|max:50',
-            'cash_id' => 'required|numeric|min:1',
+            'cash_id' => 'required',
             ]);
             $validated['users_id'] = auth()->user()->id;
             $amount = floatval($request->post("amount"));
             if($request->post("type") == "egreso"){
                  $amount = $amount * (-1);
             }
-            if( $validated['cash_id'] == 3){
+            if($validated['cash_id'] == 3){
                 $cash_opened = DB::table("cash_opening as co")
                              ->where('co.users_id','=',auth()->user()->id)
                              ->where('co.status','=','open')
                              ->first();
-                $validated['table_identifier'] = "cash_opening-".$cash_opened->id;
+                
 
                 if(!$cash_opened){
                     DB::rollBack();
-                    return back()->withErrors(['error' => 'El usuario no ha realizado apertura de caja'])->withInput();
-
+                    return redirect()
+                            ->back()
+                            ->withErrors(['El usuario no ha realizado apertura de caja registradora'])
+                            ->withInput();
                 }
+                $validated['table_identifier'] = "cash_opening-".$cash_opened->id;
+
             }
             $validated['amount'] = $amount;          
             $movement = Movement::create($validated);

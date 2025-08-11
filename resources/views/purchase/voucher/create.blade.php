@@ -190,10 +190,10 @@
                         }).then(() => {
                             window.location.href = "{{route('voucher.index')}}";
                         });
-                    }else {
+                    }else{
                         Swal.fire({
                             title: 'Error',
-                            text: 'No se pudo guardar la factura',
+                            text:data.message,
                             icon: 'error',
                             buttons: true,
                             dangerMode: true,

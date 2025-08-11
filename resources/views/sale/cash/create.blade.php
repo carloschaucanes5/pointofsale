@@ -29,7 +29,7 @@
 
                         <div class="mb-3">
                             <label for="start_amount" class="form-label">💰 Monto inicial (efectivo)</label>
-                            <input type="number" step="0.01" name="start_amount" class="form-control" required>
+                            <input type="number" step="0.01" value="90000" name="start_amount" class="form-control" required>
                         </div>
 
                         <div class="mb-3">
@@ -52,9 +52,15 @@
 
                         <div class="mb-3">
                             <label for="cash_id" class="form-label"> Afecta a</label>
-                            <select  name="cash_id" class="form-control">
+                            <select name="cash_id" id="cash_id" class="form-select" required>
                                 @foreach($cashes as $cash)
-                                  <option value="{{$cash->id}}">{{$cash->name}}</option>  
+                                @php
+                                        $selected= '';
+                                        if($cash->id==3){
+                                            $selected = 'selected';
+                                        }
+                                @endphp
+                                    <option {{$selected}} value="{{$cash->id}}">{{$cash->name}}</option>
                                 @endforeach
                             </select>
                         </div>

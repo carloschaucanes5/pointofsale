@@ -462,6 +462,14 @@ class SaleController extends Controller
     }
 
     public function return_sale(Request $request){
+        $cash_opened = DB::table("cash_opening as co")
+                ->where("co.users_id","=",auth()->user()->id)
+                ->where("co.status","=",'open')
+                ->first();
+        if(!$cash_opened){
+            return response()->json(
+            ["success"=>false,"message"=>"No has iniciado apertura de caja"],401);
+        }
         try{
             if(isset(auth()->user()->id)){
                 DB::beginTransaction();
@@ -505,6 +513,19 @@ class SaleController extends Controller
                     $return_sale->return_total = $return_total;
                     $return_sale->users_id = auth()->user()->id;
                     $return_sale->save();
+
+                    $movement = new Movement();
+                    $movement->cash_id = $cash_opened->cash_id;
+                    $movement->type = "egreso";
+                    $movement->movement_type_id = 18;
+                    $movement->description = "Devolución de venta (Venta No:POS".$sale_id.")";
+                    $movement->amount = $return_total*-1;
+                    $movement->users_id = auth()->user()->id;
+                    $movement->payment_method = 'efectivo';
+                    $movement->table_identifier = "cash_opening-".$cash_opened->id;
+                    $movement->save();
+
+
                 }
                 $total = DB::table('sale_detail as sd')
                 ->select(DB::raw('SUM(((sale_price * quantity) - discount)) as sale_total'))

@@ -6,16 +6,15 @@
 <div class="container mt-4">
     <h4>Registrar Movimiento de Dinero</h4>
 
-    @if ($errors->any())
-        <div class="alert alert-danger">
-            <strong>¡Revisa los campos!</strong>
-            <ul class="mb-0 mt-2">
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
+@if ($errors->any())
+    <div class="alert alert-danger">
+        <ul class="mb-0 mt-2">
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
 
     <form action="{{ route('movement.store') }}" method="POST">
         @csrf
@@ -42,10 +41,15 @@
             <div class="col-md-4">
                 <label for="cash_id" class="form-label">Afecta a</label>
                 <div class="mb-3">
-                    
                     <select name="cash_id" id="cash_id" class="form-select" required>
                         @foreach($cashes as $cash)
-                            <option value="{{$cash->id}}">{{$cash->name}}</option>
+                           @php
+                                $selected= '';
+                                if($cash->id==1){
+                                    $selected = 'selected';
+                                }
+                           @endphp
+                            <option {{$selected}} value="{{$cash->id}}">{{$cash->name}}</option>
                         @endforeach
                     </select>
                 </div>
