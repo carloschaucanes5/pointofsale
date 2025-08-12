@@ -55,7 +55,8 @@ class VoucherController extends Controller
                 ->where(function ($q) use ($query) {
                     $q->where('voucher.voucher_number', 'like', '%' . $query . '%')
                     ->orWhere('voucher.description', 'like', '%' . $query . '%')
-                    ->orWhere('person.name','like','%'.$query.'%');
+                    ->orWhere('person.name','like','%'.$query.'%')
+                    ->orWhere('users.name','like','%'.$query.'%');
                 })
                 ->whereBetween('voucher.created_at',[$from,$to])
                 ->orderBy('voucher.id', 'desc')
