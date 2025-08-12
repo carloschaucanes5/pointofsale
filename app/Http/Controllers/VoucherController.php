@@ -23,34 +23,51 @@ class VoucherController extends Controller
 
     public function index(Request $request)
     {
-if ($request) {
-    $query = trim($request->get('searchText'));
-    $vouchers = DB::table("voucher")
-        ->join('person', 'voucher.supplier_id', '=', 'person.id')
-        ->join('users', 'voucher.users_id', '=', 'users.id')
-        ->select(
-            'voucher.id',
-            'voucher.voucher_number',
-            'voucher.description',
-            'voucher.total',
-            'voucher.photo',
-            'voucher.status',
-            'person.name as supplier_name',
-            'person.id as supplier_id',
-            'voucher.status_payment',
-            'voucher.updated_at',
-            'users.name as user_name'
-        )
-        ->where('voucher.status', '=', 1)
-        ->where(function ($q) use ($query) {
-            $q->where('voucher_number', 'like', '%' . $query . '%')
-              ->orWhere('description', 'like', '%' . $query . '%');
-        })
-        ->orderBy('voucher.id', 'desc')
-        ->paginate(5);
+        $from = $request->get('from');
+        $to = $request->get('to');
+        if($from == '' && $to == ''){
+            $from = date('Y-m-d 00:00:00');
+            $to = date('Y-m-d 23:59:59');
+        }else{
+            $from = date('Y-m-d 00:00:00',strtotime($from));
+            $to = date('Y-m-d 23:59:59',strtotime($to));
+        }
+        if ($request) {
+            $query = trim($request->get('searchText'));
+            $vouchers = DB::table("voucher")
+                ->join('person', 'voucher.supplier_id', '=', 'person.id')
+                ->join('users', 'voucher.users_id', '=', 'users.id')
+                ->select(
+                    'voucher.id',
+                    'voucher.voucher_number',
+                    'voucher.description',
+                    'voucher.total',
+                    'voucher.photo',
+                    'voucher.status',
+                    'person.name as supplier_name',
+                    'person.id as supplier_id',
+                    'voucher.status_payment',
+                    'voucher.updated_at',
+                    'users.name as user_name',
+                    'voucher.created_at'
+                )
+                ->where('voucher.status', '=', 1)
+                ->where(function ($q) use ($query) {
+                    $q->where('voucher.voucher_number', 'like', '%' . $query . '%')
+                    ->orWhere('voucher.description', 'like', '%' . $query . '%')
+                    ->orWhere('person.name','like','%'.$query.'%');
+                })
+                ->whereBetween('voucher.created_at',[$from,$to])
+                ->orderBy('voucher.id', 'desc')
+                ->paginate(5)
+                ->appends([
+                    'from' => date('Y-m-d', strtotime($from)),
+                    'to'   => date('Y-m-d', strtotime($to))
+                ]);
 
-    return view('purchase.voucher.index', ['vouchers' => $vouchers, 'searchText' => $query]);
-}
+
+            return view('purchase.voucher.index', ['vouchers' => $vouchers, 'searchText' => $query,'from'=>date('Y-m-d',strtotime($from)),'to'=>date('Y-m-d',strtotime($to))]);
+        }
     }
 
     /**

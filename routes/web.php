@@ -64,8 +64,9 @@ Route::middleware(['auth','check.session','role:admin,superadmin,cashier,user'])
     Route::get('purchase/income/search_product/{codeOrName}', [IncomeController::class, 'search_product']);
     Route::get('purchase/income/search_product_unit/{codeOrName}', [IncomeController::class, 'search_product_unit']);
     Route::get('purchase/income/search_product_historical/{codeName}', [IncomeController::class, 'search_product_historical']);
+    
     Route::get('purchase/income/view_voucher/{voucherId}', [IncomeController::class, 'view_voucher']);
-
+   
     Route::get('sale/sale/search_product/{codeName}', [SaleController::class, 'search_product']);
     Route::get('purchase/startinventory', [IncomeController::class, 'startinventory'])->name('purchase.startinventory');
 
@@ -74,6 +75,9 @@ Route::middleware(['auth','check.session','role:admin,superadmin,cashier,user'])
     Route::post('store/inventory/proccess_out/{income_detail_id}', [InventoryController::class, 'proccess_out'])->name('store.inventory.proccess_out');
     Route::get('movement/filter', [MovementController::class, 'filterByDate'])->name('movement.filter');
     Route::get('movement/types/{type}', [MovementController::class, 'getTypesByCategory']);
+
+     Route::get('report/income/reception', [IncomeController::class, 'reception'])->name('report.income.reception');
+    
 
     });
 

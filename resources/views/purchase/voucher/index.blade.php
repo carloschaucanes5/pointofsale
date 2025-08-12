@@ -27,16 +27,21 @@
                         <div class="col-xl-12" >
                             <form action="{{route('voucher.index')}}" method="get">
                                 <div class="row">
-                                    <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+                                    <div class="col-md-6">
                                         <div class="input-group mb-6">
                                             <span class="input-group-text" id="basic-addon1"><i class="bi bi-search"></i></span>
                                             <input type="text" class="form-control" name="searchText" placeholder="Buscar Facturas" value="{{$searchText}}" aria-label="campo busqueda" aria-describedby="button-addon2">
                                             <button class="btn btn-outline-secondary" type="submit" id="button-addon2">Buscar</button>
                                         </div>
                                     </div>
-                                    <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+                                    <div class="col-md-2">
+                                        <input type="date" name="from" class="form-control" value="{{ $from }}">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <input type="date" name="to" class="form-control" value="{{ $to }}">
+                                    </div>
+                                    <div class="col-md-2">
                                         <div class="input-group mb-6">
-                                            <span class="input-group-text" id="basic-addon1"><i class="bi bi-plus-circle-fill"></i></span>
                                             <a href="{{route('voucher.create')}}" class="btn btn-success">Nueva</a>
 
                                         </div>
@@ -73,8 +78,6 @@
                         @forEach($vouchers as $vou)
                         <tr>
                             <td>
-                                <a href="{{route('voucher.edit',$vou->id)}}" class="btn btn-warning btn-sm"><i class="bi bi-pen"></i></a>
-                                <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#modal-delete-{{$vou->id}}"><i class="bi bi-trash"></i></button>
                                 <button type="button" class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#modal-view-{{$vou->id}}"><i class="bi bi-eye"></i></button>
                             </td>
                             <td>{{$vou->voucher_number}}</td>

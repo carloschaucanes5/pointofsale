@@ -419,9 +419,9 @@
                             </a>
                             <ul class="nav nav-treeview">
                                 <li class="nav-item ms-3">
-                                    <a href="./index.html" class="nav-link">
+                                    <a href="{{route('report.income.reception')}}" class="nav-link">
                                         <i class="nav-icon bi bi-calendar-day"></i>
-                                        <p>Ventas por Dia</p>
+                                        <p>Recepción de Facturas</p>
                                     </a>
                                 </li>
                             </ul>

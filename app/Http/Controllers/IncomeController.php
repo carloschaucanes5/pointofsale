@@ -268,6 +268,25 @@ class IncomeController extends Controller
         
     }
 
+    public function reception(Request $request){
+        if(!$request->input('from') && !$request->input('to') ){
+
+                $from = date('Y-m-d'). ' 00:00:00';
+                $to = date('Y-m-d') . ' 23:59:59';
+        }else{
+            $from = $request->input('from') . ' 00:00:00';
+            $to = $request->input('to') . ' 23:59:59';
+        }
+
+        $vouchers = DB::table('voucher as v')
+               ->select('p.id','p.name','v.id','v.voucher_number','v.total')
+               ->join('person as p','p.id','=','v.supplier_id')
+               ->whereBetween('v.created_at', [$from, $to])
+               ->get();
+
+        return view('report.income.reception',['from'=>$from,'to'=>$to,'vouchers'=>$vouchers]);
+    } 
+
     /**
      * Display the specified resource.
      */
