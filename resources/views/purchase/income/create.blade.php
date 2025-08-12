@@ -130,7 +130,9 @@
                                         <th>Precio/U</th>
                                         <th>Precio/T</th>
                                         <th>Utilidad</th>
-                                        <th>F. Venc.</th> 
+                                        <th>F. Venc.</th>
+                                        <th>Lote</th>
+                                        <th>Invima</th>
                                     </tr>
                                 </thead>
                                 <tfoot>
@@ -377,7 +379,20 @@ function parseAmount(value) {
     return parseFloat(value);
 }
 
-function saveIncome(){
+async function saveIncome(){
+           const result = await Swal.fire({
+                title: '¿Estás seguro de guardar las entradas?',
+                text: "No podrás revertir esta acción",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6', // Azul
+                cancelButtonColor: '#d33',     // Rojo
+                confirmButtonText: 'Guardar',
+                cancelButtonText: 'Cancelar'
+            });
+            if(!result.isConfirmed){
+                return;
+            }
             let form = document.getElementById('incomeform');
             let formData = new FormData(form);
             let voucher_id = document.getElementById('voucher_id').value;
@@ -488,8 +503,8 @@ function add(){
                     <td><input class="form-control" type="hidden" name="subtotal_sales[]" value="${subtotal_sale}">${subtotal_sale}</td>
                     <td><input class="form-control" type="hidden" name="subtotal_profits[]" value="${subtotal_profit}">${subtotal_profit}</td>
                     <td><input class="form-control" type="hidden" name="expiration_dates[]" value="${expiration_date}">${expiration_date}</td>
-                    <td><input class="form-control" type="hidden" name="lotes[]" value="${lote}">${invima}</td>
-                    <td><input class="form-control" type="hidden" name="invimas[]" value="${lote}">${invima}</td>
+                    <td><input class="form-control" type="hidden" name="lotes[]" value="${lote}">${lote}</td>
+                    <td><input class="form-control" type="hidden" name="invimas[]" value="${invima}">${invima}</td>
                 </tr>
             `;
 
