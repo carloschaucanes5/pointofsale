@@ -357,6 +357,8 @@ function view_information_historical(code){
                                         <th>Costo</th>
                                         <th>Precio</th>
                                         <th>F.Venta</th>
+                                        <th>Lote</th>
+                                        <th>Invima</th>
                                         <th></th>
                                     </tr>
                                 </thead>
@@ -369,6 +371,8 @@ function view_information_historical(code){
                                 <td>${item.purchase_price}</td>
                                 <td>${price}</td>
                                 <td>${item.form_sale}</td>
+                                <td>${item.lote}</td>
+                                <td>${item.invima}</td>
 
                                 <td><button class="btn btn-warning btn-sm" onclick="selection('${item_t}')"><i class="bi bi-plus"></i></button></td>
                               </tr>`;
@@ -425,8 +429,20 @@ function parseAmount(value) {
     return parseFloat(value);
 }
 
-function saveIncome(){
-
+async function saveIncome(){
+            const result = await Swal.fire({
+                title: '¿Estás seguro de guardar los productos como sobrepedidos?',
+                text: "No podrás revertir esta acción",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6', // Azul
+                cancelButtonColor: '#d33',     // Rojo
+                confirmButtonText: 'Guardar',
+                cancelButtonText: 'Cancelar'
+            });
+            if(!result.isConfirmed){
+                return;
+            }
             let form = document.getElementById('incomeform');
             let formData = new FormData(form);
             let voucher_id = document.getElementById('voucher_id').value;
@@ -537,8 +553,8 @@ function add(){
                     <td><input class="form-control" type="hidden" name="subtotal_sales[]" value="${subtotal_sale}">${subtotal_sale}</td>
                     <td><input class="form-control" type="hidden" name="subtotal_profits[]" value="${subtotal_profit}">${subtotal_profit}</td>
                     <td><input class="form-control" type="hidden" name="expiration_dates[]" value="${expiration_date}">${expiration_date}</td>
-                    <td><input class="form-control" type="hidden" name="lotes[]" value="${lote}">${invima}</td>
-                    <td><input class="form-control" type="hidden" name="invimas[]" value="${lote}">${invima}</td>
+                    <td><input class="form-control" type="hidden" name="lotes[]" value="${lote}">${lote}</td>
+                    <td><input class="form-control" type="hidden" name="invimas[]" value="${invima}">${invima}</td>
                 </tr>
             `;
 
