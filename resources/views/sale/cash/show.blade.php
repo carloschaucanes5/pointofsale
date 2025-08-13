@@ -15,7 +15,7 @@
             <table class="table table-bordered table-striped fs-6 no-padding">
                 <thead>
                     <tr>
-                        <th colspan="6" class="text-center">Movimientos Caja Registradora</th>
+                        <th colspan="6" class="text-center">Movimientos Caja Registradora {{$cash_opening->user_name}}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -154,7 +154,12 @@
                     @endforeach 
                 </tr>
                 @endforeach
-                    
+                <tr>
+                    <td>Total Caja Menor en el Día</td>
+                    @foreach($array_totals_movements as $tot)
+                        <td>{{$tot->total}}</td>
+                    @endforeach
+                </tr>
                 </tbody>
             </table>
         </div>

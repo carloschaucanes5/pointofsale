@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Log;
+use stdClass;
 use Symfony\Component\HttpFoundation\Response;
 
 class CashOpeningController extends Controller
@@ -138,12 +139,13 @@ class CashOpeningController extends Controller
         $cash_opening_id = $id;
         $cash_opened = DB::table('cash_opening as co')
               ->join('cash as c','c.id','=','co.cash_id')
+              ->join('users as us','us.id','=','co.users_id')
               ->where("co.id","=",$cash_opening_id)
-              ->select("c.name as cash_name","co.id","co.users_id","co.start_amount","co.opened_at","co.observations","co.status","co.created_at","co.cash_id","co.last_balances")
+              ->select("c.name as cash_name","co.id","co.users_id","co.start_amount","co.opened_at","co.observations","co.status","co.created_at","co.cash_id","co.last_balances",'us.name as user_name')
              ->orderBy('created_at', 'desc')
              ->first();
         $users_id = $cash_opened->users_id;
-        $last_balances = json_decode($cash_opened->last_balances);
+       
 
             $sql = "
             SELECT * FROM (
@@ -188,6 +190,8 @@ class CashOpeningController extends Controller
         ];
         // Ejecutar consulta paginada
         $results = collect(DB::select($sql, $params));
+
+
             $sumSql = "
             SELECT payment_method, SUM(amount) AS total
             FROM (
@@ -251,8 +255,34 @@ class CashOpeningController extends Controller
             1
         ]);
 
+        //traer la primera apertura de caja del dia
 
+        $first_cash_opened_day = DB::table('cash_opening as co')
+                             ->whereBetween('co.created_at',[date("Y-m-d 00:00:00",strtotime($cash_opened->created_at)),date("Y-m-d 23:59:59",strtotime($cash_opened->created_at))])
+                             ->orderBy("co.created_at")
+                             ->first();
+         $last_balances = json_decode($first_cash_opened_day->last_balances);
 
+        $array_totals_movements = [];
+        $methods = explode(",",$payment_methods->value);
+        foreach($methods as $me){
+            $obj1 = new stdClass();
+            $obj1->method = $me;
+            $totalmethod = 0;
+            foreach($petty_cash as $petty){
+                if($petty->payment_method == $me){
+                    $totalmethod = $totalmethod + $petty->amount;
+                }
+            }
+            foreach($last_balances as $balance){
+                if($balance->cash_id == 1 && $balance->method == $me){
+                    $totalmethod = $totalmethod + $balance->balance;
+                }
+            }
+            $obj1->total = $totalmethod;
+            array_push($array_totals_movements,$obj1);
+        }
+        
         return view('sale.cash.show',
         [
         'movements'=>$results,
@@ -261,7 +291,8 @@ class CashOpeningController extends Controller
         'cash_opening'=>$cash_opened,
         'last_balances'=>$last_balances,
         'current_balances'=>[],
-        'petty_cash'=>$petty_cash
+        'petty_cash'=>$petty_cash,
+        'array_totals_movements'=>$array_totals_movements
         ]);
     }
 
