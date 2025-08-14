@@ -27,18 +27,22 @@
                         <div class="col-xl-12" >
                             <form action="{{route('income.index')}}" method="get">
                                 <div class="row">
-                                    <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+                                    <div class="col-md-5">
                                         <div class="input-group mb-6">
                                             <span class="input-group-text" id="basic-addon1"><i class="bi bi-search"></i></span>
                                             <input type="text" class="form-control" name="searchText" placeholder="Buscar Ingreso" value="{{$texto}}" aria-label="campo busqueda" aria-describedby="button-addon2">
                                             <button class="btn btn-outline-secondary" type="submit" id="button-addon2">Buscar</button>
                                         </div>
                                     </div>
-                                    <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+                                    <div class="col-md-3">
+                                        <input type="date" name="from" class="form-control" value="{{$from}}">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <input type="date" name="to" class="form-control" value="{{$to}}">
+                                    </div>
+                                    <div class="col-md-1">
                                         <div class="input-group mb-6">
-                                            <span class="input-group-text" id="basic-addon1"><i class="bi bi-plus-circle-fill"></i></span>
                                             <a href="{{route('income.create')}}" class="btn btn-success">Nuevo</a>
-
                                         </div>
                                     </div>
                                 </div>

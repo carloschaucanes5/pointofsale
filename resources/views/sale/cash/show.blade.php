@@ -157,11 +157,11 @@
                 <tr>
                     <td>Total Caja Menor en el Día</td>
                     @foreach($array_totals_movements as $tot)
-                        <td>{{$tot->total}}</td>
+                        <td>{{number_format($tot->total,0,',','.')}}</td>
                     @endforeach
                 </tr>
                 </tbody>
-            </table>
+            </table>s
         </div>
     </div>
 </div>

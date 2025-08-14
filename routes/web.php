@@ -66,6 +66,7 @@ Route::middleware(['auth','check.session','role:admin,superadmin,cashier,user'])
     Route::get('purchase/income/search_product_historical/{codeName}', [IncomeController::class, 'search_product_historical']);
     
     Route::get('purchase/income/view_voucher/{voucherId}', [IncomeController::class, 'view_voucher']);
+    Route::get('purchase/income/export/{voucherId}', [IncomeController::class, 'export'])->name('purchase.income.export');
    
     Route::get('sale/sale/search_product/{codeName}', [SaleController::class, 'search_product']);
     Route::get('purchase/startinventory', [IncomeController::class, 'startinventory'])->name('purchase.startinventory');

@@ -17,6 +17,12 @@ use Illuminate\Support\Facades\DB;
 use PhpParser\Node\Stmt\TryCatch;
 use Symfony\Component\HttpFoundation\Response;
 
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+
 class IncomeController extends Controller
 {
     /**
@@ -30,6 +36,15 @@ class IncomeController extends Controller
 
     public function index(Request $request)
     {
+        $from = $request->get('from');
+        $to = $request->get('to');
+        if($from == '' && $to == ''){
+            $from = date('Y-m-d 00:00:00');
+            $to = date('Y-m-d 23:59:59');
+        }else{
+            $from = date('Y-m-d 00:00:00',strtotime($from));
+            $to = date('Y-m-d 23:59:59',strtotime($to));
+        }
         if($request){
             $query = trim($request->get('searchText'));
             $incomes = DB::table("income as i")
@@ -50,13 +65,19 @@ class IncomeController extends Controller
                 ->where('i.status', '=', 1)
                 ->where(function($q) use ($query) {
                     $q->where('v.voucher_number', 'like', '%' . $query . '%')
-                      ->orWhere('p.name', 'like', '%' . $query . '%');
+                      ->orWhere('p.name', 'like', '%' . $query . '%')
+                      ->orWhere('u.name','like','%'.$query.'%');
                 })
+                ->whereBetween('i.created_at',[date('Y-m-d 00:00:00', strtotime($from)),date('Y-m-d 23:59:59', strtotime($to))])
                 ->groupBy('i.id', 'i.created_at', 'i.updated_at', 'p.name', 'v.voucher_number', 'v.id', 'u.name')
                 ->orderBy('i.id', 'desc')
-                ->paginate(5);
+                ->paginate(5)
+                ->appends([
+                    'from' => date('Y-m-d', strtotime($from)),
+                    'to'   => date('Y-m-d', strtotime($to))
+                ]);
 
-            return view('purchase.income.index',['incomes'=>$incomes,'texto'=>$query]);
+            return view('purchase.income.index',['incomes'=>$incomes,'texto'=>$query,'from'=>date('Y-m-d',strtotime($from)),'to'=>date('Y-m-d',strtotime($to))]);
         }
     }
 
@@ -308,13 +329,192 @@ class IncomeController extends Controller
 
         $details = DB::table("income_detail_historical as d")
                 ->join("product as pro","pro.id","=","d.product_id")
-                ->select("pro.name as article","d.quantity","d.purchase_price","d.sale_price","d.form_sale","d.expiration_date","pro.concentration","pro.presentation")
+                ->select("pro.name as article","d.quantity","d.purchase_price","d.sale_price","d.form_sale","d.expiration_date","pro.concentration","pro.presentation","d.lote","d.invima")
                 ->where("d.income_id","=",$id)
                 ->get();
 
-        return view("purchase.income.show",["income"=>$income,"details"=>$details]);
+        return view("purchase.income.show",["income"=>$income,"details"=>$details,'income_id'=>$id]);
 
     }
+
+    public function export(String $id){
+        $income = DB::table("income as i")
+                 ->join("voucher as v","v.id","=","i.voucher_id")
+                 ->join("person as p","p.id","=","v.supplier_id")
+                 ->select("i.id","i.created_at","i.updated_at","p.name as supplier_name","i.tax","i.status","v.voucher_number","v.total")
+                ->selectSub(function($query){
+                    $query->from("users")
+                        ->select("name")
+                        ->whereColumn("users.id","i.users_id")
+                        ->limit(1);
+                        },"users_name")
+                 ->where("i.id","=",$id)
+                 ->orderBy("i.id","desc")
+                 ->first();
+
+        $details = DB::table("income_detail_historical as d")
+                ->join("product as pro","pro.id","=","d.product_id")
+                ->select("pro.name as article","d.quantity","d.purchase_price","pro.laboratory","d.sale_price","d.form_sale","d.expiration_date","pro.concentration","pro.presentation","d.lote","d.invima")
+                ->where("d.income_id","=",$id)
+                ->get();
+
+
+        // 2. Crear hoja de cálculo
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->mergeCells('B1:W1');
+        $sheet->setCellValue('B1', 'ACTA DE RECEPCIÓN DE MEDICAMENTOS Y DISPOSITIVOS MEDICOS');
+        $sheet->getStyle('B1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle('B1')->getFont()->setBold(true);
+
+        $sheet->setCellValue('B' . "2", 'PROVEEDOR');
+        $sheet->setCellValue('C' . "2", $income->supplier_name);
+        $sheet->setCellValue('B' . "3", 'FACTURA No.');
+        $sheet->setCellValue('C' . "3", $income->voucher_number);
+
+        // 3. Encabezados
+
+        $borderStyle = [
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => Border::BORDER_THIN,
+                    'color' => ['argb' => '000000'],
+                ],
+            ],
+        ];
+        $sheet->getStyle('B4:' . 'T5')->applyFromArray($borderStyle);
+        $headers = [
+            'No.' => null,
+            'NOMBRE DEL MEDICAMENTO' => null,
+            'CANTIDAD' => null,
+            'CONCENTRACION' => null,
+            'FORMA FARMACEUTICA' => null,
+            'PRESENTACION COMERCIAL' => null,
+            'LAB.' => null,
+            'REGISTRO DE INVIMA' => null,
+            'NÚMERO DE LOTE' => null,
+            'FECHA DE VENCIMIENTO' => ['AÑO', 'MES'],
+            'CONDICIONES ESPECIALES DE ALMACENAMIENTO' => null,
+            'No. MUESTRA' => null,
+            'DEFECTOS' => ['CRITICOS', 'MAYORES', 'MENORES'],
+            'CUMPLE' => ['ACEPTA', 'RECHAZA'],
+            'OBSERVACIONES' => null
+        ];
+     
+        $col = 'B'; // Columna inicial
+
+foreach ($headers as $header => $subHeaders) {
+
+    if (is_array($subHeaders)) {
+        // Encabezado con subcolumnas
+        $lastCol = chr(ord($col) + count($subHeaders) - 1); // Calcula la última columna
+        $sheet->mergeCells($col . '4:' . $lastCol . '4'); // Combinar fila 4 horizontalmente
+        $sheet->setCellValue($col . '4', $header);
+
+        // Subencabezados en fila 5
+        foreach ($subHeaders as $i => $subHeader) {
+            $currentCol = chr(ord($col) + $i);
+            $sheet->setCellValue($currentCol . '5', $subHeader);
+
+            // Estilos subheader
+            $sheet->getStyle($currentCol . '5')->getFont()->setBold(true);
+            $sheet->getStyle($currentCol . '5')->getAlignment()
+                ->setHorizontal(Alignment::HORIZONTAL_CENTER)
+                ->setVertical(Alignment::VERTICAL_CENTER);
+
+            $sheet->getColumnDimension($currentCol)->setAutoSize(true);
+        }
+
+        // Estilo del header principal
+            $sheet->getStyle($col . '4:' . $lastCol . '4')->getFont()->setBold(true);
+            $sheet->getStyle($col . '4:' . $lastCol . '4')->getAlignment()
+                ->setHorizontal(Alignment::HORIZONTAL_CENTER)
+                ->setVertical(Alignment::VERTICAL_CENTER);
+
+            // Avanzar columnas según subheaders
+            $col = chr(ord($lastCol) + 1);
+
+        } else {
+            // Encabezado simple (combinar verticalmente)
+            $sheet->mergeCells($col . '4:' . $col . '5');
+            $sheet->setCellValue($col . '4', $header);
+
+            $sheet->getStyle($col . '4')->getFont()->setBold(true);
+            $sheet->getStyle($col . '4')->getAlignment()
+                ->setHorizontal(Alignment::HORIZONTAL_CENTER)
+                ->setVertical(Alignment::VERTICAL_CENTER);
+
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+
+            $col++;
+        }
+    }
+
+
+        // 4. Datos
+        $i =1;
+        $row = 6;
+        foreach ($details as $de) {
+            $sheet->setCellValue('B' . $row, $i);
+            $sheet->setCellValue('C' . $row, $de->article);
+            $sheet->setCellValue('D' . $row, $de->quantity);
+            $sheet->setCellValue('E' . $row, $de->concentration);
+            $sheet->setCellValue('F' . $row, $de->form_sale);
+            $sheet->setCellValue('G' . $row, $de->presentation);
+            $sheet->setCellValue('H' . $row, $de->laboratory);
+            $sheet->setCellValue('I' . $row, $de->invima);
+            $sheet->setCellValue('J' . $row, $de->lote);
+            $sheet->setCellValue('K' . $row, date('Y',strtotime($de->expiration_date)));
+            $sheet->setCellValue('L' . $row, date('m',strtotime($de->expiration_date)));
+            $sheet->setCellValue('M' . $row, 'INFERIOR 30 GR C');
+            $sheet->setCellValue('N' . $row, $de->quantity);
+            $sheet->setCellValue('O' . $row, '');
+            $sheet->setCellValue('P' . $row, '');
+            $sheet->setCellValue('Q' . $row, '');
+            $sheet->setCellValue('R' . $row, '');
+            $sheet->setCellValue('S' . $row, '');
+            $sheet->setCellValue('T' . $row, '');
+            $sheet->setCellValue('U' . $row, '');
+            $sheet->setCellValue('V' . $row, '');
+            $sheet->setCellValue('W' . $row, '');
+            $i++;
+            $sheet->getStyle('B'.$row.':' . 'T'.$row)->applyFromArray($borderStyle);
+            $row++;
+        }
+        $row = $row + 2;
+
+
+        $sheet->mergeCells('B'.$row.':F'.$row);
+        $sheet->setCellValue('B'.$row, 'DATOS DEL RESPONSABLE DE LA RECEPCIÓN:');
+        $sheet->getStyle('B'.$row.':' . 'F'.$row)->applyFromArray($borderStyle);
+        $row ++;
+        $sheet->mergeCells('B'.$row.':F'.$row);
+        $sheet->setCellValue('B'.$row, 'FIRMA:');
+        $sheet->getStyle('B'.$row.':' . 'F'.$row)->applyFromArray($borderStyle);
+
+        $row ++;
+        $sheet->mergeCells('B'.$row.':F'.$row);
+        $sheet->setCellValue('B'.$row, 'NOMBRE COMPLETO:');
+        $sheet->getStyle('B'.$row.':' . 'F'.$row)->applyFromArray($borderStyle);
+
+        $row ++;
+        $sheet->mergeCells('B'.$row.':F'.$row);
+        $sheet->setCellValue('B'.$row, 'C.C:');
+        $sheet->getStyle('B'.$row.':' . 'F'.$row)->applyFromArray($borderStyle);
+
+        // 5. Preparar para descarga
+        $writer = new Xlsx($spreadsheet);
+        $filename = 'FACTURA_' .$income->voucher_number .'_'.now()->format('Ymd_His') . '.xlsx';
+
+        return new StreamedResponse(function () use ($writer) {
+            $writer->save('php://output');
+        }, 200, [
+            "Content-Type" => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "Content-Disposition" => "attachment; filename=\"$filename\"",
+            "Cache-Control" => "max-age=0",
+        ]);
+    }
+    
 
     /**
      * Show the form for editing the specified resource.
