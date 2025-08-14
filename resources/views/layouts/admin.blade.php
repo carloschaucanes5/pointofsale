@@ -425,6 +425,14 @@
                                     </a>
                                 </li>
                             </ul>
+                            <ul class="nav nav-treeview">
+                                <li class="nav-item ms-3">
+                                    <a href="{{route('report.sale.sold_products')}}" class="nav-link">
+                                        <i class="nav-icon bi bi-calendar-day"></i>
+                                        <p>Productos Vendidos</p>
+                                    </a>
+                                </li>
+                            </ul>
                         </li>
                     </ul>
                     <!--end::Sidebar Menu-->

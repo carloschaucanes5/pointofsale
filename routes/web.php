@@ -77,8 +77,8 @@ Route::middleware(['auth','check.session','role:admin,superadmin,cashier,user'])
     Route::get('movement/filter', [MovementController::class, 'filterByDate'])->name('movement.filter');
     Route::get('movement/types/{type}', [MovementController::class, 'getTypesByCategory']);
 
-     Route::get('report/income/expiredproducts', [IncomeController::class, 'expiredproducts'])->name('report.income.expiredproducts');
-    
+    Route::get('report/income/expiredproducts', [IncomeController::class, 'expiredproducts'])->name('report.income.expiredproducts');
+    Route::get('report/sale/sold_products', [SaleController::class, 'sold_products'])->name('report.sale.sold_products');
 
     });
 

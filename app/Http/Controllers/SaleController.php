@@ -608,4 +608,29 @@ class SaleController extends Controller
         $income->update();
         return Redirect::to("sale/sale");
     }
+
+    public function sold_products(Request $request){
+        $from = $request->get('from');
+        $to =  $request->get('to');
+        if($from=='' &&  $to==''){
+            $from = date('Y-m-d 00:00:00');
+            $to = date('Y-m-d 23:59:59');
+        }
+        else{
+            $from = date('Y-m-d 23:59:59',strtotime($from));
+            $to = date('Y-m-d 23:59:59',strtotime($to));
+        }
+        
+        $products = DB::table('sale_detail as sd')
+            ->join('sale as s','s.id','=','sd.sale_id')
+            ->join('income_detail_historical as idh', 'idh.income_detail_id', '=', 'sd.income_detail_id')
+            ->join('product as p', 'p.id', '=', 'idh.product_id')
+            ->select('p.id', 'p.name','p.code','p.presentation','p.concentration','p.laboratory', DB::raw('SUM(sd.quantity) as total_sold'))
+            ->groupBy('p.id', 'p.name','p.code','p.presentation','p.concentration','p.laboratory')
+            ->whereBetween('s.created_at',[$from,$to])
+            ->orderBy('total_sold','desc')
+            ->paginate(6)
+            ->appends(['from'=>$from,'to'=>$to]);
+        return view('report.sale.sold_products', ['products' => $products,'from'=>date('Y-m-d',strtotime($from)),'to'=>date('Y-m-d',strtotime($to))]);
+    }
 }
