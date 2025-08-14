@@ -289,7 +289,7 @@ class IncomeController extends Controller
         
     }
 
-    public function reception(Request $request){
+    /*public function expiredproducts(Request $request){
         if(!$request->input('from') && !$request->input('to') ){
 
                 $from = date('Y-m-d'). ' 00:00:00';
@@ -299,15 +299,30 @@ class IncomeController extends Controller
             $to = $request->input('to') . ' 23:59:59';
         }
 
-        $vouchers = DB::table('voucher as v')
-               ->select('p.id','p.name','v.id','v.voucher_number','v.total')
-               ->join('person as p','p.id','=','v.supplier_id')
-               ->whereBetween('v.created_at', [$from, $to])
-               ->get();
 
-        return view('report.income.reception',['from'=>$from,'to'=>$to,'vouchers'=>$vouchers]);
-    } 
 
+        return view('report.income.expiredproducts',['from'=>date("Y-m-d",strtotime($from)),'to'=>date("Y-m-d",strtotime($to)),'vouchers'=>[]]);
+    } */
+
+    
+    public function expiredproducts(Request $request){
+        //obtener la fecha 4 meses despues de la fecha actual
+        $from = $request->get('from');
+        $to =  $request->get('to');
+        if($from=='' && $to==''){
+            $from = Carbon::now();
+            $to = Carbon::now()->addMonths(4);
+        }
+
+        $products = DB::table('income_detail as ide')
+                    ->join('product as p','p.id','=','ide.product_id')
+                    ->select('ide.id','ide.quantity','ide.purchase_price','ide.sale_price','ide.expiration_date','p.name','p.concentration','p.presentation','p.laboratory','p.code')
+                    ->whereBetween('ide.expiration_date',[date('Y-m-d',strtotime($from)),date('Y-m-d',strtotime($to))])
+                    ->orderBy('ide.expiration_date')
+                    ->paginate(6)
+                    ->appends(['from'=>$from,'to'=>$to]);
+        return view('report.income.expiredproducts',['from'=>date("Y-m-d",strtotime($from)),'to'=>date("Y-m-d",strtotime($to)),'products'=>$products]);
+    }
     /**
      * Display the specified resource.
      */
