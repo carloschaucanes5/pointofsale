@@ -27,6 +27,7 @@ class SaleController extends Controller
     public function index(Request $request)
     {
         $searchText = $request->get("searchText");
+        $form_payment = $request->get("form_payment");
         $start_date = $request->get("start_date")?$request->get("start_date"):date('Y-m-d');
         $end_date = $request->get("end_date")?$request->get("end_date"):date('Y-m-d');
         if($request){
@@ -39,24 +40,8 @@ class SaleController extends Controller
                         ->select('key','value','alias')
                         ->get()
                         ->keyBy('key');
-            if(trim($searchText)==""){
-                $sales = DB::table("sale as sal")
-                       ->join('person as pe','pe.id','=','sal.customer_id')
-                       ->join("users as u","u.id","=","sal.users_id")
-                       ->whereBetween("sal.created_at",[
-                            date($start_date." 00:00:00"),
-                            date($end_date." 23:59:59")
-                       ])
-                       
-                       ->select("sal.id","sal.change","sal.created_at","pe.name as customer_name","pe.address as customer_address","pe.phone as customer_phone","pe.email as customer_email","pe.document_type","pe.document_number","sal.tax","sal.sale_total","u.name as user_name","sal.payment_form")
-                       ->orderBy('sal.id','desc')
-                       ->paginate(6)
-                       ->appends([
-                            'searchText' => $searchText,
-                            'start_date' => $start_date,
-                            'end_date' => $end_date,
-                        ]);
-            }else{
+
+          
                 $sales = DB::table("sale as sal")
                     ->join('sale_detail as sde', 'sde.sale_id', '=', 'sal.id')
                     ->join('income_detail_historical as idh', 'idh.income_detail_id', '=', 'sde.income_detail_id')
@@ -71,9 +56,9 @@ class SaleController extends Controller
                         $query->where('pr.name', 'like', '%' . $searchText . '%')
                             ->orWhere('pr.code', 'like', '%' . $searchText . '%')
                             ->orWhere('u.name','like','%'.$searchText."%")
-                            ->orWhere('pe.name','like','%'.$searchText.'%')
-                            ->orWhere('sal.payment_form','like','%'.$searchText.'%');
+                            ->orWhere('pe.name','like','%'.$searchText.'%');
                     })
+                    ->Where('sal.payment_form','like','%'.$form_payment.'%')
                     ->select(
                         'sal.id',
                         'sal.change',
@@ -89,16 +74,59 @@ class SaleController extends Controller
                         'u.name as user_name',
                         'sal.payment_form'
                     )
+                    ->distinct()
                     ->orderBy('sal.id', 'desc')
                     ->paginate(6)
                     ->appends([
                         'searchText' => $searchText,
                         'start_date' => $start_date,
                         'end_date' => $end_date,
+                        'form_payment'=>$form_payment
                     ]);
-            }
+            
 
-            return view('sale.sale.index',['sales'=>$sales,'texto'=>$searchText,'start_date'=>$start_date,'end_date'=>$end_date,'company'=>$company,'logo'=>$logo]);
+                $sales1 = DB::table("sale as sal")
+                    ->join('sale_detail as sde', 'sde.sale_id', '=', 'sal.id')
+                    ->join('income_detail_historical as idh', 'idh.income_detail_id', '=', 'sde.income_detail_id')
+                    ->join('product as pr', 'pr.id', '=', 'idh.product_id') 
+                    ->join('person as pe', 'pe.id', '=', 'sal.customer_id')
+                    ->join('users as u', 'u.id', '=', 'sal.users_id')
+                    ->whereBetween('sal.created_at', [
+                        $start_date . ' 00:00:00',
+                        $end_date . ' 23:59:59'
+                    ])
+                    ->where(function($query) use ($searchText) {
+                        $query->where('pr.name', 'like', '%' . $searchText . '%')
+                            ->orWhere('pr.code', 'like', '%' . $searchText . '%')
+                            ->orWhere('u.name','like','%'.$searchText."%")
+                            ->orWhere('pe.name','like','%'.$searchText.'%');
+                    })
+                    ->Where('sal.payment_form','like','%'.$form_payment.'%')
+                    ->select(
+                        'sal.id',
+                        'sal.change',
+                        'sal.created_at',
+                        'pe.name as customer_name',
+                        'pe.address as customer_address',
+                        'pe.phone as customer_phone',
+                        'pe.email as customer_email',
+                        'pe.document_type',
+                        'pe.document_number',
+                        'sal.tax',
+                        'sal.sale_total',
+                        'u.name as user_name',
+                        'sal.payment_form'
+                    )
+                    ->distinct()
+                    ->orderBy('sal.id', 'desc')
+                    ->get();
+
+                    $sum_total = 0;
+                    foreach($sales1 as $sa){
+                        $sum_total =$sum_total + $sa->sale_total;
+                    }
+
+            return view('sale.sale.index',['sales'=>$sales,'texto'=>$searchText,'start_date'=>$start_date,'end_date'=>$end_date,'company'=>$company,'logo'=>$logo,'sum_total'=>$sum_total,'form_payment'=>$form_payment]);
         }
     }
 

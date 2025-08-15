@@ -27,20 +27,35 @@
                         <div class="col-xl-12" >
                             <form action="{{route('sale.index')}}" method="get">
                                 <div class="row">
-                                    <div class="col-lg-5 col-md-5 col-sm-5 col-xs-12">
+                                    <div class="col-md-4">
                                         <div class="input-group mb-6">
+                                            <label>&nbsp;</label>
                                             <span class="input-group-text" id="basic-addon1"><i class="bi bi-search"></i></span>
                                             <input type="text" class="form-control"  name="searchText" placeholder="Buscar Venta" value="{{old('searchText',$texto)}}" aria-label="campo busqueda" aria-describedby="button-addon2">
                                             <button class="btn btn-outline-secondary" type="submit" id="button-addon2">Buscar</button>
                                         </div>
                                     </div>
-                                    <div class="col-lg-5 col-md-5 col-sm-5 col-xs-12">
-                                        <div class="input-group">
+                                    <div class="col-md-2">
+                                        <div class="form-group">
                                             <label  for="start_date">Fecha Inicio</label><input class="form-control" type="date" value="{{old('start_date',$start_date)}}" name="start_date">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="form-group">
                                             <label for="end_date">Fecha Final</label><input class="form-control"  type="date" value="{{old('end_date',$end_date)}}" name="end_date">
                                         </div>
                                     </div>
-                                    <div class="col-lg-2 col-md-2 col-sm-2 col-xs-12">
+                                    <div class="col-md-2">
+                                        <div class="form-group">
+                                            <label for="form_payment">Forma de Pago</label>
+                                            <select id="form_payment" name="form_payment" class="form-control">
+                                                <option value="" @selected(old('form_payment', $form_payment) == "")></option>
+                                                <option value="contado" @selected(old('form_payment', $form_payment) == "contado")>contado</option>
+                                                <option value="credito" @selected(old('form_payment', $form_payment) == "credito")>credito</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
                                         <div class="input-group mb-6">
                                             <a href="{{route('cash_opening.create')}}" class="btn btn-warning bi bi-cash" title="Apertura de Caja"></a>
                                             <!--a href="{{route('sale.create')}}" class="btn btn-success bi bi-plus" title="Nueva venta"></a-->
@@ -97,7 +112,18 @@
                             <td>{{$sale->user_name}}</td>
                         </tr>
                         @endforeach
-                    </tbody> 
+                    </tbody>
+                    <tr>
+                         <td></td>
+                         <td></td>
+                         <td></td>
+                        <th>Total</th>
+                        <th colspan="5">
+                            $ {{number_format($sum_total,2,',','.')}}
+                        </th>
+                        <td></td>
+                        <td></td>
+                    </tr> 
                 </table>
                     {{$sales->links('pagination::bootstrap-5')}}
             </div>
