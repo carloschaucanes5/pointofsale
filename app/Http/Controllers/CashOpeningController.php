@@ -369,7 +369,7 @@ class CashOpeningController extends Controller
 
         // Parámetros del query
         $params = [
-            $users_id, 3,"cash_opening-".$cash_opened->id,  
+            $users_id, 3,"cash_opening-".$cash_opened->id,   
             $users_id, 3 ,$cash_opened->id    
         ];
         // Ejecutar consulta paginada

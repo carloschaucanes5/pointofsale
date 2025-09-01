@@ -62,9 +62,9 @@ class ProductController extends Controller
             'laboratory' => 'Laboratorio',  // Aquí defines el alias que se usará en los mensajes
         ];
 
-        $request->validate([
+       /* $request->validate([
             'laboratory' => 'required|in:' . implode(',', $laboratories->pluck('name')->toArray())
-        ], [], $customAttributes); 
+        ], [], $customAttributes); */
 
         // Asignamos los valores recibidos desde el formulario
         $product->category_id = $request->input('category_id');
@@ -139,9 +139,9 @@ class ProductController extends Controller
             'laboratory' => 'Laboratorio', 
         ];
     
-        $request->validate([
+        /*$request->validate([
             'laboratory' => 'required|in:' . implode(',', $laboratories->pluck('name')->toArray())
-        ], [], $customAttributes); 
+        ], [], $customAttributes); */
     
         // Encuentra el producto por ID
         $product = Product::findOrFail($id);

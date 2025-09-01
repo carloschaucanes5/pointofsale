@@ -450,15 +450,28 @@ class SaleController extends Controller
                     ->first();
 
                 $movement = new Movement();
-                $movement->cash_opening_id = $cash_opening->id;
+                $movement->cash_id = $cash_opening->cash_id;
                 $movement->type = "ingreso";
                 $movement->movement_type_id = 3;
                 $movement->description = "Pago de venta a credito (Venta No:POS".$sale_id.")";
                 $movement->amount = $request->post("value");
                 $movement->users_id = auth()->user()->id;
                 $movement->payment_method = $request->post("method");
-                $movement->table_identifier = "sale-".$sale_id;
+                $movement->table_identifier = "cash_opening-".$cash_opening->id;
                 $movement->save();  
+
+
+                $movement1 = new Movement();
+                $movement1->cash_id = $cash_opening->cash_id;
+                $movement1->type = "egreso";
+                $movement1->movement_type_id = 23;
+                $movement1->description = "Se libera el credito de (Venta No:POS".$sale_id.")";
+                $movement1->amount = ($request->post("value"))*(-1);
+                $movement1->users_id = auth()->user()->id;
+                $movement1->payment_method = 'credito';
+                $movement1->table_identifier = "cash_opening-".$cash_opening->id;
+                $movement1->save();  
+
 
                 $sale = Sale::find($sale_id);
                 $sale->payment_form = 'contado';
