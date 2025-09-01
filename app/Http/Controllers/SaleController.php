@@ -449,6 +449,13 @@ class SaleController extends Controller
                     ->where("co.status","=",'open')
                     ->first();
 
+                if(!$cash_opening){
+                    return response()->json(
+                    ["success"=>false,"message"=>"No has iniciado apertura de caja"
+                    ],501);
+                }
+
+
                 $movement = new Movement();
                 $movement->cash_id = $cash_opening->cash_id;
                 $movement->type = "ingreso";
@@ -457,7 +464,8 @@ class SaleController extends Controller
                 $movement->amount = $request->post("value");
                 $movement->users_id = auth()->user()->id;
                 $movement->payment_method = $request->post("method");
-                $movement->table_identifier = "cash_opening-".$cash_opening->id;
+                $movement->table_identifier = "sale-".$sale_id;
+                $movement->cash_opening_id = $cash_opening->id;
                 $movement->save();  
 
 
@@ -469,7 +477,8 @@ class SaleController extends Controller
                 $movement1->amount = ($request->post("value"))*(-1);
                 $movement1->users_id = auth()->user()->id;
                 $movement1->payment_method = 'credito';
-                $movement1->table_identifier = "cash_opening-".$cash_opening->id;
+                $movement1->table_identifier = "sale-".$sale_id;
+                $movement->cash_opening_id = $cash_opening->id;
                 $movement1->save();  
 
 

@@ -161,7 +161,7 @@ class CashOpeningController extends Controller
                 FROM movement m
                 JOIN movement_types mt ON mt.id = m.movement_type_id
                 JOIN users us ON us.id = m.users_id
-                WHERE us.id = ? AND m.cash_id = ? AND m.table_identifier = ?
+                WHERE us.id = ? AND m.cash_id = ? AND (m.table_identifier = ? OR m.cash_opening_id = ?)
                 
                 UNION ALL
                 
@@ -185,7 +185,7 @@ class CashOpeningController extends Controller
 
         // Parámetros del query
         $params = [
-            $users_id, 3,"cash_opening-".$cash_opened->id,  
+            $users_id, 3,"cash_opening-".$cash_opened->id, $cash_opened->id, 
             $users_id, 3 ,$cash_opened->id    
         ];
         // Ejecutar consulta paginada
@@ -200,7 +200,7 @@ class CashOpeningController extends Controller
                     m.payment_method COLLATE utf8mb4_unicode_ci AS payment_method,
                     m.amount
                 FROM movement m
-                WHERE m.users_id = ? AND m.cash_id = ? and m.table_identifier = ?
+                WHERE m.users_id = ? AND m.cash_id = ? and (m.table_identifier = ? or cash_opening_id = ?)
 
                 UNION ALL
 
@@ -216,7 +216,7 @@ class CashOpeningController extends Controller
             GROUP BY payment_method
         ";
         $sums = DB::select($sumSql, [
-            $users_id, 3, "cash_opening-".$cash_opened->id,  
+            $users_id, 3, "cash_opening-".$cash_opened->id,$cash_opened->id,
             $users_id,3 ,$cash_opened->id   
         ]);
 
@@ -345,7 +345,7 @@ class CashOpeningController extends Controller
                 FROM movement m
                 JOIN movement_types mt ON mt.id = m.movement_type_id
                 JOIN users us ON us.id = m.users_id
-                WHERE us.id = ? AND m.cash_id = ? AND m.table_identifier = ?
+                WHERE us.id = ? AND m.cash_id = ? AND (m.table_identifier = ? or cash_opening_id = ?)
                 
                 UNION ALL
                 
@@ -369,7 +369,7 @@ class CashOpeningController extends Controller
 
         // Parámetros del query
         $params = [
-            $users_id, 3,"cash_opening-".$cash_opened->id,   
+            $users_id, 3,"cash_opening-".$cash_opened->id,$cash_opened->id,  
             $users_id, 3 ,$cash_opened->id    
         ];
         // Ejecutar consulta paginada
@@ -382,7 +382,7 @@ class CashOpeningController extends Controller
                     m.payment_method COLLATE utf8mb4_unicode_ci AS payment_method,
                     m.amount
                 FROM movement m
-                WHERE m.users_id = ? AND m.cash_id = ? and m.table_identifier = ?
+                WHERE m.users_id = ? AND m.cash_id = ? and (m.table_identifier = ? or cash_opening_id = ?)
 
                 UNION ALL
 
@@ -398,7 +398,7 @@ class CashOpeningController extends Controller
             GROUP BY payment_method
         ";
         $sums = DB::select($sumSql, [
-            $users_id, 3, "cash_opening-".$cash_opened->id,  
+            $users_id, 3, "cash_opening-".$cash_opened->id,$cash_opened->id,  
             $users_id,3 ,$cash_opened->id   
         ]);
 

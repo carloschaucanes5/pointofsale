@@ -153,6 +153,7 @@ class VoucherController extends Controller
                 $movement->amount = $amount;
                 $movement->payment_method = $met->method;
                 $movement->table_identifier = "voucher-".$voucher->id;
+                $movement->cash_opening_id = $request->get('cash_id') == 3 ? $cash->id : null;
                 $movement->save();
 
                 $cash_balance = CashBalance::where('cash_id','=',$request->get('cash_id'))

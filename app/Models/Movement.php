@@ -21,7 +21,8 @@ class Movement extends Model
         'amount',
         'payment_method',
         'table_identifier',
-        'cash_id'
+        'cash_id',
+        'cash_opening_id'
     ];
 
     protected $guarded = [];

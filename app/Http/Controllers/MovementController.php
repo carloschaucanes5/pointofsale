@@ -240,7 +240,8 @@ class MovementController extends Controller
                 $validated['table_identifier'] = "cash_opening-".$cash_opened->id;
 
             }
-            $validated['amount'] = $amount;          
+            $validated['amount'] = $amount;
+            $validated['cash_opening_id'] = $cash_opened?$cash_opened->id : null;          
             $movement = Movement::create($validated);
             if($movement){
                 $cash_balance = CashBalance::where('cash_id','=',$movement->cash_id)
