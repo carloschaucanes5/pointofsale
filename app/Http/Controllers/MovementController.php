@@ -223,13 +223,11 @@ class MovementController extends Controller
             if($request->post("type") == "egreso"){
                  $amount = $amount * (-1);
             }
+            $cash_opened = DB::table("cash_opening as co")
+                ->where('co.users_id','=',auth()->user()->id)
+                ->where('co.status','=','open')
+                ->first();
             if($validated['cash_id'] == 3){
-                $cash_opened = DB::table("cash_opening as co")
-                             ->where('co.users_id','=',auth()->user()->id)
-                             ->where('co.status','=','open')
-                             ->first();
-                
-
                 if(!$cash_opened){
                     DB::rollBack();
                     return redirect()

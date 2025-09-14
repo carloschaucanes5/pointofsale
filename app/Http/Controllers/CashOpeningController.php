@@ -582,5 +582,60 @@ class CashOpeningController extends Controller
         
     }
 
+    function general_report(Request $request){
+            $from = $request->input('from') . ' 00:00:00';
+            $to = $request->input('to') . ' 23:59:59';
+            if($request->input('from')=="" &&  $request->input('to')==""){
+                $from = date('Y-m-d').$from;
+                $to = date('Y-m-d').$to;
+            }
+
+            $sql = "
+                SELECT 
+                    m.type,
+                    m.created_at,
+                    mt.name AS movement_type,
+                    m.description,
+                    SUM(m.amount) AS total
+                FROM movement m
+                JOIN movement_types mt ON mt.id = m.movement_type_id
+                JOIN users us ON us.id = m.users_id
+                WHERE m.created_at BETWEEN ? AND ? AND m.description like ?  
+                AND m.cash_id = 1
+                GROUP BY m.type, m.created_at, mt.name, m.description
+                ORDER BY m.created_at DESC;
+                ";
+        $params = [
+            $from, $to, '%'.$request->input('text_search').'%'
+        ];
+        // Ejecutar consulta paginada
+        $results = collect(DB::select($sql, $params));
+
+        //total egresos
+        $total_spent = 0;
+        foreach($results as $res){
+            if($res->type == 'egreso'){
+                $total_spent = $total_spent + $res->total;
+            }
+        }
+
+        $total_income = 0;
+        foreach($results as $res){
+            if($res->type == 'ingreso'){
+                 $total_income  =  $total_income + $res->total;
+            }
+        }
+        return view("report.general.general",[
+            'from'=>$request->input('from'),
+            'to'=>$request->input('to'),
+            'text_search'=>$request->input('text_search'),
+            'movements'=>$results,
+            'total_income'=>$total_income,
+            'total_spent'=>$total_spent  
+        ]);
+    }
+
+    
+
 
 }

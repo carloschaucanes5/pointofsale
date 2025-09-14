@@ -37,7 +37,7 @@
                                     <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
                                         <div class="input-group mb-6">
                                             <span class="input-group-text" id="basic-addon1"><i class="bi bi-plus-circle-fill"></i></span>
-                                            <a href="{{route('product.create')}}" class="btn btn-success">Nueva</a>
+                                            <a href="{{route('product.create')}}" class="btn btn-success" style="display: none">Nueva</a>
 
                                         </div>
                                     </div>

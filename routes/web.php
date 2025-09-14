@@ -80,6 +80,7 @@ Route::middleware(['auth','check.session','role:admin,superadmin,cashier,user'])
 
     Route::get('report/income/expiredproducts', [IncomeController::class, 'expiredproducts'])->name('report.income.expiredproducts');
     Route::get('report/sale/sold_products', [SaleController::class, 'sold_products'])->name('report.sale.sold_products');
+    Route::get('report/cash_opening/general', [CashOpeningController::class, 'general_report'])->name('report.cash_opening.general');
 
     });
 

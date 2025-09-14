@@ -433,6 +433,14 @@
                                     </a>
                                 </li>
                             </ul>
+                            <ul class="nav nav-treeview">
+                                <li class="nav-item ms-3">
+                                    <a href="{{route('report.cash_opening.general')}}" class="nav-link">
+                                        <i class="nav-icon bi bi-calendar-day"></i>
+                                        <p>Informe General</p>
+                                    </a>
+                                </li>
+                            </ul>
                         </li>
                     </ul>
                     <!--end::Sidebar Menu-->
