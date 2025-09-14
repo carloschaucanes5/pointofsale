@@ -18,14 +18,22 @@
     <h3 class="mb-4">Balance  General</h3>
 
 <form action="{{ route('report.cash_opening.general') }}" method="GET" class="row g-3 mb-4">
-    <div class="col-md-3">
+    <div class="col-md-2">
         <input type="date" name="from" class="form-control form-control-sm" value="{{ $from }}">
     </div>
-    <div class="col-md-3">
+    <div class="col-md-2">
         <input type="date" name="to" class="form-control form-control-sm" value="{{ $to }}">
     </div>
-        <div class="col-md-3">
+    <div class="col-md-3">
         <input type="text" name="text_search" class="form-control form-control-sm" value="{{ $text_search }}" placeholder="Buscar por detalle">
+    </div>
+    <div class="col-md-2">
+        <select name="type_movement" class="form-select form-select-sm">
+            <option value="">-- Tipo de Movimiento --</option>
+            @foreach($types_movement as $type)
+                <option value="{{ $type->id }}" @if(request('type_movement') == $type->id) selected @endif>{{ $type->name }}</option>
+            @endforeach
+        </select>
     </div>
 
     <div class="col-md-3">

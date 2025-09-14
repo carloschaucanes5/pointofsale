@@ -67,9 +67,7 @@
                 <select id="payment_method" name="payment_method" class="form-control">
                     <option value="">Seleccionar un medio de pago</option>
                     @foreach($methods as $method)
-                        @if($method != 'credito')
                             <option value="{{$method}}">{{$method}}</option>
-                        @endif
                     @endforeach
                 </select>
             </div>

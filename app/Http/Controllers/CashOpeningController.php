@@ -583,13 +583,25 @@ class CashOpeningController extends Controller
     }
 
     function general_report(Request $request){
+            $types_movement = DB::table("movement_types")
+                            ->get();
             $from = $request->input('from') . ' 00:00:00';
             $to = $request->input('to') . ' 23:59:59';
             if($request->input('from')=="" &&  $request->input('to')==""){
                 $from = date('Y-m-d').$from;
                 $to = date('Y-m-d').$to;
             }
-
+            $type_movement = $request->input("type_movement");
+            $detail = $request->input("text_search");
+            $filter = "";
+            $filterData = "";
+            if($type_movement!=""){
+                $filter = "AND m.movement_type_id = ? ";
+                $filterData = $type_movement;
+            }else{
+                $filter = "AND m.description LIKE ? ";
+                $filterData = "%".$detail."%";
+            }
             $sql = "
                 SELECT 
                     m.type,
@@ -600,13 +612,13 @@ class CashOpeningController extends Controller
                 FROM movement m
                 JOIN movement_types mt ON mt.id = m.movement_type_id
                 JOIN users us ON us.id = m.users_id
-                WHERE m.created_at BETWEEN ? AND ? AND m.description like ?  
+                WHERE m.created_at BETWEEN ? AND ? ".$filter." 
                 AND m.cash_id = 1
                 GROUP BY m.type, m.created_at, mt.name, m.description
                 ORDER BY m.created_at DESC;
                 ";
         $params = [
-            $from, $to, '%'.$request->input('text_search').'%'
+            $from, $to, $filterData
         ];
         // Ejecutar consulta paginada
         $results = collect(DB::select($sql, $params));
@@ -626,16 +638,14 @@ class CashOpeningController extends Controller
             }
         }
         return view("report.general.general",[
-            'from'=>$request->input('from'),
-            'to'=>$request->input('to'),
+            'from'=>$request->input('from')?$request->input('from'):date('Y-m-d'),
+            'to'=>$request->input('to')?$request->input('to'):date('Y-m-d'),
             'text_search'=>$request->input('text_search'),
             'movements'=>$results,
             'total_income'=>$total_income,
-            'total_spent'=>$total_spent  
+            'total_spent'=>$total_spent,
+            'types_movement'=>$types_movement 
         ]);
     }
-
-    
-
 
 }
