@@ -108,6 +108,7 @@
 
 <script>
     const form = document.getElementById('voucherForm');
+    
    /* const video = document.getElementById('video');
     const canvas = document.getElementById('canvas');
     const preview = document.getElementById('preview');
@@ -145,6 +146,7 @@
     // Enviar formulario con imagen
     form.addEventListener('submit', function (e) {
         e.preventDefault();
+        
         //metodos de pago
             const table_payments = document.querySelectorAll("#table_payments tbody tr");
             let methods = [];
@@ -156,6 +158,34 @@
                 const obj = {method:methodPayment,value:valorPayment};
                 methods.push(obj);
             }
+            //debe haver almenos un metodo de pago cuando el estatus de pago sea credito, los demas metodos pueden ser de otro tipo
+            if(document.getElementById('status_payment').value=="credito"){
+                if(cc==0){
+                    Swal.fire({
+                        title: 'Error',
+                        text:'Debe haber al menos un método de pago de tipo crédito cuando el estado de pago es crédito',
+                        icon: 'error',
+                        buttons: true,
+                        dangerMode: true,
+                        timer: 6000
+                    });
+                    return;
+                }
+            }else{
+               if(cc>0){
+                    Swal.fire({
+                        title: 'Error',
+                        text:'No puede haber métodos de pago de tipo crédito si el estado de pago es contado',
+                        icon: 'error',
+                        buttons: true,
+                        dangerMode: true,
+                        timer: 6000
+                    });
+                    return;
+               }
+            }
+            
+        
         //
         const formData = new FormData();
         formData.append('voucher_number', document.getElementById('voucher_number').value);
@@ -225,6 +255,20 @@
     });
 
     function add_payment(){
+            //validar si en la tabla ya esta el metodo de pago que seleccionaste para no agregar una segunda ves
+            const table_payments = document.querySelectorAll("#table_payments tbody tr");
+            const methodSelected = document.getElementById('payment_method').value; 
+            for (let i = 0; i < table_payments.length; i++) {
+                let methodPayment = table_payments[i].children[0].textContent;
+                if(methodPayment==methodSelected){
+                    Swal.fire({
+                        title:"Mensaje",
+                        text:"El método de pago ya fue agregado",
+                        icon:"warning"
+                    })
+                    return;
+                }
+            }
             const method = document.getElementById('payment_method').value;
             const value = document.getElementById('payment_value').value;
             if(value.trim()!="" && value!=0){

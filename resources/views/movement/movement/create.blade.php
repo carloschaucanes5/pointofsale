@@ -5,7 +5,6 @@
 @section('content')
 <div class="container mt-4">
     <h4>Registrar Movimiento de Dinero</h4>
-
 @if ($errors->any())
     <div class="alert alert-danger">
         <ul class="mb-0 mt-2">
@@ -64,7 +63,7 @@
 
             <div class="col-md-6">
                 <label for="payment_method" class="form-label">Método de Pago</label>
-                <select id="payment_method" name="payment_method" class="form-control">
+                <select id="payment_method" name="payment_method" class="form-control" required>
                     <option value="">Seleccionar un medio de pago</option>
                     @foreach($methods as $method)
                             <option value="{{$method}}">{{$method}}</option>
@@ -75,7 +74,7 @@
 
         <div class="mb-3">
             <label for="description" class="form-label">Descripción</label>
-            <textarea name="description" id="description" class="form-control" rows="3"></textarea>
+            <textarea name="description" id="description" class="form-control" rows="3" required></textarea>
         </div>
 
         <div class="d-flex justify-content-between">

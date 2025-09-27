@@ -31,7 +31,11 @@ class MovementController extends Controller
             $payment_methods = DB::table("config")
                                ->where('key',"=","payment_methods")
                                ->first();
+            $cashes = DB::table('cash as c')
+                  ->select("c.id","c.name")
+                  ->get();
 
+            $cash_selected = $request->input('cash_id') ? $request->input('cash_id') : "";
             $type = $request->input('type')?$request->input('type'):"";
             $from = $request->input('from') . ' 00:00:00';
             $to = $request->input('to') . ' 23:59:59';
@@ -46,6 +50,24 @@ class MovementController extends Controller
             $offset = ($page - 1) * $perPage;
 
             // Consulta paginada
+
+            //filtrar por tipo de movimiento y caja
+            $filter = "";
+            $filter_params = [];
+            if($type != "" && $cash_selected != ""){
+                $filter = " AND (m.type = ? AND c.id = ?)";
+                $filter_params = [$type,$cash_selected];
+            }else if($type != ""){
+                $filter = " AND m.type = ?";
+                $filter_params = [$type];
+            }else if($cash_selected != ""){
+                $filter = " AND c.id = ?";
+                $filter_params = [$cash_selected];
+            }else{
+                $filter = "";
+                $filter_params = [];
+            }
+                
             $sql = "
                 SELECT * FROM (
 
@@ -56,37 +78,20 @@ class MovementController extends Controller
                         m.description COLLATE utf8mb4_unicode_ci AS description,
                         m.amount,
                         m.payment_method COLLATE utf8mb4_unicode_ci AS payment_method,
-                        us.name COLLATE utf8mb4_unicode_ci AS username
+                        us.name COLLATE utf8mb4_unicode_ci AS username,
+                        c.name  COLLATE utf8mb4_unicode_ci as name_cash
                     FROM movement m
+                    JOIN cash c ON c.id = m.cash_id
                     JOIN movement_types mt ON mt.id = m.movement_type_id
                     JOIN users us ON us.id = m.users_id
-                    WHERE m.created_at >= ? AND m.created_at <= ? AND m.type LIKE ?
-                    
-                    UNION ALL
-                    
-                    SELECT 
-                        'ingreso' COLLATE utf8mb4_unicode_ci AS type,
-                        '' COLLATE utf8mb4_unicode_ci AS created_at,
-                        'Venta' COLLATE utf8mb4_unicode_ci AS movement_type,
-                        '' COLLATE utf8mb4_unicode_ci AS description,
-                        SUM(p.value) AS amount,
-                        p.method COLLATE utf8mb4_unicode_ci AS payment_method,
-                        u.name COLLATE utf8mb4_unicode_ci AS username
-                    FROM sale s
-                    JOIN users u ON u.id = s.users_id
-                    JOIN payment p ON p.sale_id = s.id
-                    WHERE s.created_at >= ? AND s.created_at <= ? AND 'ingreso' LIKE ?
-                    GROUP BY  p.method, u.name
+                    WHERE m.created_at >= ? AND m.created_at <= ? $filter
                 ) AS union_result
                 ORDER BY created_at DESC
                 LIMIT $perPage OFFSET $offset
             ";
 
             // Parámetros del query
-            $params = [
-                $from, $to, "%$type%", // para movement
-                $from, $to, "%$type%"            // para sale
-            ];
+            $params = array_merge([$from, $to], $filter_params);
 
             // Ejecutar consulta paginada
             $results = collect(DB::select($sql, $params));
@@ -99,20 +104,11 @@ class MovementController extends Controller
                 
                     SELECT m.created_at
                     FROM movement m
-                    WHERE m.created_at >= ? AND m.created_at <= ? AND m.type LIKE ?
-                    
-                    UNION ALL
-                    
-                    SELECT s.created_at
-                    FROM sale s
-                    WHERE s.created_at >= ? AND s.created_at <= ? AND 'ingreso' LIKE  ?
-                    GROUP BY s.created_at, s.users_id
+                    JOIN cash c ON c.id = m.cash_id
+                    WHERE m.created_at >= ? AND m.created_at <= ? $filter
                 ) AS total_result
             ";
-            $total = DB::selectOne($countSql, [
-                $from, $to, "%$type%",
-                $from, $to, "%$type%"
-            ])->total;
+            $total = DB::selectOne($countSql,$params)->total;
 
             $sumSql = "
                 SELECT payment_method, SUM(amount) AS total
@@ -123,28 +119,14 @@ class MovementController extends Controller
                         m.payment_method COLLATE utf8mb4_unicode_ci AS payment_method,
                         m.amount
                     FROM movement m
-                    WHERE m.created_at BETWEEN ? AND ?
-                    AND m.type like ?
+                    JOIN cash c ON c.id = m.cash_id
+                    WHERE m.created_at BETWEEN ? AND ? $filter
 
-                    UNION ALL
 
-                    -- Ventas
-                    SELECT 
-                        p.method COLLATE utf8mb4_unicode_ci AS payment_method,
-                        p.value AS amount
-                    FROM sale s
-                    JOIN payment p ON p.sale_id = s.id
-                    WHERE s.created_at BETWEEN ? AND ?
-                    AND 'ingreso' like ?
                 ) AS all_movements
                 GROUP BY payment_method
             ";
-            $sums = DB::select($sumSql, [
-                $from, $to, '%'.$type.'%',   // movement
-                $from, $to, '%'.$type.'%'    // sale
-            ]);
-
-
+            $sums = DB::select($sumSql,$params);
 
             // Crear el paginador manual
             $paginator = new LengthAwarePaginator(
@@ -167,7 +149,9 @@ class MovementController extends Controller
                     'type'=>$type,
                     'payment_methods'=>explode(",",$payment_methods->value),
                     'array_sums'=>$sums,
-                    'paginator'=>$paginator
+                    'paginator'=>$paginator,
+                    'cashes'=>$cashes,
+                    'cash_selected'=>$cash_selected
                  ]
             );
         }
@@ -199,7 +183,8 @@ class MovementController extends Controller
     public function getTypesByCategory($type)
     {
         $types = DB::table('movement_types')
-        ->orderBy('name')->get();
+                ->where('type', '=', $type)
+                ->orderBy('name')->get();
         return response()->json($types);
     }
 
@@ -209,7 +194,9 @@ class MovementController extends Controller
     public function store(Request $request)
     {
         try{
+ 
             DB::beginTransaction();
+
             $validated = $request->validate([
             'type' => 'required|in:egreso,ingreso',
             'movement_type_id' => 'required|numeric|min:0',
@@ -218,6 +205,29 @@ class MovementController extends Controller
             'payment_method' => 'required|string|max:50',
             'cash_id' => 'required',
             ]);
+
+            //---------------------------------------
+            $cash_balance = CashBalance::where('cash_id','=',$validated['cash_id'])
+            ->where("method","=",$validated['payment_method'])
+            ->first();
+            if($validated['type'] == "egreso"){
+                if($cash_balance){
+                    if($cash_balance->balance < $validated['amount']){
+                        DB::rollBack();
+                        return redirect()
+                                ->back()
+                                ->withErrors(['El monto del egreso no puede ser mayor al saldo actual de la caja'])
+                                ->withInput();
+                    }
+                }else{
+                    DB::rollBack();
+                    return redirect()
+                            ->back()
+                            ->withErrors(['No hay saldo en la caja para realizar el egreso'])
+                            ->withInput();
+                }
+            }
+            //---------------------------------------
             $validated['users_id'] = auth()->user()->id;
             $amount = floatval($request->post("amount"));
             if($request->post("type") == "egreso"){
@@ -239,7 +249,8 @@ class MovementController extends Controller
 
             }
             $validated['amount'] = $amount;
-            $validated['cash_opening_id'] = $cash_opened?$cash_opened->id : null;          
+            $validated['cash_opening_id'] = $cash_opened?$cash_opened->id : null;
+
             $movement = Movement::create($validated);
             if($movement){
                 $cash_balance = CashBalance::where('cash_id','=',$movement->cash_id)
@@ -248,7 +259,6 @@ class MovementController extends Controller
                 if($cash_balance){
                     $cash_balance->balance = $cash_balance->balance + $amount;
                     $cash_balance->save();
-                    DB::commit();
                 }
                 else
                 {
@@ -256,9 +266,13 @@ class MovementController extends Controller
                     $cash_balance1->cash_id = $movement->cash_id;
                     $cash_balance1->method = $validated['payment_method'];
                     $cash_balance1->balance = $amount;
-                    $cash_balance1->save();
-                     DB::commit();
+                    $cash_balance1->save(); 
                 }
+                //validar si el tipo de moviemintpo es un trslado entre cajas
+                if($validated['movement_type_id'] == 24 || $validated['movement_type_id'] == 25 || $validated['movement_type_id'] == 26){
+                    $this->movements_box($validated['movement_type_id'],$amount,$validated['cash_id'],$validated['payment_method']);
+                }
+                DB::commit();
             }
             else
             {
@@ -273,6 +287,67 @@ class MovementController extends Controller
             return back()->withErrors(['error' => 'Ocurrió un error'])->withInput();
         }
     }
+
+public function movements_box($movement_type_id,$value,$cash_id,$method)
+{
+    //$movement_type_id 24 traslado a caja menor, entra a caja menor como ingreso
+    //$movement_type_id 25 traslado a caja registradora, entra a caja registradora como ingreso
+    //$movement_type_id 26 traslado a caja general, entra a caja generak como ingreso
+    //esos ingresos afectas al balance de la caja
+    $box = '';
+    if($cash_id == 1){
+        $box = 'Proviene de un Traslado desde Caja Menor';
+    }
+    if($cash_id == 2){
+        $box = 'Proviene de un Traslado desde Caja General';
+    }
+    if($cash_id == 3){
+        $box = 'Proviene de un Traslado desde Caja Registradora';
+    }
+    $movement = new Movement();
+    $movement->type = "ingreso";
+    if($movement_type_id == 24){
+        $movement->description = $box ;
+        $movement->cash_id = 1; //caja menor        
+        $movement->movement_type_id = 24;
+    }
+    if($movement_type_id == 25){
+        $movement->description = $box ;
+        $movement->cash_id = 3; //caja registradora        
+        $movement->movement_type_id = 25;
+    }
+    if($movement_type_id == 26){
+        $movement->description = $box;
+        $movement->cash_id = 2; //caja general        
+        $movement->movement_type_id = 26;       
+    }
+    $movement->amount = abs($value);
+    $movement->payment_method = $method;
+    $movement->users_id = auth()->user()->id;
+ 
+    //si hay apertura de caja, asignar el id
+    $cash_opened = DB::table("cash_opening as co")
+                ->where('co.users_id','=',auth()->user()->id)
+                ->where('co.status','=','open')
+                ->first();
+    $movement->cash_opening_id = $cash_opened ?$cash_opened->id : null;
+    $movement->table_identifier = null;
+    $movement->save();
+    $cash_balance = CashBalance::where('cash_id','=',$movement->cash_id )
+                ->where("method","=",$method)
+                ->first();
+    if($cash_balance){
+        //summar al saldo actual
+        $cash_balance->balance = $cash_balance->balance + abs($value);
+        $cash_balance->save(); 
+    }else{
+        $cash_balance1 = new CashBalance();
+        $cash_balance1->cash_id = $movement->cash_id;
+        $cash_balance1->method = $method;
+        $cash_balance1->balance = abs($value);
+        $cash_balance1->save();
+    }     
+}
 
 public function filterByDate(Request $request)
 {

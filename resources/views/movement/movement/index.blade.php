@@ -3,40 +3,66 @@
 @section('title', 'Movimientos de Caja')
 
 @section('content')
-<div class="container mt-4">
-    <h3 class="mb-4">Listado de Movimientos</h3>
 
-<form action="{{ route('movement.index') }}" method="GET" class="row g-3 mb-4">
-    <div class="col-md-2">
-        <input type="date" name="from" class="form-control" value="{{ $from }}">
-    </div>
-    <div class="col-md-2">
-        <input type="date" name="to" class="form-control" value="{{ $to }}">
-    </div>
-    <div class="col-md-2">
-        <select name="type" class="form-control" value="{{ $type }}">
-            
-            @if($type =='egreso')
-                <option value="">Todos</option>
-                <option value="egreso" selected>egreso</option>
-                <option value="ingreso">ingreso</option>
-            @elseif($type=="ingreso")
-                <option value="">Todos</option>
-                <option value="egreso">egreso</option>
-                <option value="ingreso" selected>ingreso</option>
-            @else
-                <option value="" selected>Todos</option>
-                <option value="egreso">egreso</option>
-                <option value="ingreso">ingreso</option>
-            @endif
+<style>
+    .table th, .table td {
+        font-size: 0.8rem;
+    }
+    .cel-spent {
+        background-color: rgb(253, 169, 112) !important;
+    }
+    .cel-income{
+        background-color: rgb(130, 247, 130) !important;
+    }
+</style>
 
-        </select>
-    </div>
-    <div class="col-md-3">
-        <button class="btn btn-outline-primary">Buscar</button>
-    </div>
-    <div class="col-md-3 text-end">
-        <a href="{{ route('movement.create') }}" class="btn btn-success">+ Nuevo </a>
+<div class="container">
+    <h4 class="mb-4">Listado de Movimientos</h4>
+
+<form action="{{ route('movement.index') }}" method="GET">
+    <div class="row">
+        <div class="col-md-2">
+            <input type="date" name="from" class="form-control" value="{{ $from }}">
+        </div>
+        <div class="col-md-2">
+            <input type="date" name="to" class="form-control" value="{{ $to }}">
+        </div>
+        <div class="col-md-2">
+            <select name="type" class="form-control" value="{{ $type }}">
+                
+                @if($type =='egreso')
+                    <option value="">Todos</option>
+                    <option value="egreso" selected>egreso</option>
+                    <option value="ingreso">ingreso</option>
+                @elseif($type=="ingreso")
+                    <option value="">Todos</option>
+                    <option value="egreso">egreso</option>
+                    <option value="ingreso" selected>ingreso</option>
+                @else
+                    <option value="" selected>Todos</option>
+                    <option value="egreso">egreso</option>
+                    <option value="ingreso">ingreso</option>
+                @endif
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select name="cash_id" class="form-control" value="{{ $cash_selected }}">
+                <option value="" >Todas las Cajas</option>
+                @foreach($cashes as $cash)
+                    @if($cash_selected == $cash->id)
+                        <option value="{{$cash->id}}" selected>{{$cash->name}}</option>
+                    @else
+                        <option value="{{$cash->id}}">{{$cash->name}}</option>
+                    @endif
+                @endforeach
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button class="btn btn-outline-primary">Buscar</button>
+        </div>
+        <div class="col-md-2 text-end">
+            <a href="{{ route('movement.create') }}" class="btn btn-success">+ Nuevo </a>
+        </div>
     </div>
 </form>
     @if ($errors->has('error'))
@@ -48,6 +74,7 @@
         <thead class="table-dark">
             <tr>
                 <th>Fecha</th>
+                <th>Caja</th>
                 <th>Tipo</th>
                 <th>Categoría</th>
                 @foreach($payment_methods as $method)
@@ -60,6 +87,7 @@
             @forelse ($movements as $movement)
                 <tr>
                     <td>{{ $movement->created_at}}</td>
+                    <td>{{ $movement->name_cash}}</td>
                     <td>
                         @if ($movement->type == 'ingreso')
                             <span class="badge bg-success">Ingreso</span>

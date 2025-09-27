@@ -582,7 +582,12 @@ class CashOpeningController extends Controller
         
     }
 
-    function general_report(Request $request){
+    function report_box(Request $request, $id){
+
+           $payment_methods = DB::table("config")
+                    ->where('key',"=","payment_methods")
+                    ->first();
+
             $types_movement = DB::table("movement_types")
                             ->get();
             $from = $request->input('from') . ' 00:00:00';
@@ -608,18 +613,24 @@ class CashOpeningController extends Controller
                     m.created_at,
                     mt.name AS movement_type,
                     m.description,
+                    m.payment_method,
+                    us.name AS username,
                     SUM(m.amount) AS total
                 FROM movement m
                 JOIN movement_types mt ON mt.id = m.movement_type_id
                 JOIN users us ON us.id = m.users_id
                 WHERE m.created_at BETWEEN ? AND ? ".$filter." 
-                AND m.cash_id = 1
-                GROUP BY m.type, m.created_at, mt.name, m.description
+                AND m.cash_id = ?
+                GROUP BY m.type, m.created_at, mt.name, m.description, m.payment_method, us.name
                 ORDER BY m.created_at DESC;
                 ";
         $params = [
-            $from, $to, $filterData
+            $from, $to, $filterData, $id
         ];
+
+        $balances = CashBalance::where("cash_id","=",$id)
+                    ->get();
+
         // Ejecutar consulta paginada
         $results = collect(DB::select($sql, $params));
 
@@ -637,14 +648,20 @@ class CashOpeningController extends Controller
                  $total_income  =  $total_income + $res->total;
             }
         }
-        return view("report.general.general",[
+        $view = "";
+        if($id==3)$view = "register";
+        if($id==1)$view = "menor";
+        if($id==2)$view = "general";
+        return view("report.general.".$view,[
             'from'=>$request->input('from')?$request->input('from'):date('Y-m-d'),
             'to'=>$request->input('to')?$request->input('to'):date('Y-m-d'),
             'text_search'=>$request->input('text_search'),
             'movements'=>$results,
             'total_income'=>$total_income,
             'total_spent'=>$total_spent,
-            'types_movement'=>$types_movement 
+            'types_movement'=>$types_movement ,
+            'payment_methods'=>explode(",",$payment_methods->value),
+            'balances'=>$balances 
         ]);
     }
 

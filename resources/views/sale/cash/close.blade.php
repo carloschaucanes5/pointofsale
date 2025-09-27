@@ -261,7 +261,7 @@
                             $pay = 0;
                         @endphp
                         @foreach($last_balances as $last_balance)
-                            @if($last_balance->method == $method && last_balance->cash_id == 1)
+                            @if($last_balance->method == $method && $last_balance->cash_id == 1)
                                 @php 
                                     $b = 1;
                                     $pay = $last_balance->balance;

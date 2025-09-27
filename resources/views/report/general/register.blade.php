@@ -15,9 +15,9 @@
     }
 </style>
 <div class="container">
-    <h3 class="mb-4">CAJA GENERAL</h3>
+    <h3 class="mb-4">CAJA REGISTRADORA</h3>
 
-<form action="{{ route('report.cash_opening.general_box',2) }}" method="GET" class="row g-3 mb-4">
+<form action="{{ route('report.cash_opening.register_box',3) }}" method="GET" class="row g-3 mb-4">
     <div class="col-md-2">
         <input type="date" name="from" class="form-control form-control-sm" value="{{ $from }}">
     </div>
@@ -136,7 +136,7 @@
             </tr>
         </tfoot>
     </table>
-   <!--mostar datos del $balance de la caja general-->
+       <!--mostar datos del $balance de la caja general-->
     <h4 class="mt-4">Saldos por Método de Pago</h4>
     <table class="table table-bordered table-hover table-sm table-striped">
         <thead class="table-dark">

@@ -334,7 +334,13 @@
                                 <li class="nav-item ms-3">
                                     <a href="{{ route('voucher.index') }}" class="nav-link">
                                         <i class="bi bi-file-text"></i>
-                                        <p>Facturas</p>
+                                        <p>Nueva Factura</p>
+                                    </a>
+                                </li>
+                                <li class="nav-item ms-3">
+                                    <a href="{{ route('purchase.voucher.historical') }}" class="nav-link">
+                                        <i class="bi bi-file-text"></i>
+                                        <p>Historial de Facturas</p>
                                     </a>
                                 </li>
                                 <li class="nav-item ms-3">
@@ -370,6 +376,12 @@
                                     <a href="{{route('cash_opening.index')}}" class="nav-link">
                                         <i class="bi bi-door-open"></i> 
                                         <p>Apertura Caja</p>
+                                    </a>
+                                </li>
+                                <li class="nav-item ms-3">
+                                    <a href="{{route('sale.sale.report_return')}}" class="nav-link">
+                                        <i class="nav-icon bi bi-cart-check"></i>
+                                        <p>Devoluciones</p>
                                     </a>
                                 </li>
                             </ul>
@@ -435,9 +447,25 @@
                             </ul>
                             <ul class="nav nav-treeview">
                                 <li class="nav-item ms-3">
-                                    <a href="{{route('report.cash_opening.general')}}" class="nav-link">
+                                    <a href="{{route('report.cash_opening.menor_box',1)}}" class="nav-link">
                                         <i class="nav-icon bi bi-calendar-day"></i>
-                                        <p>Informe General</p>
+                                        <p>Caja Menor</p>
+                                    </a>
+                                </li>
+                            </ul>
+                            <ul class="nav nav-treeview">
+                                <li class="nav-item ms-3">
+                                    <a href="{{route('report.cash_opening.register_box',3)}}" class="nav-link">
+                                        <i class="nav-icon bi bi-calendar-day"></i>
+                                        <p>Caja Registradora</p>
+                                    </a>
+                                </li>
+                            </ul>
+                            <ul class="nav nav-treeview">
+                                <li class="nav-item ms-3">
+                                    <a href="{{route('report.cash_opening.general_box',2)}}" class="nav-link">
+                                        <i class="nav-icon bi bi-calendar-day"></i>
+                                        <p>Caja General</p>
                                     </a>
                                 </li>
                             </ul>

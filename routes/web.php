@@ -41,19 +41,7 @@ Route::get('/home', [HomeController::class, 'index'])->name('home');
 
 
 Route::middleware(['auth','check.session','role:admin,superadmin,cashier,user'])->group(function() {
-    Route::resource('store/category', CategoryController::class);
-    Route::resource('store/product', ProductController::class);
-    Route::resource('store/laboratory', LaboratoryController::class);
-    Route::resource('store/inventory', InventoryController::class);
-    Route::resource('sale/customer', CustomerController::class);
-    Route::resource('sale/sale', SaleController::class);
-    Route::resource('purchase/supplier', SupplierController::class);
-    Route::resource('purchase/income', IncomeController::class);
-    Route::resource('purchase/voucher', VoucherController::class);
-    Route::resource('segurity/user', UserController::class);
-    Route::resource('sale/cash_opening', CashOpeningController::class);
-    Route::resource('movement', MovementController::class);
-
+    
     Route::put('segurity/user/{id}/{person_id?}', [UserController::class, 'update'])->name('user.update');
 
     Route::post('sale/pay_credit}', [SaleController::class, 'pay_credit'])->name('sale.pay_credit');
@@ -80,7 +68,29 @@ Route::middleware(['auth','check.session','role:admin,superadmin,cashier,user'])
 
     Route::get('report/income/expiredproducts', [IncomeController::class, 'expiredproducts'])->name('report.income.expiredproducts');
     Route::get('report/sale/sold_products', [SaleController::class, 'sold_products'])->name('report.sale.sold_products');
-    Route::get('report/cash_opening/general', [CashOpeningController::class, 'general_report'])->name('report.cash_opening.general');
+    Route::get('report/cash_opening/menor_box/{id}', [CashOpeningController::class, 'report_box'])->name('report.cash_opening.menor_box');
+    Route::get('report/cash_opening/register_box/{id}', [CashOpeningController::class, 'report_box'])->name('report.cash_opening.register_box');
+    Route::get('report/cash_opening/general_box/{id}', [CashOpeningController::class, 'report_box'])->name('report.cash_opening.general_box');
+
+    Route::get('sale/sale/report_return', [SaleController::class, 'report_return'])->name('sale.sale.report_return');
+    Route::get('purchase/voucher/historical', [VoucherController::class, 'historical'])->name('purchase.voucher.historical');
+    Route::post('purchase/voucher/pay', [VoucherController::class, 'pay'])->name('purchase.voucher.pay');
+
+
+    Route::resource('store/category', CategoryController::class);
+    Route::resource('store/product', ProductController::class);
+    Route::resource('store/laboratory', LaboratoryController::class);
+    Route::resource('store/inventory', InventoryController::class);
+    Route::resource('sale/customer', CustomerController::class);
+    Route::resource('sale/sale', SaleController::class);
+    Route::resource('purchase/supplier', SupplierController::class);
+    Route::resource('purchase/income', IncomeController::class);
+    Route::resource('purchase/voucher', VoucherController::class);
+    Route::resource('segurity/user', UserController::class);
+    Route::resource('sale/cash_opening', CashOpeningController::class);
+    Route::resource('movement', MovementController::class);
+
+    
 
     });
 

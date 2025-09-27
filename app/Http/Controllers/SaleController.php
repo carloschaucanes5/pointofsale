@@ -683,4 +683,60 @@ class SaleController extends Controller
             ->appends(['from'=>$from,'to'=>$to]);
         return view('report.sale.sold_products', ['products' => $products,'from'=>date('Y-m-d',strtotime($from)),'to'=>date('Y-m-d',strtotime($to))]);
     }
+
+public function report_return(Request $request)
+ {
+        $logo = DB::table('config')
+                        ->where("key","=","logo")
+                        ->get()
+                        ->first();
+        $company = DB::table('config')
+                    ->where("key","like","company%")
+                    ->select('key','value','alias')
+                    ->get()
+                    ->keyBy('key');
+
+        $searchText = $request->get("searchText");
+        $start_date = $request->get("start_date")?$request->get("start_date"):date('Y-m-d');
+        $end_date = $request->get("end_date")?$request->get("end_date"):date('Y-m-d');
+        if($request){
+
+                $returns = DB::table("return_sale as ret")
+                    ->join('income_detail_historical as idh', 'idh.income_detail_id', '=', 'ret.income_detail_id')
+                    ->join('product as pr', 'pr.id', '=', 'idh.product_id') 
+                    ->join('users as u', 'u.id', '=', 'ret.users_id')
+                    ->whereBetween('ret.created_at', [
+                        $start_date . ' 00:00:00',
+                        $end_date . ' 23:59:59'
+                    ])
+                    ->where(function($query) use ($searchText) {
+                        $query->where('pr.name', 'like', '%' . $searchText . '%')
+                            ->orWhere('pr.code', 'like', '%' . $searchText . '%')
+                            ->orWhere('u.name','like','%'.$searchText."%");
+                    })
+                    ->select(
+                        'ret.sale_id',
+                        'ret.created_at',
+                        'ret.quantity',
+                        'ret.description',
+                        'pr.name as product_name',
+                        'pr.code',
+                        'pr.concentration',
+                        'pr.presentation',
+                        'pr.laboratory',
+                        'ret.return_total',
+                        'u.name as user_name'
+                    )
+                    ->distinct()
+                    ->orderBy('ret.id', 'desc')
+                    ->paginate(6)
+                    ->appends([
+                        'searchText' => $searchText,
+                        'start_date' => $start_date,
+                        'end_date' => $end_date,
+                    ]);
+            
+            return view('sale.sale.report_return',['returns'=>$returns,'texto'=>$searchText,'start_date'=>$start_date,'end_date'=>$end_date,'logo'=>$logo,'company'=>$company]);
+        }
+    }
 }
