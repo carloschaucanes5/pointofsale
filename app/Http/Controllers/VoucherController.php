@@ -477,7 +477,7 @@ class VoucherController extends Controller
                 if(floatval($balance_balance->balance)  <  floatval($voucher_amount))
                 {
                     DB::rollBack();
-                    return Redirect::to("purchase/voucher/historical")->with('error','La caja seleccionada no tiene saldo');
+                    return redirect()->back()->with('error','La caja seleccionada no tiene saldo con el método de pago seleccionado');
                 }
             }
             
@@ -515,7 +515,7 @@ class VoucherController extends Controller
             DB::commit();
             return Redirect::to("purchase/voucher/historical")->with('success','Factura pagada correctamente.');
         } catch (\Exception $e) {
-x|            DB::rollBack();
+         DB::rollBack();
             return Redirect::to("purchase/voucher/historical")->with('error','Error al pagar la factura: ' . $e->getMessage());
         }
     }

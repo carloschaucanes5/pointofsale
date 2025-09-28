@@ -38,6 +38,41 @@ class InventoryController extends Controller
         return view('store.inventory.index',compact('incomes_detail','searchText'));
     }
 
+    public function get_outs(Request $request)
+    {
+        $a = $request->get("start_date");
+        $start_date = $request->get("start_date")?$request->get("start_date"):date('Y-m-d');
+        $end_date = $request->get("end_date")?$request->get("end_date"):date('Y-m-d');
+        $searchText = trim($request->get("searchText"));
+        $outs_detail = DB::table('product as p')
+                    ->join('category as c','p.category_id','=','c.id')
+                    ->join('income_detail_historical as ide','p.id','=','ide.product_id')
+                    ->join('output as o','o.income_detail_id','=','ide.income_detail_id')
+                    ->join('users as u','u.id','=','o.users_id')
+                    ->select('ide.id','p.code','p.name','p.stock','p.description','p.image','p.status','c.category','p.presentation','p.concentration','p.laboratory','ide.purchase_price','ide.sale_price','ide.form_sale','ide.expiration_date','ide.quantity','o.quantity_out','o.description','u.name as user_name','o.created_at')
+                    ->where(function($query) use ($searchText){
+                        $query->where('p.name','like','%'.$searchText.'%')
+                              ->orwhere('p.code','like','%'.$searchText.'%');
+                    })
+                    ->whereBetween('o.created_at', [
+                        $start_date . ' 00:00:00',
+                        $end_date . ' 23:59:59'
+                    ])
+                    ->orderBy('o.created_at','asc')
+                    ->paginate(5)
+                    ->appends([
+                        'searchText' => $searchText,
+                        'start_date' => $start_date,
+                        'end_date' => $end_date
+                    ]);
+                    
+        return view('store.inventory.outs',[
+                    'outs_detail'=>$outs_detail,
+                    'searchText'=>$searchText,                    
+                    'start_date'=>$start_date,
+                    'end_date'=>$end_date]);
+    }
+
     /**
      * Show the form for creating a new resource.
      */

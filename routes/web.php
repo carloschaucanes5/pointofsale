@@ -76,6 +76,8 @@ Route::middleware(['auth','check.session','role:admin,superadmin,cashier,user'])
     Route::get('purchase/voucher/historical', [VoucherController::class, 'historical'])->name('purchase.voucher.historical');
     Route::post('purchase/voucher/pay', [VoucherController::class, 'pay'])->name('purchase.voucher.pay');
 
+    Route::get('store/inventory/outs', [InventoryController::class, 'get_outs'])->name('store.inventory.outs');
+
 
     Route::resource('store/category', CategoryController::class);
     Route::resource('store/product', ProductController::class);

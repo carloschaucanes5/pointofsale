@@ -301,7 +301,13 @@
                                 <li class="nav-item ms-3">
                                     <a href="{{ route('inventory.index') }}" class="nav-link">
                                         <i class="bi bi-clipboard-data"></i>
-                                        <p>inventario</p>
+                                        <p>Inventario</p>
+                                    </a>
+                                </li>
+                                 <li class="nav-item ms-3">
+                                    <a href="{{ route('store.inventory.outs') }}" class="nav-link">
+                                        <i class="bi bi-box-arrow-right"></i>
+                                        <p>Salidas</p>
                                     </a>
                                 </li>
                                 <li class="nav-item ms-3">
