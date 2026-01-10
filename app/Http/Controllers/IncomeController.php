@@ -23,6 +23,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 
+use function PHPUnit\Framework\throwException;
+
 class IncomeController extends Controller
 {
     /**
@@ -309,6 +311,7 @@ class IncomeController extends Controller
         //obtener la fecha 4 meses despues de la fecha actual
         $from = $request->get('from');
         $to =  $request->get('to');
+        $text = $request->get('text');
         if($from=='' && $to==''){
             $from = Carbon::now();
             $to = Carbon::now()->addMonths(4);
@@ -318,10 +321,14 @@ class IncomeController extends Controller
                     ->join('product as p','p.id','=','ide.product_id')
                     ->select('ide.id','ide.quantity','ide.purchase_price','ide.sale_price','ide.expiration_date','p.name','p.concentration','p.presentation','p.laboratory','p.code')
                     ->whereBetween('ide.expiration_date',[date('Y-m-d',strtotime($from)),date('Y-m-d',strtotime($to))])
+                    ->where(function($query) use ($text) {
+                        $query->where('p.name', 'like', '%' . $text . '%')
+                              ->orWhere('p.code', 'like', '%' . $text . '%');
+                    })
                     ->orderBy('ide.expiration_date')
                     ->paginate(6)
-                    ->appends(['from'=>$from,'to'=>$to]);
-        return view('report.income.expiredproducts',['from'=>date("Y-m-d",strtotime($from)),'to'=>date("Y-m-d",strtotime($to)),'products'=>$products]);
+                    ->appends(['from'=>$from,'to'=>$to,'text'=>$text]);
+        return view('report.income.expiredproducts',['from'=>date("Y-m-d",strtotime($from)),'to'=>date("Y-m-d",strtotime($to)),'products'=>$products,'text'=>$text]);
     }
     /**
      * Display the specified resource.
@@ -568,4 +575,31 @@ foreach ($headers as $header => $subHeaders) {
             'photo_url' => asset($voucher->photo),
         ]);
     }
+
+    public function update_sale_price($income_detail_id, $new_price)
+    {
+        $mensaje = "";
+        try {
+            
+            //validar si en el historical existe el registro
+            $incomeDetailHistorical = IncomeDetailHistorical::where('income_detail_id', $income_detail_id)->first();
+            if ( doubleval($new_price) <= doubleval($incomeDetailHistorical->sale_price)) {  
+                    throw new Exception('El nuevo precio debe ser mayor al precio de venta actual. Si deseas bajarle el precio a un producto, debes contactarte con el administrador del sistema.'); 
+            }else{
+                $incomeDetail = IncomeDetail::findOrFail($income_detail_id);
+                $incomeDetail->sale_price = $new_price;
+                $incomeDetail->save();
+                return response()->json([
+                    'success' => true,
+                    'message' => 'El precio de venta ha sido actualizado correctamente.'
+                ]);
+            }
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al actualizar el precio de venta: ' . $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
 }

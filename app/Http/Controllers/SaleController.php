@@ -659,7 +659,7 @@ class SaleController extends Controller
         return Redirect::to("sale/sale");
     }
 
-    public function sold_products(Request $request){
+    /*public function sold_products(Request $request){
         $from = $request->get('from');
         $to =  $request->get('to');
         if($from=='' &&  $to==''){
@@ -667,7 +667,7 @@ class SaleController extends Controller
             $to = date('Y-m-d 23:59:59');
         }
         else{
-            $from = date('Y-m-d 23:59:59',strtotime($from));
+            $from = date('Y-m-d 00:00:00',strtotime($from));
             $to = date('Y-m-d 23:59:59',strtotime($to));
         }
         
@@ -682,7 +682,91 @@ class SaleController extends Controller
             ->paginate(6)
             ->appends(['from'=>$from,'to'=>$to]);
         return view('report.sale.sold_products', ['products' => $products,'from'=>date('Y-m-d',strtotime($from)),'to'=>date('Y-m-d',strtotime($to))]);
+    }*/
+
+public function sold_products(Request $request)
+{
+    $from = $request->get('from');
+    $to   = $request->get('to');
+    $pedir   = $request->get('pedir');
+    $textSearch = $request->get('text_search');
+
+    // Manejo de fechas
+    if (!$from && !$to) {
+        $fromInput = date('Y-m-d');
+        $toInput   = date('Y-m-d');
+
+        $from = $fromInput . " 00:00:00";
+        $to   = $toInput   . " 23:59:59";
+    } else {
+        $fromInput = $from;
+        $toInput   = $to;
+
+        $from = $from . " 00:00:00";
+        $to   = $to . " 23:59:59";
     }
+    
+    $dias = Carbon::parse($from)->diffInDays(Carbon::parse($to)) + 1;
+    if(!$pedir){
+        $pedir = $dias;
+    }
+    $query = DB::table('sale_detail as sd')
+        ->selectRaw("
+            p.code,
+            p.name,
+            p.concentration,
+            p.presentation,
+            p.laboratory,
+            idh.form_sale,
+            SUM(sd.quantity) AS ventas,
+         IFNULL((
+            SELECT SUM(quantity)
+            FROM income_detail ide
+            WHERE p.id = ide.product_id
+          ), 0) AS existencias,
+          SUM(idh.purchase_price * sd.quantity) as costo
+        ")
+        ->join('sale as s', 's.id', '=', 'sd.sale_id')
+        ->join('income_detail_historical as idh', 'sd.income_detail_id', '=', 'idh.income_detail_id')
+        ->join('product as p', 'p.id', '=', 'idh.product_id')
+        ->whereBetween('s.created_at', [$from, $to]);
+
+    // Filtro de texto (DEBE IR antes del groupBy)
+    if (!empty($textSearch)) {
+        $query->where(function ($q) use ($textSearch) {
+            $q->where(DB::raw('p.name'), 'LIKE', "%$textSearch%")
+              ->orWhere(DB::raw('p.code'), 'LIKE', "%$textSearch%");
+        });
+    }
+
+    // GroupBy + Order
+    $query->groupBy([
+                'p.id',
+                'p.code',
+                'p.name',
+                'p.concentration',
+                'p.presentation',
+                'p.laboratory',
+                'idh.form_sale'
+            ])
+        ->orderBy('ventas', 'DESC');
+
+    // Paginación
+    $products = $query->paginate(300)->appends([
+        'from' => $fromInput,
+        'to' => $toInput,
+        'text_search' => $textSearch
+    ]);
+
+    return view('report.sale.sold_products', [
+        'products' => $products,
+        'from' => $fromInput,
+        'to' => $toInput,
+        'text_search' => $textSearch,
+        'dias' => $dias,
+        'pedir' => $pedir
+    ]);
+}
 
 public function report_return(Request $request)
  {
