@@ -77,14 +77,14 @@
                 <ul class="navbar-nav ms-auto">
                     <!--begin::Navbar Search-->
                     <li class="nav-item">
-                        <a class="nav-link" data-widget="navbar-search" href="#" role="button">
+                        <a style="display: none" class="nav-link" data-widget="navbar-search" href="#" role="button">
                             <i class="bi bi-search"></i>
                         </a>
                     </li>
                     <!--end::Navbar Search-->
                     <!--begin::Messages Dropdown Menu-->
                     <li class="nav-item dropdown">
-                        <a class="nav-link" data-bs-toggle="dropdown" href="#">
+                        <a style="display: none" class="nav-link" data-bs-toggle="dropdown" href="#">
                             <i class="bi bi-chat-text"></i>
                             <span class="navbar-badge badge text-bg-danger">3</span>
                         </a>
@@ -163,7 +163,7 @@
                     <!--end::Messages Dropdown Menu-->
                     <!--begin::Notifications Dropdown Menu-->
                     <li class="nav-item dropdown">
-                        <a class="nav-link" data-bs-toggle="dropdown" href="#">
+                        <a style="display: none" class="nav-link" data-bs-toggle="dropdown" href="#">
                             <i class="bi bi-bell-fill"></i>
                             <span class="navbar-badge badge text-bg-warning">15</span>
                         </a>
@@ -267,7 +267,7 @@
                         class="brand-image opacity-75 shadow" />
                     <!--end::Brand Image-->
                     <!--begin::Brand Text-->
-                    <span class="brand-text fw-light">SISTEMA POS</span>
+                    <span class="brand-text fw-light">SISTEMA POINTOFSALE</span>
                     <!--end::Brand Text-->
                 </a>
                 <!--end::Brand Link-->
@@ -310,9 +310,10 @@
                                         <p>Salidas</p>
                                     </a>
                                 </li>
+          
                                 <li class="nav-item ms-3">
                                     <a href="{{ route('category.index') }}" class="nav-link">
-                                        <i class="bi bi-collection"></i>
+                                        <i class="bi bi-folder"></i>
                                         <p>Categorías</p>
                                     </a>
                                 </li>
@@ -591,7 +592,8 @@
         crossorigin="anonymous"></script>
     <script src="/pointofsale/public/js/world.js" integrity="sha256-XPpPaZlU8S/HWf7FZLAncLg2SAkP8ScUTII89x9D3lY="
         crossorigin="anonymous"></script>
-    <script>
+    <script src="/pointofsale/public/js/JsBarcode.all.min.js"></script>
+    
         $(document).ready(function() {
             $('.selectpicker').selectpicker();
         });
@@ -667,8 +669,8 @@
     }
 
 
-    function printDiv(divId){
-        let contenido = document.getElementById(divId).innerHTML;
+    function printDiv(){
+        let contenido = document.getElementById('barcode').innerHTML;
         let ventana = window.open('', '', 'height=600,width=800');
         ventana.document.write('<html><head><title>Imprimir</title>');
         ventana.document.write('<style>body{font-family:sans-serif; font-size:12px;}</style>');

@@ -505,7 +505,7 @@ class CashOpeningController extends Controller
                             m.payment_method COLLATE utf8mb4_unicode_ci AS payment_method,
                             m.amount
                         FROM movement m
-                        WHERE m.users_id = ? AND m.cash_id = ? AND m.table_identifier = ?
+                        WHERE m.users_id = ? AND m.cash_id = ? AND m.cash_opening_id = ?
 
                         UNION ALL
 
@@ -517,14 +517,25 @@ class CashOpeningController extends Controller
                         JOIN payment p ON p.sale_id = s.id
                         JOIN cash_opening co ON co.id = s.cash_opening_id
                         WHERE s.users_id = ? AND co.cash_id = ? AND s.cash_opening_id = ?
+
+                        UNION ALL
+
+                        -- Devoluciones
+                        SELECT
+                           rs.method COLLATE utf8mb4_unicode_ci AS payment_method,
+                           rs.return_total * -1 as amount
+                        FROM return_sale rs
+                        JOIN cash_opening co ON rs.cash_opening_id = co.id
+                        WHERE rs.users_id = ? AND co.cash_id = ? AND rs.cash_opening_id = ?
+
                     ) AS all_movements
                     GROUP BY payment_method
                 ";
                 $sums = DB::select($sumSql, [
-                    auth()->user()->id, 3, "cash_opening-".$cash_opening->id, 
-                    auth()->user()->id, 3, $cash_opening->id  
+                    auth()->user()->id, 3, $cash_opening->id, 
+                    auth()->user()->id, 3, $cash_opening->id,
+                    auth()->user()->id, 3, $cash_opening->id    
                 ]);
-
 
                 foreach($sums as $sum){
                     $movement = new Movement();
@@ -541,7 +552,7 @@ class CashOpeningController extends Controller
                                     ->where("method","=",$sum->payment_method)
                                     ->first();
                         if($cash_balance){
-                            $cash_balance->balance = $cash_balance->balance + $sum->total;
+                            $cash_balance->balance = floatval($cash_balance->balance) + floatval($sum->total);
                             $cash_balance->save();
                         }
                         else

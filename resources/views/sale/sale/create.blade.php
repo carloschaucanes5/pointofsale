@@ -710,10 +710,14 @@ async function toinvoice(){
             const table_payments = document.querySelectorAll("#table_payments tbody tr");
             let methods = [];
             let cc = 0;
+            let sumTarjeta = 0;
             for (let i = 0; i < table_payments.length; i++) {
                 let valorPayment = parseFloat(table_payments[i].children[3].textContent);
                 let methodPayment = table_payments[i].children[0].textContent;
                 if(methodPayment=="credito")cc++;
+                if(methodPayment=="tarjeta"){
+                    sumTarjeta += valorPayment;
+                }
                 const obj = {method:methodPayment,value:valorPayment};
                 methods.push(obj);
             }
@@ -738,10 +742,18 @@ async function toinvoice(){
                 });
                 return;
             }
+            let ht = "";
+            if(sumTarjeta > 0){
+                let totalTarjeta =  Math.ceil((parseFloat(document.getElementById("sale_total").value) * 0.057)/100)*100;
+                  ht = "<h4>Cobrar Adicionalmente <b>$"+totalTarjeta+"</b> por uso de tarjeta</h3>";
+                  //total a cobrar
+                    let totalPayment = parseFloat(document.getElementById("sale_total").value) + totalTarjeta;
+                    ht += "<h4>Total a cobrar: <b>"+formatCurrency.format(totalPayment.toFixed(0))+"</b></h>";
+            }
             const confirmTransaction = async () => {
                 return Swal.fire({
                     title: '¿Estás seguro?',
-                    text: "¡Esta acción no se puede deshacer!",
+                    html: ht,
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonText: 'Sí, Facturar',

@@ -18,7 +18,9 @@ class ReturnSale extends Model
         'status',
         'description',
         'users_id',
-        'return_total'
+        'return_total',
+        'method',
+        'cash_opening_id'
     ];
 
     protected $guarded = [];

@@ -13,7 +13,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Str;
+use Spatie\FlareClient\View;
 use Symfony\Component\HttpFoundation\Response;
+use App\Services\OllamaService;
 
 class InventoryController extends Controller
 {
@@ -270,5 +272,17 @@ class InventoryController extends Controller
         $product->status = 0;
         $product->update();
         return Redirect::to("store/inventory")->with("success","Producto ha cambiado a estado inactivo");
+    }
+
+    public function query_ia(){
+        $question = request('searchText');
+        $response = "";
+        if($question){
+            $response = OllamaService::ask(
+                $question.""
+            );
+        }
+
+        return view('store.inventory/ia',["searchText"=>$question, "response"=>$response]);
     }
 }

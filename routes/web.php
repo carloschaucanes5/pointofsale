@@ -80,6 +80,7 @@ Route::middleware(['auth','check.session','role:admin,superadmin,cashier,user'])
     Route::get('store/inventory/outs', [InventoryController::class, 'get_outs'])->name('store.inventory.outs');
 
 
+
     Route::resource('store/category', CategoryController::class);
     Route::resource('store/product', ProductController::class);
     Route::resource('store/laboratory', LaboratoryController::class);

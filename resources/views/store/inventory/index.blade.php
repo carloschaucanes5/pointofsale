@@ -67,7 +67,7 @@
                         @forEach($incomes_detail as $incd)
                         <tr>
                             <td>
-                                <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#modal-output-{{$incd->id}}"><i class="bi bi-arrow-up-circle"></i></button>
+                                <button style="display: none;" type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#modal-output-{{$incd->id}}"><i class="bi bi-arrow-up-circle"></i></button>
                             </td>
                             <td>{{$incd->code}}</td>
                             <td>{{$incd->name}} {{$incd->concentration}} {{$incd->presentation}} Lab:{{$incd->laboratory}}</td>

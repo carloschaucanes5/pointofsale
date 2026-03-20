@@ -435,7 +435,9 @@ class VoucherController extends Controller
                 ->paginate(5)
                 ->appends([
                     'from' => date('Y-m-d', strtotime($from)),
-                    'to'   => date('Y-m-d', strtotime($to))
+                    'to'   => date('Y-m-d', strtotime($to)),
+                    'status_payment'=>$status_payment,
+                    'method_payment_selected'=>$method_payment_selected
                 ]);
 
 
@@ -460,7 +462,6 @@ class VoucherController extends Controller
                 DB::rollBack();
                 return Redirect::to("purchase/voucher/historical")->with('error','Error al actualizar el estado de la factura en el medio de pago');
             }
-
 
             $voucher = Voucher::findOrFail($id);
             $voucher->status_payment = 'contado';
@@ -487,7 +488,7 @@ class VoucherController extends Controller
             $movement->type="egreso";
             $movement->users_id = auth()->user()->id;
             $movement->cash_id = $cash_old;
-            $movement->movement_type_id = 29;
+            $movement->movement_type_id = 27;
             $movement->description = "Pago de factura a credito =>(".$voucher->voucher_number.")";
             $movement->amount = floatval($voucher_amount) * (-1);
             $movement->payment_method = 'credito';
@@ -497,11 +498,24 @@ class VoucherController extends Controller
                 return Redirect::to("purchase/voucher/historical")->with('error','Error al registrar el movimiento de caja.');
             }
 
+            //----descontar de caja seleccionada saldo credito----
+            $cash_balance1 = CashBalance::
+            where("cash_balance.cash_id","=",$cash_old)
+            ->where("cash_balance.method","=",'credito')
+            ->first();
+            $old_balance = $cash_balance1->balance;
+            $cash_balance1->balance = floatval($old_balance) + (floatval($voucher_amount) * (-1));
+            if(!$cash_balance1->save()){
+                DB::rollBack();
+                return Redirect::to("purchase/voucher/historical")->with('error','Error al descontar el saldo credito pendiente.');
+            }
+            //-----------------------------------------------------
+
             $movement1 = new Movement();
             $movement1->type="egreso";
             $movement1->users_id = auth()->user()->id;
             $movement1->cash_id = $cash_now;
-            $movement1->movement_type_id = 29;
+            $movement1->movement_type_id = 27;
             $movement1->description = "Pago de factura con ".$method_payment." =>(".$voucher->voucher_number.")";
             $movement1->amount = floatval($voucher_amount) * (-1);
             $movement1->payment_method = $method_payment;
@@ -510,7 +524,18 @@ class VoucherController extends Controller
                 DB::rollBack();
                 return Redirect::to("purchase/voucher/historical")->with('error','Error al registrar el movimiento de caja.');
             }
-
+            //----descontar de caja seleccionada saldo a ser pagado por caja seleccionada----
+            $cash_balance2 = CashBalance::
+            where("cash_balance.cash_id","=",$cash_now)
+            ->where("cash_balance.method","=",$method_payment)
+            ->first();
+            $old_balance2 = $cash_balance2->balance;
+            $cash_balance2->balance = floatval($old_balance2) + (floatval($voucher_amount) * (-1));
+            if(!$cash_balance2->save()){
+                DB::rollBack();
+                return Redirect::to("purchase/voucher/historical")->with('error','Error al descontar el saldo de la caja seleccionada');
+            }
+            //-----------------------------------------------------
 
             DB::commit();
             return Redirect::to("purchase/voucher/historical")->with('success','Factura pagada correctamente.');

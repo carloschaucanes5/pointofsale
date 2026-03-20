@@ -8,6 +8,7 @@ use App\Models\IncomeDetailHistorical;
 use App\Models\Payment;
 use App\Models\ReturnSale;
 use App\Models\CashBalance;
+use App\Models\Category;
 use App\Models\Movement;
 use Exception;
 use Symfony\Component\Console\Input\Input;
@@ -30,6 +31,7 @@ class SaleController extends Controller
         $form_payment = $request->get("form_payment");
         $start_date = $request->get("start_date")?$request->get("start_date"):date('Y-m-d');
         $end_date = $request->get("end_date")?$request->get("end_date"):date('Y-m-d');
+        $payment_method = $request->get("payment_method");
         if($request){
             $logo = DB::table('config')
                           ->where("key","=","logo")
@@ -40,25 +42,22 @@ class SaleController extends Controller
                         ->select('key','value','alias')
                         ->get()
                         ->keyBy('key');
-
+            $payment_methods =DB::table('config')
+                        ->where("key","=","payment_methods")
+                        ->get()
+                        ->first();
           
+
                 $sales = DB::table("sale as sal")
-                    ->join('sale_detail as sde', 'sde.sale_id', '=', 'sal.id')
-                    ->join('income_detail_historical as idh', 'idh.income_detail_id', '=', 'sde.income_detail_id')
-                    ->join('product as pr', 'pr.id', '=', 'idh.product_id') 
+                    ->join('payment as pay','pay.sale_id','=','sal.id')
                     ->join('person as pe', 'pe.id', '=', 'sal.customer_id')
                     ->join('users as u', 'u.id', '=', 'sal.users_id')
                     ->whereBetween('sal.created_at', [
                         $start_date . ' 00:00:00',
                         $end_date . ' 23:59:59'
                     ])
-                    ->where(function($query) use ($searchText) {
-                        $query->where('pr.name', 'like', '%' . $searchText . '%')
-                            ->orWhere('pr.code', 'like', '%' . $searchText . '%')
-                            ->orWhere('u.name','like','%'.$searchText."%")
-                            ->orWhere('pe.name','like','%'.$searchText.'%');
-                    })
-                    ->Where('sal.payment_form','like','%'.$form_payment.'%')
+                    ->where('sal.payment_form','like','%'.$form_payment.'%')
+                    ->where('pay.method','like','%'.$payment_method.'%')
                     ->select(
                         'sal.id',
                         'sal.change',
@@ -72,7 +71,9 @@ class SaleController extends Controller
                         'sal.tax',
                         'sal.sale_total',
                         'u.name as user_name',
-                        'sal.payment_form'
+                        'sal.payment_form',
+                        'pay.method',
+                        'pay.value'
                     )
                     ->distinct()
                     ->orderBy('sal.id', 'desc')
@@ -81,14 +82,13 @@ class SaleController extends Controller
                         'searchText' => $searchText,
                         'start_date' => $start_date,
                         'end_date' => $end_date,
-                        'form_payment'=>$form_payment
+                        'form_payment'=>$form_payment,
+                        'payment_method'=>$payment_method
                     ]);
             
 
                 $sales1 = DB::table("sale as sal")
-                    ->join('sale_detail as sde', 'sde.sale_id', '=', 'sal.id')
-                    ->join('income_detail_historical as idh', 'idh.income_detail_id', '=', 'sde.income_detail_id')
-                    ->join('product as pr', 'pr.id', '=', 'idh.product_id') 
+                    ->join('payment as pay','pay.sale_id','=','sal.id')
                     ->join('person as pe', 'pe.id', '=', 'sal.customer_id')
                     ->join('users as u', 'u.id', '=', 'sal.users_id')
                     ->whereBetween('sal.created_at', [
@@ -96,12 +96,11 @@ class SaleController extends Controller
                         $end_date . ' 23:59:59'
                     ])
                     ->where(function($query) use ($searchText) {
-                        $query->where('pr.name', 'like', '%' . $searchText . '%')
-                            ->orWhere('pr.code', 'like', '%' . $searchText . '%')
-                            ->orWhere('u.name','like','%'.$searchText."%")
+                        $query->Where('u.name','like','%'.$searchText."%")
                             ->orWhere('pe.name','like','%'.$searchText.'%');
                     })
-                    ->Where('sal.payment_form','like','%'.$form_payment.'%')
+                    ->where('sal.payment_form','like','%'.$form_payment.'%')
+                    ->where('pay.method','like','%'.$payment_method.'%')
                     ->select(
                         'sal.id',
                         'sal.change',
@@ -126,7 +125,7 @@ class SaleController extends Controller
                         $sum_total =$sum_total + $sa->sale_total;
                     }
 
-            return view('sale.sale.index',['sales'=>$sales,'texto'=>$searchText,'start_date'=>$start_date,'end_date'=>$end_date,'company'=>$company,'logo'=>$logo,'sum_total'=>$sum_total,'form_payment'=>$form_payment]);
+            return view('sale.sale.index',['sales'=>$sales,'texto'=>$searchText,'start_date'=>$start_date,'end_date'=>$end_date,'company'=>$company,'logo'=>$logo,'sum_total'=>$sum_total,'form_payment'=>$form_payment,'payment_methods'=>explode(',',$payment_methods->value),'payment_method'=>$payment_method]);
         }
     }
 
@@ -155,8 +154,6 @@ class SaleController extends Controller
             return response()->json(['error'=>$e->getMessage()],500);
         }
      }
-
-
 
     /**
      * Show the form for creating a new resource.
@@ -234,11 +231,10 @@ class SaleController extends Controller
                 ->where("co.users_id","=",auth()->user()->id)
                 ->where("co.status","=",'open')
                 ->first();
-            if(!$cash_opened){
-                return response()->json(
-                ["success"=>false,"message"=>"No has iniciado apertura de caja"],401);
-            }
-
+                if(!$cash_opened){
+                    return response()->json(
+                    ["success"=>false,"message"=>"No has iniciado apertura de caja"],401);
+                }
                 DB::beginTransaction();
                 $sale = new Sale();
                 $sale->customer_id = explode("-",$request->post('customer_id'))[0];
@@ -259,24 +255,40 @@ class SaleController extends Controller
                 $sale_prices = $request->post('sale_price');
                 
                 $cont = 0; 
-
+                $paymemts = json_decode($request->post("methods"));
+                $result = collect($paymemts)->filter(function($item){
+                    return str_contains($item->method,'tarjeta');   
+                });
+                $sumincrease = 0;
+                $sumaTotal = 0;
                 while($cont < count($income_details)){
                     $detail = new SaleDetail();
                     $detail->sale_id = $sale->id;
                     $detail->income_detail_id = $income_details[$cont];
                     $detail->quantity = $quantities[$cont];
                     $detail->discount = $discounts[$cont];
-                    $detail->sale_price = $sale_prices[$cont];
+                    $increase = 0;
+                    if(count($result)>=1){
+                        $increase = ceil((floatval($sale_prices[$cont])*0.057)/100) * 100;
+                        $sumincrease = $sumincrease + ($increase * intval($detail->quantity));
+                    }
+                    $detail->sale_price = floatval($sale_prices[$cont]) + $increase;
+                    $sumaTotal = $sumaTotal + ((floatval($detail->sale_price) * intval($detail->quantity))-floatval($detail->discount)); 
                     $detail->save();
                     $cont = $cont + 1;
                 }
-
-                $paymemts = json_decode($request->post("methods"));
                 foreach($paymemts as $pay){
                     $payment = new Payment();
                     $payment->method = $pay->method;
                     $payment->sale_id = $sale->id;
-                    $payment->value = $pay->value;
+                    if($pay->method == 'tarjeta'){
+                        $payment->value  = floatval($pay->value) + $sumincrease;
+                    }
+                    else
+                    {
+                        $payment->value = $pay->value;
+                    }
+                    
                     $payment->status = 1;
                     $payment->save();
 
@@ -284,7 +296,7 @@ class SaleController extends Controller
                             ->where("method","=",$pay->method)
                             ->first();
                     if($cash_balance){
-                        $cash_balance->balance = $cash_balance->balance + floatval($pay->value);
+                        $cash_balance->balance = $cash_balance->balance + floatval($payment->value);
                         $cash_balance->save();
                     }
                     else
@@ -292,12 +304,13 @@ class SaleController extends Controller
                         $cash_balance1 = new CashBalance();
                         $cash_balance1->cash_id = $cash_opened->cash_id;
                         $cash_balance1->method = $pay->method;
-                        $cash_balance1->balance = floatval($pay->value);
+                        $cash_balance1->balance = floatval($payment->value);
                         $cash_balance1->save();
                     }
 
                 }
-
+                $sale->sale_total = $sumaTotal;
+                $sale->save();
                 DB::commit();
 
                 $sale = DB::table("sale as s")
@@ -358,6 +371,10 @@ class SaleController extends Controller
      */
     public function show(Request $request,$id)
     {
+        $methods =DB::table('config')
+                                ->where("key","=","payment_methods")
+                                ->get()
+                                ->first();
         $sale_id = $id;
         $sale = DB::table("sale as s")
             ->join("person as p", "s.customer_id", "=", "p.id")
@@ -429,7 +446,8 @@ class SaleController extends Controller
             'return_sales'=>$return_sales,
             'sum_return_total'=>$return_total->sum_return_total,
             'payment_methods' => $payment_methods,
-            'config_methods' => explode(",",$config_methods->value)
+            'config_methods' => explode(",",$config_methods->value),
+            'methods'=>explode(',',$methods->value)
         ]);
     }
 
@@ -478,7 +496,7 @@ class SaleController extends Controller
                 $movement1->users_id = auth()->user()->id;
                 $movement1->payment_method = 'credito';
                 $movement1->table_identifier = "sale-".$sale_id;
-                $movement->cash_opening_id = $cash_opening->id;
+                $movement1->cash_opening_id = $cash_opening->id;
                 $movement1->save();  
 
 
@@ -490,7 +508,7 @@ class SaleController extends Controller
                             ->where("method","=",'credito')
                             ->first();
                 if($cash_balance){
-                    $cash_balance->balance = $cash_balance->balance - floatval($request->post("value"));
+                    $cash_balance->balance = floatval($cash_balance->balance) - floatval($request->post("value"));
                     $cash_balance->save();
                 }
 
@@ -527,6 +545,7 @@ class SaleController extends Controller
                 $income_detail_id = $request->post("income_detail_id");
                 $quantity_return = $request->post("quantity_return");
                 $description_return = $request->post("description_return");
+                $method_return = $request->post("payment_method");
                 $income_detail_id_found = IncomeDetail::find($income_detail_id);
                 if($income_detail_id_found){
                     $income_detail_id_found->quantity = $income_detail_id_found->quantity + $quantity_return;
@@ -560,6 +579,8 @@ class SaleController extends Controller
                     $return_sale->description = $description_return?$description_return:"";
                     $return_sale->quantity = $quantity_return;
                     $return_sale->status = 1;
+                    $return_sale->method = $method_return;
+                    $return_sale->cash_opening_id =  $cash_opened->id;
                     $return_sale->return_total = $return_total;
                     $return_sale->users_id = auth()->user()->id;
                     $return_sale->save();
@@ -571,7 +592,7 @@ class SaleController extends Controller
                     $movement->description = "Devolución de venta (Venta No:POS".$sale_id.")";
                     $movement->amount = $return_total*-1;
                     $movement->users_id = auth()->user()->id;
-                    $movement->payment_method = 'efectivo';
+                    $movement->payment_method = $method_return;
                     $movement->table_identifier = "cash_opening-".$cash_opened->id;
                     $movement->save();
 
@@ -690,7 +711,8 @@ public function sold_products(Request $request)
     $to   = $request->get('to');
     $pedir   = $request->get('pedir');
     $textSearch = $request->get('text_search');
-
+    $category = $request->get('category');
+    $categories = Category::all();
     // Manejo de fechas
     if (!$from && !$to) {
         $fromInput = date('Y-m-d');
@@ -717,6 +739,7 @@ public function sold_products(Request $request)
             p.concentration,
             p.presentation,
             p.laboratory,
+            cat.category,
             idh.form_sale,
             SUM(sd.quantity) AS ventas,
          IFNULL((
@@ -724,18 +747,27 @@ public function sold_products(Request $request)
             FROM income_detail ide
             WHERE p.id = ide.product_id
           ), 0) AS existencias,
-          SUM(idh.purchase_price * sd.quantity) as costo
+          SUM(idh.purchase_price * sd.quantity) as total_costo,
+          SUM(idh.sale_price * sd.quantity) as total_precio,
+          SUM(sd.discount) as total_descuento
         ")
         ->join('sale as s', 's.id', '=', 'sd.sale_id')
         ->join('income_detail_historical as idh', 'sd.income_detail_id', '=', 'idh.income_detail_id')
         ->join('product as p', 'p.id', '=', 'idh.product_id')
+        ->join('category as cat','cat.id','=','p.category_id')
         ->whereBetween('s.created_at', [$from, $to]);
 
     // Filtro de texto (DEBE IR antes del groupBy)
     if (!empty($textSearch)) {
         $query->where(function ($q) use ($textSearch) {
-            $q->where(DB::raw('p.name'), 'LIKE', "%$textSearch%")
-              ->orWhere(DB::raw('p.code'), 'LIKE', "%$textSearch%");
+            $q->where('p.name', 'LIKE', "%$textSearch%")
+            ->orWhere('p.code', 'LIKE', "%$textSearch%");
+        });
+    }
+
+    if (!empty($category)) {
+        $query->where(function ($q) use ($category) {
+            $q->where('cat.id', '=', $category);
         });
     }
 
@@ -747,15 +779,24 @@ public function sold_products(Request $request)
                 'p.concentration',
                 'p.presentation',
                 'p.laboratory',
+                'cat.category', 
                 'idh.form_sale'
             ])
         ->orderBy('ventas', 'DESC');
-
+   $sumCosto = 0;
+   $sumPrecio = 0;
+   $sumDescuento = 0;
+    foreach($query->get() as $key=>$value){
+        $sumCosto = $sumCosto + floatval($value->total_costo);
+        $sumPrecio = $sumPrecio + floatval($value->total_precio);
+        $sumDescuento = $sumDescuento + floatval($value->total_descuento);
+    }
     // Paginación
     $products = $query->paginate(300)->appends([
         'from' => $fromInput,
         'to' => $toInput,
-        'text_search' => $textSearch
+        'text_search' => $textSearch,
+        'category'=>$category
     ]);
 
     return view('report.sale.sold_products', [
@@ -764,7 +805,12 @@ public function sold_products(Request $request)
         'to' => $toInput,
         'text_search' => $textSearch,
         'dias' => $dias,
-        'pedir' => $pedir
+        'pedir' => $pedir,
+        'categories'=>$categories,
+        'category'=>$category,
+        'suma_precio'=>$sumPrecio,
+        'suma_costo'=>$sumCosto,
+        'suma_descuento'=>$sumDescuento
     ]);
 }
 

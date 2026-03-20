@@ -22,12 +22,20 @@
                         <label id="laboratory" class="form-control">{{$det->laboratory}}<label>
                     </div>
                     <div class="form-group">
+                        <label for="payment_method"><b>Medio de Pago</b></label>
+                        <select name="payment_method" id="payment_method" class="form-control">
+                            @foreach($methods as $method)
+                                <option value="{{$method}}">{{$method}}</option>
+                            @endforeach
+                        </select>                
+                    </div>
+                    <div class="form-group">
                         <label for="quantity_return"><b>Cantidad</b></label>
                         <input type="number" class="form-control" min="1" max="{{$det->quantity}}" onblur="validate_quantity(this)" id="quantity_return" name="quantity_return" value="{{$det->quantity}}">
                     </div>
                     <div class="form-group">
                         <label for="description_return"><b>Descripción</b></label>
-                        <textarea  id="description_return" class="form-control"  rows="5" cols="40" name="description_return"></textarea>
+                        <textarea  id="description_return" class="form-control"  rows="5" cols="20" name="description_return"></textarea>
                     </div>  
                 </div>
             </form>
