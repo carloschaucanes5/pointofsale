@@ -313,6 +313,8 @@
                     sum_total += valorPayment;
                 } 
                 document.getElementById('total').value = sum_total;
+            }else{
+                document.getElementById('total').value = 0;
             }
         }
 </script>

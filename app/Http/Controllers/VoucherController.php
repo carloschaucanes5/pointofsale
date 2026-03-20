@@ -135,6 +135,12 @@ class VoucherController extends Controller
 
             }
 
+            if(!(floatval($request->get('total'))>0)){
+                return response()->json([
+                    'success' => false,
+                    'message' => 'El valor de la factura debe ser mayor a cero (0). Revisar si se adiciono el medio de pago con su valor'
+                ], 500);
+            }
 
             $voucher = new Voucher();
             $voucher->voucher_number = $request->get('voucher_number');
