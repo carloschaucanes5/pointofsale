@@ -75,6 +75,7 @@
                             <th>Producto</th>
                             <th>Cantidad</th>
                             <th>Total</th>
+                            <th>Medio</th>
                             <th>Descripción</th> 
                             <th>Responsable</th>
                         </tr>
@@ -90,6 +91,7 @@
                             <td>{{$ret->product_name}} {{$ret->concentration}} {{$ret->presentation}} {{$ret->laboratory}}</td>
                             <td>{{$ret->quantity}}</td>
                             <td>${{number_format($ret->return_total,0,",",".")}}</td>
+                            <td>{{$ret->method}}</td>
                             <td>{{$ret->description}}</td> 
                             <td>{{$ret->user_name}}</td>
                         </tr>

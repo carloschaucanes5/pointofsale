@@ -848,6 +848,7 @@ public function report_return(Request $request)
                         'ret.sale_id',
                         'ret.created_at',
                         'ret.quantity',
+                        'ret.method',
                         'ret.description',
                         'pr.name as product_name',
                         'pr.code',
