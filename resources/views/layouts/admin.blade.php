@@ -593,7 +593,7 @@
     <script src="/pointofsale/public/js/world.js" integrity="sha256-XPpPaZlU8S/HWf7FZLAncLg2SAkP8ScUTII89x9D3lY="
         crossorigin="anonymous"></script>
     <script src="/pointofsale/public/js/JsBarcode.all.min.js"></script>
-    
+    <script>
         $(document).ready(function() {
             $('.selectpicker').selectpicker();
         });
@@ -669,8 +669,8 @@
     }
 
 
-    function printDiv(){
-        let contenido = document.getElementById('barcode').innerHTML;
+    function printDiv(div_container){
+        let contenido = document.getElementById(div_container).innerHTML;
         let ventana = window.open('', '', 'height=600,width=800');
         ventana.document.write('<html><head><title>Imprimir</title>');
         ventana.document.write('<style>body{font-family:sans-serif; font-size:12px;}</style>');

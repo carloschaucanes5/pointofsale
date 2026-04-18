@@ -26,7 +26,6 @@
                         <div class="col-md-9">
                             <div class="row">
                                 <div class="col-md-12">
-                                    <label for="product_search"><b>Producto</b></label>
                                     <div class="input-group">
                                         <span class="input-group-text"><i class="bi bi-search"></i></span>
                                         <input type="text" class="form-control" id="product_search"  placeholder="Introduce el codigo de barras o el nombre del producto"/>
@@ -318,22 +317,37 @@
             else
             {
             const modalSetQuantity = document.getElementById("modal-set-quantity");
+            var utility = parseFloat(item1.sale_price) - parseFloat(item1.purchase_price);
+            var discountMax = (utility * 0.3);
+            var discountMin = (utility * 0.1);
             modalSetQuantity.querySelector(".modal-header").innerHTML = `
                 <div class="row">
                     <div class="form-group">
                         <div class="card text-dark bg-light mb-3">
                             <div class="card-header">
-                                <h5 class="card-title">${item1.name}</h5></div>
+                                <h5 class="card-title">${item1.name} (${item1.code})</h5></div>
                             <div class="card-body">
                             <table with="100%" class="table table-bordered">
-                                <tr>
-                                    <td><b>Codigo:</b><br>${item1.code}</td>
-                                    <td><b>Precio:</b><br>${formatCurrency.format(parseFloat(item1.sale_price).toFixed(0))}</td>
-                                </tr>
-                                <tr>
-                                    <td><b>Forma Venta:</b><br>${item1.form_sale}</td>
-                                    <td><b>Stock:</b><br>${item1.quantity}</td>
-                                </tr>
+                                <tbody>
+                                    <tr>
+                                        <td><b>Costo:</b><br>${formatCurrency.format(parseFloat(item1.purchase_price).toFixed(0))}</td>
+                                        <td><b>Precio:</b><br>${formatCurrency.format(parseFloat(item1.sale_price).toFixed(0))}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><b>Forma Venta:</b><br>${item1.form_sale}</td>
+                                        <td><b>Stock:</b><br>${item1.quantity}</td>
+                                    </tr>
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td><b>Descuento Mínimo(10%)U.</b></td>
+                                        <td>${formatCurrency.format(parseFloat(discountMin).toFixed(0))}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><b>Descuento Máximo(30%)U.</b></td>
+                                        <td>${formatCurrency.format(parseFloat(discountMax).toFixed(0))}</td>
+                                    </tr>
+                                </tbody>
                             </table>
                         </div>
                     </div>

@@ -302,7 +302,9 @@ function view_information_historical(element){
         .then(response => response.json())
         .then(data => {
             if (data.length > 0) {
-                let table = `<table class="table table-sm table-bordered">
+                let table = `
+                <h3><center>${product.name} ${(product.code)}</center></h3>
+                <table class="table table-sm table-bordered">
                                 <thead>
                                     <tr>
                                         <th>Fecha</th>
@@ -312,6 +314,7 @@ function view_information_historical(element){
                                         <th>Forma Venta</th>
                                         <th>Lote</th>
                                         <th>Invima</th>
+                                        <th>Proveedor</th> 
                                         <th></th>
                                     </tr>
                                 </thead>
@@ -326,6 +329,7 @@ function view_information_historical(element){
                                 <td>${item.form_sale}</td>
                                 <td>${item.lote}</td>
                                 <td>${item.invima}</td>
+                                <th>${item.supplier}</th>
                                 <td><button class="btn btn-warning btn-sm" onclick="selection('${item_t}')">Seleccionar</button></td>
                               </tr>`;
                 });

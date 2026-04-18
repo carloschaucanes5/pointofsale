@@ -114,7 +114,7 @@ class IncomeController extends Controller
         return response()->json($products);
     }
 
-    public function search_product_historical($codeOrName){
+    public function search_product_historical1($codeOrName){
 
         $information_historical = DB::table('income_detail_historical as idh')
             ->join('product as p', 'idh.product_id', '=', 'p.id')
@@ -126,6 +126,36 @@ class IncomeController extends Controller
 
         return response()->json($information_historical);
     }
+    public function search_product_historical($codeOrName){
+        $information_historical = DB::table('income_detail_historical as idh')
+        ->join('product as p', 'idh.product_id', '=', 'p.id')
+        ->select(
+            'idh.product_id',
+            'idh.quantity',
+            'idh.purchase_price',
+            'idh.sale_price',
+            'idh.form_sale',
+            'idh.expiration_date',
+            'idh.created_at',
+            'idh.lote',
+            'idh.invima'
+        )
+        ->selectSub(function ($query) {
+            $query->from('income_detail as sub_ide')
+                ->join('income as sub_i','sub_ide.income_id','=','sub_i.id')
+                ->join('voucher as sub_v','sub_i.voucher_id','=','sub_v.id')
+                ->join('person as sub_p','sub_p.id','=','sub_v.supplier_id')
+                ->selectRaw("CONCAT(sub_p.name, ' - ', sub_p.phone)")
+                ->whereColumn('sub_ide.id', 'idh.income_detail_id')
+                ->limit(1);
+        }, 'supplier')
+        ->where('p.code', 'like', '%' . $codeOrName . '%')
+        ->orderBy('idh.created_at', 'desc')
+        ->limit(6)
+        ->get();
+        return response()->json($information_historical);
+    }
+
 
     /**
      * Show the form for creating a new resource.

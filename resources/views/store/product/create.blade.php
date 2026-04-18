@@ -170,7 +170,7 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
       </div>
       <div class="modal-body d-flex justify-content-center align-items-center">
-         <svg id="barcode"></svg>
+         <svg id="barcode1"></svg>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
@@ -186,7 +186,7 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', e => {
-        $('#laboratory').autocomplete()
+        $('#laboratory').autocomplete();
     }, false);
 
 function generateCode(){
@@ -213,7 +213,7 @@ function generateCode(){
 function generateImage(){
     const codigo = document.getElementById('code').value;
 
-    JsBarcode("#barcode", codigo, {
+    JsBarcode("#barcode1", codigo, {
         format: "CODE128",
         width: 2,
         height: 60,
@@ -223,7 +223,7 @@ function generateImage(){
 
 function imprimirDiv() {
 
-    const svg = document.getElementById('barcode');
+    const svg = document.getElementById('barcode1');
 
     if (!svg) {
         alert('No se encontró el SVG del código de barras');
