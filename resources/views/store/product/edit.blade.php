@@ -82,7 +82,7 @@
                                 <select name="category_id" class="form-control" id="category_id">
                                     @foreach($categories as $cat)
                                         @if($cat->id == $product->category_id)
-                                            <option value="{{$cat->id}}">{{$cat->category}}</option>
+                                            <option selected value="{{$cat->id}}">{{$cat->category}}</option>
                                         @else
                                             <option value="{{$cat->id}}">{{$cat->category}}</option>
                                         @endif

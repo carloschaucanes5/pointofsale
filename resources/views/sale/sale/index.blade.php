@@ -29,10 +29,21 @@
                                 <div class="row">
                                     <div class="col-md-3">
                                         <div class="input-group mb-6">
-                                            <label>&nbsp;</label>
-                                           
-                                            <input type="text" class="form-control"  name="searchText" placeholder="Buscar Venta" value="{{old('searchText',$texto)}}" aria-label="campo busqueda" aria-describedby="button-addon2">
+                                            @php
+                                            $placeholder = "Buscar Cliente";
+                                            if($detail){
+                                                $placeholder = "Buscar Producto";
+                                            }
+                                            @endphp
+                                            <b>&nbsp;</b>
+                                            <input type="text" class="form-control" id="searchText"  name="searchText" placeholder="{{ $placeholder }}" value="{{old('searchText',$texto)}}" aria-label="campo busqueda" aria-describedby="button-addon2">
                                             <button class="btn btn-outline-secondary bi bi-search btn-sm" type="submit" id="button-addon2"></button>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-1">
+                                        <div class="form-group">
+                                            <b>Detalle</b><br/>
+                                            <input type="checkbox" onchange="reloadOption(this.form)"  name="detail" @checked($detail)/>  
                                         </div>
                                     </div>
                                     <div class="col-md-2">
@@ -46,29 +57,33 @@
                                         </div>
                                     </div>
                                     <div class="col-md-2">
-                                    <div class="form-group table-sm">
-                                        <b>Forma</b>
-                                        <select id="payment_method" name="payment_method" class="form-control">
-                                            <option value=""></option>
-                                            @foreach($payment_methods as $method)
-                                                @if($method == $payment_method)
-                                                    <option value="{{$method}}" selected>{{$method}}</option>
-                                                @else
-                                                    <option value="{{$method}}">{{$method}}</option>
-                                                @endif
-                                            @endforeach
-                                        </select>
+                                        @if(!$detail)
+                                            <div class="form-group table-sm">
+                                                <b>Forma</b>
+                                                <select id="payment_method" name="payment_method" class="form-control">
+                                                    <option value=""></option>
+                                                    @foreach($payment_methods as $method)
+                                                        @if($method == $payment_method)
+                                                            <option value="{{$method}}" selected>{{$method}}</option>
+                                                        @else
+                                                            <option value="{{$method}}">{{$method}}</option>
+                                                        @endif
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                      @endif
                                     </div>
-                                    </div>
-                                    <div class="col-md-2">
-                                        <div class="form-group">
-                                            <b>Medio</b>
-                                            <select id="form_payment" name="form_payment" class="form-control">
-                                                <option value="" @selected(old('form_payment', $form_payment) == "")></option>
-                                                <option value="contado" @selected(old('form_payment', $form_payment) == "contado")>contado</option>
-                                                <option value="credito" @selected(old('form_payment', $form_payment) == "credito")>credito</option>
-                                            </select>
-                                        </div>
+                                    <div class="col-md-1">
+                                        @if(!$detail)
+                                            <div class="form-group">
+                                                <b>Medio</b>
+                                                <select id="form_payment" name="form_payment" class="form-control">
+                                                    <option value="" @selected(old('form_payment', $form_payment) == "")></option>
+                                                    <option value="contado" @selected(old('form_payment', $form_payment) == "contado")>contado</option>
+                                                    <option value="credito" @selected(old('form_payment', $form_payment) == "credito")>credito</option>
+                                                </select>
+                                            </div>
+                                        @endif
                                     </div>
                                     <div class="col-md-1">
                                         <div class="input-group mb-6">
@@ -94,11 +109,12 @@
             @endif
             <div class="card-body">
             </div>
+            @if(!$detail)
             <div class="table-responsive">
                 <table class="table table-hover mb-0 table-sm">
                     <thead>
                         <tr>
-                            <th>Opciones</th>
+                            <th></th>
                             <th>POS</th>
                             <th>Fecha</th>
                             <th>Cliente</th>
@@ -130,21 +146,71 @@
                         </tr>
                         @endforeach
                     </tbody>
-                    <tr>
-                         <td></td>
-                         <td></td>
-                         <td></td>
-                        <th>Total</th>
-                        <th colspan="5">
-                            $ {{number_format($sum_total,2,',','.')}}
-                        </th>
-                        <td></td>
-                        <td></td>
-                    </tr> 
                 </table>
                     {{$sales->links('pagination::bootstrap-5')}}
             </div>
-           
+            @else
+
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 table-sm">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>POS</th>
+                            <th>Producto</th>
+                            <th>Cant.</th>
+                            <th>Precio</th>
+                            <th>Desc</th>
+                              <th>Total</th>
+                            <th>Fecha</th>
+                            <th>Cliente</th>
+                            <th>Responsable</th>
+
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forEach($sales as $sale)
+                        <tr>
+                            <td>
+                                <button type="button" class="btn btn-primary btn-sm" onclick="view_invoice({{$sale->id}})" data-bs-toggle="#"><i class="bi bi-receipt" title="imprimir factura"></i></button>
+                                @auth
+                                    @if(Auth::user()->role=='admin')   
+                                        <a  class="btn btn-warning btn-sm" title="Efectuar Devolución" href="{{route('sale.show',$sale->id)}}" ><i class="bi bi-arrow-return-left"></i></a>
+                                    @endif
+                                @endauth
+                                
+                            </td>
+                            <td>{{$sale->id}}</td>
+                            <td><small>{{ $sale->name }}{{ $sale->concentration}} {{ $sale->presentation }}<b><small>({{$sale->code}})</small></b></small></td>
+                            <td>{{$sale->quantity}}</td>
+                            <td>${{number_format($sale->sale_price,0,",",".")}}</td>
+                            <td>${{number_format($sale->discount,0,",",".")}}</td>
+                            @php
+                            $total_parcial = (floatval($sale->sale_price) - floatval($sale->discount))*(intval($sale->quantity));
+                            @endphp
+                            <td>${{number_format($total_parcial,0,",",".")}}</td>
+                            <td>{{$sale->created_at}}</td>
+                            <td>{{$sale->customer_name}}</td>
+                            <td>{{$sale->user_name}}</td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+                    {{$sales->links('pagination::bootstrap-5')}}
+            </div>
+            @endif
+           <table class="table table-hover mb-0 table-sm">
+            <tr>
+                <th>Total Venta</th>
+                <td>
+                    $ {{number_format($sum_total,2,',','.')}}
+                </td>
+                <th>Total Descuentos</th>
+                <td>
+                    $ {{number_format($total_discount,2,',','.')}}
+                </td>
+            </tr> 
+           </table>
         </div>
     </section>
  @include('sale.sale.receipt')
@@ -216,6 +282,11 @@
                 }).finally(()=>{
                      hideSpinner();
                 });
+        }
+
+        function reloadOption(form){
+            document.getElementById('searchText').value = "";
+            form.submit();
         }
 
     </script>

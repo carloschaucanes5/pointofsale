@@ -27,6 +27,7 @@ class SaleController extends Controller
 {
     public function index(Request $request)
     {
+        $detail = $request->get("detail");
         $searchText = $request->get("searchText");
         $form_payment = $request->get("form_payment");
         $start_date = $request->get("start_date")?$request->get("start_date"):date('Y-m-d');
@@ -46,48 +47,17 @@ class SaleController extends Controller
                         ->where("key","=","payment_methods")
                         ->get()
                         ->first();
-          
-
-                $sales = DB::table("sale as sal")
-                    ->join('payment as pay','pay.sale_id','=','sal.id')
-                    ->join('person as pe', 'pe.id', '=', 'sal.customer_id')
-                    ->join('users as u', 'u.id', '=', 'sal.users_id')
-                    ->whereBetween('sal.created_at', [
-                        $start_date . ' 00:00:00',
-                        $end_date . ' 23:59:59'
-                    ])
-                    ->where('sal.payment_form','like','%'.$form_payment.'%')
-                    ->where('pay.method','like','%'.$payment_method.'%')
-                    ->select(
-                        'sal.id',
-                        'sal.change',
-                        'sal.created_at',
-                        'pe.name as customer_name',
-                        'pe.address as customer_address',
-                        'pe.phone as customer_phone',
-                        'pe.email as customer_email',
-                        'pe.document_type',
-                        'pe.document_number',
-                        'sal.tax',
-                        'sal.sale_total',
-                        'u.name as user_name',
-                        'sal.payment_form',
-                        'pay.method',
-                        'pay.value'
-                    )
-                    ->distinct()
-                    ->orderBy('sal.id', 'desc')
-                    ->paginate(6)
-                    ->appends([
-                        'searchText' => $searchText,
-                        'start_date' => $start_date,
-                        'end_date' => $end_date,
-                        'form_payment'=>$form_payment,
-                        'payment_method'=>$payment_method
-                    ]);
+            
+            $sales = [];
+            if(!$detail){
+                $sales = $this->sale_general($request);
+            }else{
+                $sales = $this->sale_detail($request);
+            }
+            
             
 
-                $sales1 = DB::table("sale as sal")
+                 $sales1 = DB::table("sale as sal")
                     ->join('payment as pay','pay.sale_id','=','sal.id')
                     ->join('person as pe', 'pe.id', '=', 'sal.customer_id')
                     ->join('users as u', 'u.id', '=', 'sal.users_id')
@@ -95,10 +65,8 @@ class SaleController extends Controller
                         $start_date . ' 00:00:00',
                         $end_date . ' 23:59:59'
                     ])
-                    ->where(function($query) use ($searchText) {
-                        $query->Where('u.name','like','%'.$searchText."%")
-                            ->orWhere('pe.name','like','%'.$searchText.'%');
-                    })
+        
+                    ->where('pe.name','like',''.$searchText.'%')
                     ->where('sal.payment_form','like','%'.$form_payment.'%')
                     ->where('pay.method','like','%'.$payment_method.'%')
                     ->select(
@@ -120,13 +88,150 @@ class SaleController extends Controller
                     ->orderBy('sal.id', 'desc')
                     ->get();
 
+                $discount = DB::table('sale as sal')
+                    ->join('sale_detail as sald', 'sal.id', '=', 'sald.sale_id')
+                    ->whereBetween('sal.created_at', [
+                        $start_date . ' 00:00:00',
+                        $end_date . ' 23:59:59'
+                    ])
+                    ->sum('sald.discount');
+
                     $sum_total = 0;
                     foreach($sales1 as $sa){
                         $sum_total =$sum_total + $sa->sale_total;
                     }
 
-            return view('sale.sale.index',['sales'=>$sales,'texto'=>$searchText,'start_date'=>$start_date,'end_date'=>$end_date,'company'=>$company,'logo'=>$logo,'sum_total'=>$sum_total,'form_payment'=>$form_payment,'payment_methods'=>explode(',',$payment_methods->value),'payment_method'=>$payment_method]);
+            if($detail){
+                $detail = true;
+            }else{
+                $detail = false;
+            }
+
+            return view('sale.sale.index',
+            ['sales'=>$sales,'texto'=>$searchText,
+            'start_date'=>$start_date,
+            'end_date'=>$end_date,
+            'company'=>$company,
+            'logo'=>$logo,
+            'sum_total'=>$sum_total,
+            'form_payment'=>$form_payment,
+            'payment_methods'=>explode(',',$payment_methods->value),
+            'payment_method'=>$payment_method,
+            'total_discount'=>$discount,
+            'detail'=>$detail
+            ]);
         }
+    }
+
+    public function sale_general($request){
+        $searchText = $request->get("searchText");
+        $form_payment = $request->get("form_payment");
+        $start_date = $request->get("start_date")?$request->get("start_date"):date('Y-m-d');
+        $end_date = $request->get("end_date")?$request->get("end_date"):date('Y-m-d');
+        $payment_method = $request->get("payment_method");
+
+        $sales = DB::table("sale as sal")
+                    ->join('users as u', 'u.id', '=', 'sal.users_id')
+                    ->join('payment as pay','pay.sale_id','=','sal.id')
+                    ->join('person as pe', 'pe.id', '=', 'sal.customer_id')
+                    ->whereBetween('sal.created_at', [
+                        $start_date . ' 00:00:00',
+                        $end_date . ' 23:59:59'
+                    ])
+                    ->where('sal.payment_form','like','%'.$form_payment.'%')
+                    ->where('pay.method','like','%'.$payment_method.'%')
+                    ->where('pe.name','like',''.$searchText.'%')
+                    ->select(
+                        'sal.id',
+                        'sal.change',
+                        'sal.created_at',
+                        'pe.name as customer_name',
+                        'pe.address as customer_address',
+                        'pe.phone as customer_phone',
+                        'pe.email as customer_email',
+                        'pe.document_type',
+                        'pe.document_number',
+                        'sal.tax',
+                        'sal.sale_total',
+                        'u.name as user_name',
+                        'sal.payment_form',
+                        'pay.method',
+                        'pay.value'
+                    )
+                    ->distinct()
+                    ->orderBy('sal.id', 'desc')
+                    ->paginate(6)
+                    ->appends(
+                        request()->query()
+                        
+                    /*[
+                        'searchText' => $searchText,
+                        'start_date' => $start_date,
+                        'end_date' => $end_date,
+                        'form_payment'=>$form_payment,
+                        'payment_method'=>$payment_method
+                    ]*/);
+        return $sales;
+    }
+
+    public function sale_detail($request){
+        $searchText = $request->get("searchText");
+        $form_payment = $request->get("form_payment");
+        $start_date = $request->get("start_date")?$request->get("start_date"):date('Y-m-d');
+        $end_date = $request->get("end_date")?$request->get("end_date"):date('Y-m-d');
+        $payment_method = $request->get("payment_method");
+
+        $sales = DB::table("sale as sal")
+                    ->join('sale_detail as sald','sal.id','=','sald.sale_id')
+                    ->join('income_detail_historical as idh','sald.income_detail_id','=','idh.income_detail_id')
+                    ->join('product as pro','pro.id','=','idh.product_id')
+                    ->join('users as u', 'u.id', '=', 'sal.users_id')
+                    ->join('person as pe', 'pe.id', '=', 'sal.customer_id')
+                    ->whereBetween('sal.created_at', [
+                        $start_date . ' 00:00:00',
+                        $end_date . ' 23:59:59'
+                    ])
+                    ->where(function ($query) use ($searchText) {
+                            $query->where('pe.name','like','%'.$searchText.'%')
+                                  ->orWhere('pro.name', 'like','%'. $searchText . '%')
+                                  ->orWhere('pro.code', 'like', '%'.$searchText . '%');
+                     })
+                    ->select(
+                        'sal.id',
+                        'sal.change',
+                        'sal.created_at',
+                        'pe.name as customer_name',
+                        'pe.address as customer_address',
+                        'pe.phone as customer_phone',
+                        'pe.email as customer_email',
+                        'pe.document_type',
+                        'pe.document_number',
+                        'sal.tax',
+                        'sal.sale_total',
+                        'u.name as user_name',
+                        'sal.payment_form',
+                        'pro.code',
+                        'pro.name',
+                        'pro.concentration',
+                        'pro.presentation',
+                        'sald.quantity',
+                        'sald.discount',
+                        'idh.sale_price'
+                    )
+                    ->distinct()
+                    ->orderBy('sal.id', 'desc')
+                    ->paginate(6)
+                    ->appends(
+                        request()->query()
+                        
+                    /*[
+                        'searchText' => $searchText,
+                        'start_date' => $start_date,
+                        'end_date' => $end_date,
+                        'form_payment'=>$form_payment,
+                        'payment_method'=>$payment_method
+                    ]*/);
+        return $sales;
     }
 
     /**
