@@ -214,13 +214,6 @@ class VoucherController extends Controller
                      
             }
 
-                   DB::commit();
-                    return response()->json([
-                        'success' => true,
-                        'message' => 'Factura creada correctamente',
-                        'voucher' => $voucher
-                    ], 201);
-           /* 
             //registrar movimientos de caja
             if ($request->hasFile('photo') && $request->file('photo')->isValid()) {
                 $photo = $request->file('photo');
@@ -257,7 +250,7 @@ class VoucherController extends Controller
                     'message' => 'No se ha subido la imagen correctamente. Por favor, inténtelo de nuevo.'
                 ], 500);
                 
-            }*/
+            }
             
         } catch (\Exception $e) {
             DB::rollBack();

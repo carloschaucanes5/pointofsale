@@ -224,13 +224,7 @@ class SaleController extends Controller
                     ->appends(
                         request()->query()
                         
-                    /*[
-                        'searchText' => $searchText,
-                        'start_date' => $start_date,
-                        'end_date' => $end_date,
-                        'form_payment'=>$form_payment,
-                        'payment_method'=>$payment_method
-                    ]*/);
+                 );
         return $sales;
     }
 

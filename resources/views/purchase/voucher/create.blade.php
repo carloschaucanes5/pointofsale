@@ -8,8 +8,7 @@
         <div class="card-header">
             <h3 class="card-title">Nueva Factura</h3>
         </div>
-
-        <form id="voucherForm" class="form">
+        <form id="voucherForm" class="form" enctype="multipart/form-data">
             @csrf
             <div class="card-body">
                 <div class="form-group">
@@ -82,10 +81,12 @@
                     <label for="description">Descripcion</label>
                     <textarea rows="3" class="form-control" name="description" id="description"></textarea>
                 </div>
-
-                <!-- Webcam Section -->
-
                 <div class="form-group" style="display: flex; justify-content: center;flex-direction: column; align-items: center;">
+                    <label for="photo">Foto de la Factura</label>
+                    <input type="file" name="photo" id="photo" >
+                </div>
+                <!-- Webcam Section -->
+                <!--div class="form-group" style="display: flex; justify-content: center;flex-direction: column; align-items: center;">
                     <label for="photo">Foto de la Factura</label>
                     <video id="video" class="col-md-12" width="auto" autoplay></video>
                     <canvas  id="canvas" style="display: none;"></canvas>
@@ -95,7 +96,7 @@
                         <button type="button" class="btn btn-sm btn-info mt-2" id="capture"><i class="bi bi-camera"></i></button>
                         <button type="button" class="btn btn-sm btn-danger mt-2" id="clear_capture"><i class="bi bi-trash"></i></button>
                     </p>
-                </div>
+                </div-->
             </div>
 
             <div class="card-footer">
@@ -198,6 +199,9 @@
         // Convertir canvas a blob
         //canvas.toBlob(function(blob) {
             const photoInput = document.getElementById('photo');
+            if (photoInput.files.length > 0) {
+                formData.append('photo', photoInput.files[0]);
+            }
             //if (blob && photoInput.value == 1) {
                 //formData.append('photo', blob, 'captured.png'); 
                 showSpinner();
