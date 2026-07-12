@@ -83,7 +83,7 @@
                 </div>
                 <div class="form-group" style="display: flex; justify-content: center;flex-direction: column; align-items: center;">
                     <label for="photo">Foto de la Factura</label>
-                    <input type="file" name="photo" id="photo" >
+                    <input type="file" name="photos[]" id="photo" multiple accept="image/*">
                 </div>
                 <!-- Webcam Section -->
                 <!--div class="form-group" style="display: flex; justify-content: center;flex-direction: column; align-items: center;">
@@ -199,8 +199,11 @@
         // Convertir canvas a blob
         //canvas.toBlob(function(blob) {
             const photoInput = document.getElementById('photo');
-            if (photoInput.files.length > 0) {
+            /*if (photoInput.files.length > 0) {
                 formData.append('photo', photoInput.files[0]);
+            }*/
+           for (let i = 0; i < photoInput.files.length; i++) {
+                formData.append('photos[]', photoInput.files[i]);
             }
             //if (blob && photoInput.value == 1) {
                 //formData.append('photo', blob, 'captured.png'); 

@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\URL;
 
+use Illuminate\Support\Facades\View;
 use function Laravel\Prompts\table;
 
 class VoucherController extends Controller
@@ -74,6 +75,32 @@ class VoucherController extends Controller
 
             return view('purchase.voucher.index', ['vouchers' => $vouchers, 'searchText' => $query,'from'=>date('Y-m-d',strtotime($from)),'to'=>date('Y-m-d',strtotime($to))]);
         }
+    }
+
+    public function status(){
+        $datos = DB::table('voucher as vou')
+        ->join('person as per', 'vou.supplier_id', '=', 'per.id')
+        ->join('income as inc', 'vou.id', '=', 'inc.voucher_id')
+        ->join('income_detail_historical as idh', 'idh.income_id', '=', 'inc.id')
+        ->leftJoin('income_detail as incd', 'incd.id', '=', 'idh.income_detail_id')
+        ->join('product as pro', 'pro.id', '=', 'idh.product_id')
+        ->select(
+            'vou.id',
+            'vou.voucher_number',
+            'vou.created_at',
+            'vou.photo',
+            'per.name as supplier',
+            'pro.code',
+            'pro.name',
+            'pro.concentration',
+            'pro.presentation',
+            'pro.laboratory',
+            'idh.quantity as inicial',
+            'incd.quantity as actual'
+        )
+        ->orderByDesc('vou.created_at')
+        ->paginate(10);
+        return View('purchase.voucher.status',['vouchers'=>$datos]);
     }
 
     /**
@@ -215,42 +242,45 @@ class VoucherController extends Controller
             }
 
             //registrar movimientos de caja
-            if ($request->hasFile('photo') && $request->file('photo')->isValid()) {
-                $photo = $request->file('photo');
-                $folder = public_path('images/purchase/voucher');
-                // Crea la carpeta si no existe
-                if (!file_exists($folder)) {
-                    mkdir($folder, 0775, true);
-                }
-                $id = $voucher->id?$voucher->id:$voucher->voucher_number;
-                $name = $id . '.' . $photo->getClientOriginalExtension();
-                // Mueve el archivo al directorio público
-                $movedFile = $photo->move($folder, $name);
-                if($movedFile && file_exists($movedFile->getPathname())){
-                    $voucher->photo = 'images/purchase/voucher/' . $name;
-                    $voucher->save();
-                    DB::commit();
-                    return response()->json([
-                        'success' => true,
-                        'message' => 'Factura creada correctamente',
-                        'voucher' => $voucher
-                    ], 201);
-                } else {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'No existe la ruta de la imagen o no se ha podido mover el archivo.'
-                    ], 500);
-                }       
-            }
-            else
-            {
-                DB::rollBack();
-                return response()->json([
-                    'success' => false,
-                    'message' => 'No se ha subido la imagen correctamente. Por favor, inténtelo de nuevo.'
-                ], 500);
-                
-            }
+
+   if ($request->hasFile('photos')) {
+
+    $folder = public_path('images/purchase/voucher');
+
+    if (!file_exists($folder)) {
+        mkdir($folder, 0775, true);
+    }
+
+    $rutas = [];
+    foreach ($request->file('photos') as $index => $photo) {
+        if ($photo->isValid()) {
+            $extension = $photo->getClientOriginalExtension();
+            $nombre = $voucher->id . "_" . ($index + 1) . "." . $extension;
+
+            $photo->move($folder, $nombre);
+
+            $rutas[] = 'images/purchase/voucher/' . $nombre;
+        }
+    }
+    $voucher->photo = implode(',', $rutas);
+    $voucher->save();
+    DB::commit();
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Factura creada correctamente',
+        'voucher' => $voucher
+    ], 201);
+}
+else
+{
+    DB::rollBack();
+
+    return response()->json([
+        'success' => false,
+        'message' => 'Debe seleccionar al menos una imagen.'
+    ], 500);
+}
             
         } catch (\Exception $e) {
             DB::rollBack();

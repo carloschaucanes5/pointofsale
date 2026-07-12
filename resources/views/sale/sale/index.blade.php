@@ -232,7 +232,7 @@
                         generateInvoice(data.info_sale,data.detail_sale, data.form_payment);
                         const myModal = new bootstrap.Modal(document.getElementById('modal-receipt-invoice'));
                         myModal.show();  
-                    }else {
+                    }else{
                         Swal.fire({
                             title: 'Error',
                             text: 'No se pudo generar la factura, intentalo mas tarde',

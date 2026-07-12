@@ -351,6 +351,12 @@
                                     </a>
                                 </li>
                                 <li class="nav-item ms-3">
+                                    <a href="{{ route('purchase.voucher.status') }}" class="nav-link">
+                                        <i class="bi-hourglass"></i>
+                                        <p>Estado Factura</p>
+                                    </a>
+                                </li>
+                                <li class="nav-item ms-3">
                                     <a href="{{ route('purchase.startinventory') }}" class="nav-link">
                                         <i class="bi bi-eye"></i>
                                         <p>Sobrepedidos</p>

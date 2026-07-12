@@ -798,7 +798,7 @@ async function toinvoice(){
                     }else {
                         Swal.fire({
                             title: 'Error',
-                            text: 'No se pudo facturar, intentalo nuevamente',
+                            text: data.message,
                             icon: 'error',
                             buttons: true,
                             dangerMode: true,
