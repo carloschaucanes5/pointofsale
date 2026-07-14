@@ -17,7 +17,9 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\URL;
 
 use Illuminate\Support\Facades\View;
+use Ramsey\Uuid\Type\Integer;
 use function Laravel\Prompts\table;
+
 
 class VoucherController extends Controller
 {
@@ -25,7 +27,10 @@ class VoucherController extends Controller
      * Display a listing of the resource.
      */
 
-    public function __construct() {}
+    private $drive;
+    public function __construct() {
+        
+    }
 
     public function index(Request $request)
     {
@@ -77,7 +82,17 @@ class VoucherController extends Controller
         }
     }
 
-    public function status(){
+    public function status(Request $request){
+        $texto = trim($request->get('text'));
+        $from = $request->get('from');
+        $to = $request->get('to');
+        if($from == '' && $to == ''){
+            $from = date('Y-m-d 00:00:00');
+            $to = date('Y-m-d 23:59:59');
+        }else{
+            $from = date('Y-m-d 00:00:00',strtotime($from));
+            $to = date('Y-m-d 23:59:59',strtotime($to));
+        }
         $datos = DB::table('voucher as vou')
         ->join('person as per', 'vou.supplier_id', '=', 'per.id')
         ->join('income as inc', 'vou.id', '=', 'inc.voucher_id')
@@ -96,11 +111,25 @@ class VoucherController extends Controller
             'pro.presentation',
             'pro.laboratory',
             'idh.quantity as inicial',
+            'idh.income_detail_id',
             'incd.quantity as actual'
         )
+        ->where(function ($q) use ($texto) {
+            $q->where('vou.voucher_number', 'like', '%' . $texto . '%')
+            ->orWhere('pro.code', 'like', '%' . $texto . '%')
+            ->orWhere('pro.name','like','%'.$texto.'%');
+        })
+        ->whereBetween('vou.created_at',[$from,$to])
         ->orderByDesc('vou.created_at')
-        ->paginate(10);
-        return View('purchase.voucher.status',['vouchers'=>$datos]);
+        ->paginate(10)
+        ->appends([
+            'text'=>$texto,
+            'from' => date('Y-m-d', strtotime($from)),
+            'to'   => date('Y-m-d', strtotime($to))
+        ]);
+
+
+        return View('purchase.voucher.status',['vouchers'=>$datos,'text' => $texto,'from'=>date('Y-m-d',strtotime($from)),'to'=>date('Y-m-d',strtotime($to))]);
     }
 
     /**
@@ -243,44 +272,40 @@ class VoucherController extends Controller
 
             //registrar movimientos de caja
 
-   if ($request->hasFile('photos')) {
+             if ($request->hasFile('photos')) {
+                $folder = public_path('images/purchase/voucher');
+                if (!file_exists($folder)) {
+                    mkdir($folder, 0775, true);
+                }
+                $rutas = [];
+                foreach ($request->file('photos') as $index => $photo) {
+                    if ($photo->isValid()) {
+                        $extension = $photo->getClientOriginalExtension();
+                        $nombre = $voucher->id . "_" . ($index + 1) . "." . $extension;
 
-    $folder = public_path('images/purchase/voucher');
+                        $photo->move($folder, $nombre);
 
-    if (!file_exists($folder)) {
-        mkdir($folder, 0775, true);
-    }
+                        $rutas[] = 'images/purchase/voucher/' . $nombre;
+                    }
+                }
+                $voucher->photo = implode(',', $rutas);
+                $voucher->save();
 
-    $rutas = [];
-    foreach ($request->file('photos') as $index => $photo) {
-        if ($photo->isValid()) {
-            $extension = $photo->getClientOriginalExtension();
-            $nombre = $voucher->id . "_" . ($index + 1) . "." . $extension;
+                DB::commit();
 
-            $photo->move($folder, $nombre);
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Factura creada correctamente',
+                    'voucher' => $voucher
+                ], 201);
+            }
 
-            $rutas[] = 'images/purchase/voucher/' . $nombre;
-        }
-    }
-    $voucher->photo = implode(',', $rutas);
-    $voucher->save();
-    DB::commit();
+            DB::rollBack();
 
-    return response()->json([
-        'success' => true,
-        'message' => 'Factura creada correctamente',
-        'voucher' => $voucher
-    ], 201);
-}
-else
-{
-    DB::rollBack();
-
-    return response()->json([
-        'success' => false,
-        'message' => 'Debe seleccionar al menos una imagen.'
-    ], 500);
-}
+            return response()->json([
+                'success' => false,
+                'message' => 'Debe seleccionar al menos una imagen.'
+            ], 500);
             
         } catch (\Exception $e) {
             DB::rollBack();
@@ -298,6 +323,43 @@ else
     {
         return view('purchase.voucher.show', ['voucher' => Voucher::findOrFail($id)]);
     }
+
+    public function historical_income(Request $request){
+        $income_detail_id = $request->post('income_detail_id');
+        $porVentas = DB::table('sale_detail as sde')
+            ->join('sale as sal', 'sde.sale_id', '=', 'sal.id')
+            ->join('users as us', 'us.id', '=', 'sal.users_id')
+            ->select(
+                'sde.id',
+                'sde.income_detail_id',
+                'sde.quantity',
+                'sde.discount',
+                'sde.sale_price',
+                'us.name',
+                'sal.created_at',
+                
+            )
+            ->where('sde.income_detail_id',  $income_detail_id)
+            ->get();
+       // dd($resultado);
+
+        $porSalidas = DB::table('output as ou')
+            ->join('users as us', 'ou.users_id', '=', 'us.id')
+            ->where('ou.income_detail_id', $income_detail_id)
+            ->select(
+                'ou.income_detail_id',
+                'ou.description',
+                'ou.quantity_out',
+                'us.name',
+                'ou.created_at'
+            )
+            ->get();
+
+        $objeto = new \stdClass();
+        $objeto->sales = $porVentas;
+        $objeto->outs = $porSalidas;
+        return response()->json($objeto);
+    } 
 
     /**
      * Show the form for editing the specified resource.
