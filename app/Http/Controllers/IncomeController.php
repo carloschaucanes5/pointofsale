@@ -33,21 +33,21 @@ class IncomeController extends Controller
 
     public function __construct()
     {
-        
+
     }
 
     public function index(Request $request)
     {
         $from = $request->get('from');
         $to = $request->get('to');
-        if($from == '' && $to == ''){
+        if ($from == '' && $to == '') {
             $from = date('Y-m-d 00:00:00');
             $to = date('Y-m-d 23:59:59');
-        }else{
-            $from = date('Y-m-d 00:00:00',strtotime($from));
-            $to = date('Y-m-d 23:59:59',strtotime($to));
+        } else {
+            $from = date('Y-m-d 00:00:00', strtotime($from));
+            $to = date('Y-m-d 23:59:59', strtotime($to));
         }
-        if($request){
+        if ($request) {
             $query = trim($request->get('searchText'));
             $incomes = DB::table("income as i")
                 ->join("voucher as v", "i.voucher_id", "=", "v.id")
@@ -65,28 +65,28 @@ class IncomeController extends Controller
                 )
                 ->join('income_detail_historical as ide', 'i.id', '=', 'ide.income_id')
                 ->where('i.status', '=', 1)
-                ->where(function($q) use ($query) {
+                ->where(function ($q) use ($query) {
                     $q->where('v.voucher_number', 'like', '%' . $query . '%')
-                      ->orWhere('p.name', 'like', '%' . $query . '%')
-                      ->orWhere('u.name','like','%'.$query.'%');
+                        ->orWhere('p.name', 'like', '%' . $query . '%')
+                        ->orWhere('u.name', 'like', '%' . $query . '%');
                 })
-                ->whereBetween('i.created_at',[date('Y-m-d 00:00:00', strtotime($from)),date('Y-m-d 23:59:59', strtotime($to))])
+                ->whereBetween('i.created_at', [date('Y-m-d 00:00:00', strtotime($from)), date('Y-m-d 23:59:59', strtotime($to))])
                 ->groupBy('i.id', 'i.created_at', 'i.updated_at', 'p.name', 'v.voucher_number', 'v.id', 'u.name')
                 ->orderBy('i.id', 'desc')
                 ->paginate(5)
                 ->appends([
                     'from' => date('Y-m-d', strtotime($from)),
-                    'to'   => date('Y-m-d', strtotime($to))
+                    'to' => date('Y-m-d', strtotime($to))
                 ]);
 
-            return view('purchase.income.index',['incomes'=>$incomes,'texto'=>$query,'from'=>date('Y-m-d',strtotime($from)),'to'=>date('Y-m-d',strtotime($to))]);
+            return view('purchase.income.index', ['incomes' => $incomes, 'texto' => $query, 'from' => date('Y-m-d', strtotime($from)), 'to' => date('Y-m-d', strtotime($to))]);
         }
     }
 
     public function search_product(Request $request, $codeOrName)
     {
         $products = DB::table('product')
-            ->where(function($query) use ($codeOrName) {
+            ->where(function ($query) use ($codeOrName) {
                 $query->where('name', 'like', '%' . $codeOrName . '%')
                     ->orWhere('code', 'like', '%' . $codeOrName . '%');
             })
@@ -103,7 +103,7 @@ class IncomeController extends Controller
     public function search_product_unit(Request $request, $codeOrName)
     {
         $products = DB::table('product')
-            ->where(function($query) use ($codeOrName) {
+            ->where(function ($query) use ($codeOrName) {
                 $query->where('name', 'like', '%' . $codeOrName . '%')
                     ->orWhere('code', 'like', '%' . $codeOrName . '%');
             })
@@ -114,11 +114,12 @@ class IncomeController extends Controller
         return response()->json($products);
     }
 
-    public function search_product_historical1($codeOrName){
+    public function search_product_historical1($codeOrName)
+    {
 
         $information_historical = DB::table('income_detail_historical as idh')
             ->join('product as p', 'idh.product_id', '=', 'p.id')
-            ->select('idh.product_id', 'idh.quantity', 'idh.purchase_price', 'idh.sale_price', 'idh.form_sale', 'idh.expiration_date','idh.created_at','idh.lote','idh.invima')
+            ->select('idh.product_id', 'idh.quantity', 'idh.purchase_price', 'idh.sale_price', 'idh.form_sale', 'idh.expiration_date', 'idh.created_at', 'idh.lote', 'idh.invima')
             ->where('p.code', 'like', '%' . $codeOrName . '%')
             ->orderBy('idh.created_at', 'desc')
             ->limit(6)
@@ -126,33 +127,34 @@ class IncomeController extends Controller
 
         return response()->json($information_historical);
     }
-    public function search_product_historical($codeOrName){
+    public function search_product_historical($codeOrName)
+    {
         $information_historical = DB::table('income_detail_historical as idh')
-        ->join('product as p', 'idh.product_id', '=', 'p.id')
-        ->select(
-            'idh.product_id',
-            'idh.quantity',
-            'idh.purchase_price',
-            'idh.sale_price',
-            'idh.form_sale',
-            'idh.expiration_date',
-            'idh.created_at',
-            'idh.lote',
-            'idh.invima'
-        )
-        ->selectSub(function ($query) {
-            $query->from('income_detail as sub_ide')
-                ->join('income as sub_i','sub_ide.income_id','=','sub_i.id')
-                ->join('voucher as sub_v','sub_i.voucher_id','=','sub_v.id')
-                ->join('person as sub_p','sub_p.id','=','sub_v.supplier_id')
-                ->selectRaw("CONCAT(sub_p.name, ' - ', sub_p.phone)")
-                ->whereColumn('sub_ide.id', 'idh.income_detail_id')
-                ->limit(1);
-        }, 'supplier')
-        ->where('p.code', 'like', '%' . $codeOrName . '%')
-        ->orderBy('idh.created_at', 'desc')
-        ->limit(6)
-        ->get();
+            ->join('product as p', 'idh.product_id', '=', 'p.id')
+            ->select(
+                'idh.product_id',
+                'idh.quantity',
+                'idh.purchase_price',
+                'idh.sale_price',
+                'idh.form_sale',
+                'idh.expiration_date',
+                'idh.created_at',
+                'idh.lote',
+                'idh.invima'
+            )
+            ->selectSub(function ($query) {
+                $query->from('income_detail as sub_ide')
+                    ->join('income as sub_i', 'sub_ide.income_id', '=', 'sub_i.id')
+                    ->join('voucher as sub_v', 'sub_i.voucher_id', '=', 'sub_v.id')
+                    ->join('person as sub_p', 'sub_p.id', '=', 'sub_v.supplier_id')
+                    ->selectRaw("CONCAT(sub_p.name, ' - ', sub_p.phone)")
+                    ->whereColumn('sub_ide.id', 'idh.income_detail_id')
+                    ->limit(1);
+            }, 'supplier')
+            ->where('p.code', 'like', '%' . $codeOrName . '%')
+            ->orderBy('idh.created_at', 'desc')
+            ->limit(6)
+            ->get();
         return response()->json($information_historical);
     }
 
@@ -163,87 +165,100 @@ class IncomeController extends Controller
 
     public function startinventory(Request $request)
     {
-         $config = DB::table('config')
-            ->select('key','value')
-            ->where('key','=','company_nit')
+        $config = DB::table('config')
+            ->select('key', 'value')
+            ->where('key', '=', 'company_nit')
             ->first();
 
-         $vouchers = DB::table("voucher")
-        ->join('person', 'voucher.supplier_id', '=', 'person.id')
-        ->join('users', 'voucher.users_id', '=', 'users.id')
-        ->select(
-            'voucher.id',
-            'voucher.voucher_number',
-            'voucher.description',
-            'voucher.total',
-            'voucher.photo',
-            'voucher.status',
-            'person.document_number',
-            'person.name as supplier_name',
-            'voucher.status_payment',
-            'voucher.updated_at',
-            'users.name as user_name'
-        )
-        ->where('voucher.id','=',1)
-        ->orderBy('voucher.id', 'desc')
-        ->get();
+        $vouchers = DB::table("voucher")
+            ->join('person', 'voucher.supplier_id', '=', 'person.id')
+            ->join('users', 'voucher.users_id', '=', 'users.id')
+            ->select(
+                'voucher.id',
+                'voucher.voucher_number',
+                'voucher.description',
+                'voucher.total',
+                'voucher.photo',
+                'voucher.status',
+                'person.document_number',
+                'person.name as supplier_name',
+                'voucher.status_payment',
+                'voucher.updated_at',
+                'users.name as user_name'
+            )
+            ->where('voucher.id', '=', 1)
+            ->orderBy('voucher.id', 'desc')
+            ->get();
 
         $forms = DB::table("formsale")->get();
-        $persons = DB::table("person")->where('person_type','=','supplier')->get();
+        $persons = DB::table("person")->where('person_type', '=', 'supplier')->get();
         $incomes = Income::all();
         $products = DB::table("product as p")
-                    ->select(DB::raw('CONCAT(p.code," ",p.name) as article'),'p.stock','p.id')
-                    ->where('p.status','=',1)
-                    ->get();
-        return view('purchase.income.startinventory',['persons'=>$persons,'incomes'=>$incomes,'products'=>$products, 'forms'=>$forms, 'vouchers'=>$vouchers]);       
+            ->select(DB::raw('CONCAT(p.code," ",p.name) as article'), 'p.stock', 'p.id')
+            ->where('p.status', '=', 1)
+            ->get();
+        return view('purchase.income.startinventory', ['persons' => $persons, 'incomes' => $incomes, 'products' => $products, 'forms' => $forms, 'vouchers' => $vouchers]);
     }
 
     public function create()
     {
-         $vouchers = DB::table("voucher")
-        ->join('person', 'voucher.supplier_id', '=', 'person.id')
-        ->join('users', 'voucher.users_id', '=', 'users.id')
-        ->select(
-            'voucher.id',
-            'voucher.voucher_number',
-            'voucher.description',
-            'voucher.total',
-            'voucher.photo',
-            'voucher.status',
-            'person.name as supplier_name',
-            'voucher.status_payment',
-            'voucher.updated_at',
-            'users.name as user_name'
-        )
-        ->where('voucher.status', '=', 1)
-        ->orderBy('voucher.id', 'desc')
-        ->get();
+        $vouchers = DB::table("voucher")
+            ->join('person', 'voucher.supplier_id', '=', 'person.id')
+            ->join('users', 'voucher.users_id', '=', 'users.id')
+            ->select(
+                'voucher.id',
+                'voucher.voucher_number',
+                'voucher.description',
+                'voucher.total',
+                'voucher.photo',
+                'voucher.status',
+                'person.name as supplier_name',
+                'voucher.status_payment',
+                'voucher.updated_at',
+                'users.name as user_name'
+            )
+            ->where('voucher.status', '=', 1)
+            ->orderBy('voucher.id', 'desc')
+            ->get();
 
         $forms = DB::table("formsale")->get();
-        $persons = DB::table("person")->where('person_type','=','supplier')->get();
+        $persons = DB::table("person")->where('person_type', '=', 'supplier')->get();
         $incomes = Income::all();
         $products = DB::table("product as p")
-                    ->select(DB::raw('CONCAT(p.code," ",p.name) as article'),'p.stock','p.id')
-                    ->where('p.status','=',1)
-                    ->get();
-        return view('purchase.income.create',['persons'=>$persons,'incomes'=>$incomes,'products'=>$products, 'forms'=>$forms, 'vouchers'=>$vouchers]);            
+            ->select(DB::raw('CONCAT(p.code," ",p.name) as article'), 'p.stock', 'p.id')
+            ->where('p.status', '=', 1)
+            ->get();
+        return view('purchase.income.create', ['persons' => $persons, 'incomes' => $incomes, 'products' => $products, 'forms' => $forms, 'vouchers' => $vouchers]);
     }
 
     /**
      * Store a newly createds resource in storage.
      */
+
+    public function existeVoucher($id)
+    {
+        return Voucher::where('id', $id)->exists();
+    }
+
     public function store(Request $request)
     {
-        try{
-            if(auth()->user()->id){
-                 DB::beginTransaction();
+        try {
+            if (auth()->user()->id) {
+                DB::beginTransaction();
                 $income = new Income();
+                if (!$this->existeVoucher(intval($request->post('voucher_id')))) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'El código de la factura no existe',
+                        'error' => ''
+                    ]);
+                }
                 $income->voucher_id = $request->post('voucher_id');
                 $income->users_id = auth()->user()->id; // Assuming you want to set the current authenticated user
                 $income->tax = 0;
                 $income->status = 1;
                 $income->save();
-                
+
                 $products = $request->post('products');
                 $quantities = $request->post('quantities');
                 $purchase_prices = $request->post('purchase_prices');
@@ -252,9 +267,9 @@ class IncomeController extends Controller
                 $expiration_dates = $request->post('expiration_dates');
                 $lotes = $request->post('lotes');
                 $invimas = $request->post('invimas');
-                
+
                 $cont = 0;
-                while($cont < count($products)){
+                while ($cont < count($products)) {
                     $detail = new IncomeDetail();
                     $detail->income_id = $income->id;
                     $detail->product_id = $products[$cont];
@@ -283,34 +298,32 @@ class IncomeController extends Controller
 
                     $cont = $cont + 1;
                 }
-                    // Update the voucher status to 'A' (active)
-                    $voucher = Voucher::findOrFail($request->post('voucher_id'));
-                    $voucher->status = 0;
-                    $voucher->save();
-        
-                    // Update the product stock
-                    foreach ($products as $index => $productId){
-                        $product = Product::findOrFail($productId);
-                        $product->stock += $quantities[$index];
-                        $product->save();
-                    }
+                // Update the voucher status to 'A' (active)
+                $voucher = Voucher::findOrFail($request->post('voucher_id'));
+                $voucher->status = 0;
+                $voucher->save();
+
+                // Update the product stock
+                foreach ($products as $index => $productId) {
+                    $product = Product::findOrFail($productId);
+                    $product->stock += $quantities[$index];
+                    $product->save();
+                }
                 DB::commit();
                 return response()->json([
-                'message' => 'Factura registrada correctamente.',
-                'success' => true
-            ]);
-            
-            }
-            else
-            {
+                    'message' => 'Factura registrada correctamente.',
+                    'success' => true
+                ]);
+
+            } else {
                 return response()->json([
                     'success' => false,
                     'message' => 'No se ha iniciado sesión, intentalo mas tarde',
                     'error' => ''
                 ]);
             }
-           
-        }catch(Exception $e){
+
+        } catch (Exception $e) {
             DB::rollBack();
             return response()->json([
                 'success' => false,
@@ -318,7 +331,7 @@ class IncomeController extends Controller
                 'error' => $e->getMessage()
             ]);
         }
-        
+
     }
 
     /*public function expiredproducts(Request $request){
@@ -336,29 +349,30 @@ class IncomeController extends Controller
         return view('report.income.expiredproducts',['from'=>date("Y-m-d",strtotime($from)),'to'=>date("Y-m-d",strtotime($to)),'vouchers'=>[]]);
     } */
 
-    
-    public function expiredproducts(Request $request){
+
+    public function expiredproducts(Request $request)
+    {
         //obtener la fecha 4 meses despues de la fecha actual
         $from = $request->get('from');
-        $to =  $request->get('to');
+        $to = $request->get('to');
         $text = $request->get('text');
-        if($from=='' && $to==''){
+        if ($from == '' && $to == '') {
             $from = Carbon::now();
             $to = Carbon::now()->addMonths(4);
         }
 
         $products = DB::table('income_detail as ide')
-                    ->join('product as p','p.id','=','ide.product_id')
-                    ->select('ide.id','ide.quantity','ide.purchase_price','ide.sale_price','ide.expiration_date','p.name','p.concentration','p.presentation','p.laboratory','p.code')
-                    ->whereBetween('ide.expiration_date',[date('Y-m-d',strtotime($from)),date('Y-m-d',strtotime($to))])
-                    ->where(function($query) use ($text) {
-                        $query->where('p.name', 'like', '%' . $text . '%')
-                              ->orWhere('p.code', 'like', '%' . $text . '%');
-                    })
-                    ->orderBy('ide.expiration_date')
-                    ->paginate(6)
-                    ->appends(['from'=>$from,'to'=>$to,'text'=>$text]);
-        return view('report.income.expiredproducts',['from'=>date("Y-m-d",strtotime($from)),'to'=>date("Y-m-d",strtotime($to)),'products'=>$products,'text'=>$text]);
+            ->join('product as p', 'p.id', '=', 'ide.product_id')
+            ->select('ide.id', 'ide.quantity', 'ide.purchase_price', 'ide.sale_price', 'ide.expiration_date', 'p.name', 'p.concentration', 'p.presentation', 'p.laboratory', 'p.code')
+            ->whereBetween('ide.expiration_date', [date('Y-m-d', strtotime($from)), date('Y-m-d', strtotime($to))])
+            ->where(function ($query) use ($text) {
+                $query->where('p.name', 'like', '%' . $text . '%')
+                    ->orWhere('p.code', 'like', '%' . $text . '%');
+            })
+            ->orderBy('ide.expiration_date')
+            ->paginate(6)
+            ->appends(['from' => $from, 'to' => $to, 'text' => $text]);
+        return view('report.income.expiredproducts', ['from' => date("Y-m-d", strtotime($from)), 'to' => date("Y-m-d", strtotime($to)), 'products' => $products, 'text' => $text]);
     }
     /**
      * Display the specified resource.
@@ -366,55 +380,56 @@ class IncomeController extends Controller
     public function show(string $id)
     {
         $income = DB::table("income as i")
-                 ->join("voucher as v","v.id","=","i.voucher_id")
-                 ->join("person as p","p.id","=","v.supplier_id")
-                 ->select("i.id","i.created_at","i.updated_at","p.name","i.tax","i.status","v.voucher_number","v.total")
-                ->selectSub(function($query){
-                    $query->from("users")
-                        ->select("name")
-                        ->whereColumn("users.id","i.users_id")
-                        ->limit(1);
-                        },"users_name")
-                 ->where("i.id","=",$id)
-                 ->orderBy("i.id","desc")
-                 ->first();
+            ->join("voucher as v", "v.id", "=", "i.voucher_id")
+            ->join("person as p", "p.id", "=", "v.supplier_id")
+            ->select("i.id", "i.created_at", "i.updated_at", "p.name", "i.tax", "i.status", "v.voucher_number", "v.total")
+            ->selectSub(function ($query) {
+                $query->from("users")
+                    ->select("name")
+                    ->whereColumn("users.id", "i.users_id")
+                    ->limit(1);
+            }, "users_name")
+            ->where("i.id", "=", $id)
+            ->orderBy("i.id", "desc")
+            ->first();
 
         $details = DB::table("income_detail_historical as d")
-                ->join("product as pro","pro.id","=","d.product_id")
-                ->select("pro.name as article","d.quantity","d.purchase_price","d.sale_price","d.form_sale","d.expiration_date","pro.concentration","pro.presentation","d.lote","d.invima")
-                ->where("d.income_id","=",$id)
-                ->get();
+            ->join("product as pro", "pro.id", "=", "d.product_id")
+            ->select("pro.name as article", "d.quantity", "d.purchase_price", "d.sale_price", "d.form_sale", "d.expiration_date", "pro.concentration", "pro.presentation", "d.lote", "d.invima")
+            ->where("d.income_id", "=", $id)
+            ->get();
 
-        return view("purchase.income.show",["income"=>$income,"details"=>$details,'income_id'=>$id]);
+        return view("purchase.income.show", ["income" => $income, "details" => $details, 'income_id' => $id]);
 
     }
 
-    public function export(String $id){
+    public function export(string $id)
+    {
         $income = DB::table("income as i")
-                 ->join("voucher as v","v.id","=","i.voucher_id")
-                 ->join("person as p","p.id","=","v.supplier_id")
-                 ->select("i.id","i.created_at","i.updated_at","p.name as supplier_name","i.tax","i.status","v.voucher_number","v.total")
-                ->selectSub(function($query){
-                    $query->from("users")
-                        ->select("name")
-                        ->whereColumn("users.id","i.users_id")
-                        ->limit(1);
-                        },"users_name")
-                 ->where("i.id","=",$id)
-                 ->orderBy("i.id","desc")
-                 ->first();
+            ->join("voucher as v", "v.id", "=", "i.voucher_id")
+            ->join("person as p", "p.id", "=", "v.supplier_id")
+            ->select("i.id", "i.created_at", "i.updated_at", "p.name as supplier_name", "i.tax", "i.status", "v.voucher_number", "v.total")
+            ->selectSub(function ($query) {
+                $query->from("users")
+                    ->select("name")
+                    ->whereColumn("users.id", "i.users_id")
+                    ->limit(1);
+            }, "users_name")
+            ->where("i.id", "=", $id)
+            ->orderBy("i.id", "desc")
+            ->first();
 
         $details = DB::table("income_detail_historical as d")
-                ->join("product as pro","pro.id","=","d.product_id")
-                ->select("pro.name as article","d.quantity","d.purchase_price","pro.laboratory","d.sale_price","d.form_sale","d.expiration_date","pro.concentration","pro.presentation","d.lote","d.invima")
-                ->where("d.income_id","=",$id)
-                ->get();
+            ->join("product as pro", "pro.id", "=", "d.product_id")
+            ->select("pro.name as article", "d.quantity", "d.purchase_price", "pro.laboratory", "d.sale_price", "d.form_sale", "d.expiration_date", "pro.concentration", "pro.presentation", "d.lote", "d.invima")
+            ->where("d.income_id", "=", $id)
+            ->get();
 
 
         // 2. Crear hoja de cálculo
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
-        $sheet->mergeCells('B1:W1');
+        $sheet->mergeCells('B1:U1');
         $sheet->setCellValue('B1', 'ACTA DE RECEPCIÓN DE MEDICAMENTOS Y DISPOSITIVOS MEDICOS');
         $sheet->getStyle('B1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
         $sheet->getStyle('B1')->getFont()->setBold(true);
@@ -434,7 +449,7 @@ class IncomeController extends Controller
                 ],
             ],
         ];
-        $sheet->getStyle('B4:' . 'T5')->applyFromArray($borderStyle);
+        $sheet->getStyle('B4:' . 'U5')->applyFromArray($borderStyle);
         $headers = [
             'No.' => null,
             'NOMBRE DEL MEDICAMENTO' => null,
@@ -444,6 +459,7 @@ class IncomeController extends Controller
             'PRESENTACION COMERCIAL' => null,
             'LAB.' => null,
             'REGISTRO DE INVIMA' => null,
+            'ESTADO REGISTRO' => ['INVIMA'],
             'NÚMERO DE LOTE' => null,
             'FECHA DE VENCIMIENTO' => ['AÑO', 'MES'],
             'CONDICIONES ESPECIALES DE ALMACENAMIENTO' => null,
@@ -452,59 +468,59 @@ class IncomeController extends Controller
             'CUMPLE' => ['ACEPTA', 'RECHAZA'],
             'OBSERVACIONES' => null
         ];
-     
+
         $col = 'B'; // Columna inicial
 
-foreach ($headers as $header => $subHeaders) {
+        foreach ($headers as $header => $subHeaders) {
 
-    if (is_array($subHeaders)) {
-        // Encabezado con subcolumnas
-        $lastCol = chr(ord($col) + count($subHeaders) - 1); // Calcula la última columna
-        $sheet->mergeCells($col . '4:' . $lastCol . '4'); // Combinar fila 4 horizontalmente
-        $sheet->setCellValue($col . '4', $header);
+            if (is_array($subHeaders)) {
+                // Encabezado con subcolumnas
+                $lastCol = chr(ord($col) + count($subHeaders) - 1); // Calcula la última columna
+                $sheet->mergeCells($col . '4:' . $lastCol . '4'); // Combinar fila 4 horizontalmente
+                $sheet->setCellValue($col . '4', $header);
 
-        // Subencabezados en fila 5
-        foreach ($subHeaders as $i => $subHeader) {
-            $currentCol = chr(ord($col) + $i);
-            $sheet->setCellValue($currentCol . '5', $subHeader);
+                // Subencabezados en fila 5
+                foreach ($subHeaders as $i => $subHeader) {
+                    $currentCol = chr(ord($col) + $i);
+                    $sheet->setCellValue($currentCol . '5', $subHeader);
 
-            // Estilos subheader
-            $sheet->getStyle($currentCol . '5')->getFont()->setBold(true);
-            $sheet->getStyle($currentCol . '5')->getAlignment()
-                ->setHorizontal(Alignment::HORIZONTAL_CENTER)
-                ->setVertical(Alignment::VERTICAL_CENTER);
+                    // Estilos subheader
+                    $sheet->getStyle($currentCol . '5')->getFont()->setBold(true);
+                    $sheet->getStyle($currentCol . '5')->getAlignment()
+                        ->setHorizontal(Alignment::HORIZONTAL_CENTER)
+                        ->setVertical(Alignment::VERTICAL_CENTER);
 
-            $sheet->getColumnDimension($currentCol)->setAutoSize(true);
+                    $sheet->getColumnDimension($currentCol)->setAutoSize(true);
+                }
+
+                // Estilo del header principal
+                $sheet->getStyle($col . '4:' . $lastCol . '4')->getFont()->setBold(true);
+                $sheet->getStyle($col . '4:' . $lastCol . '4')->getAlignment()
+                    ->setHorizontal(Alignment::HORIZONTAL_CENTER)
+                    ->setVertical(Alignment::VERTICAL_CENTER);
+
+                // Avanzar columnas según subheaders
+                $col = chr(ord($lastCol) + 1);
+
+            } else {
+                // Encabezado simple (combinar verticalmente)
+                $sheet->mergeCells($col . '4:' . $col . '5');
+                $sheet->setCellValue($col . '4', $header);
+
+                $sheet->getStyle($col . '4')->getFont()->setBold(true);
+                $sheet->getStyle($col . '4')->getAlignment()
+                    ->setHorizontal(Alignment::HORIZONTAL_CENTER)
+                    ->setVertical(Alignment::VERTICAL_CENTER);
+
+                $sheet->getColumnDimension($col)->setAutoSize(true);
+
+                $col++;
+            }
         }
-
-        // Estilo del header principal
-            $sheet->getStyle($col . '4:' . $lastCol . '4')->getFont()->setBold(true);
-            $sheet->getStyle($col . '4:' . $lastCol . '4')->getAlignment()
-                ->setHorizontal(Alignment::HORIZONTAL_CENTER)
-                ->setVertical(Alignment::VERTICAL_CENTER);
-
-            // Avanzar columnas según subheaders
-            $col = chr(ord($lastCol) + 1);
-
-        } else {
-            // Encabezado simple (combinar verticalmente)
-            $sheet->mergeCells($col . '4:' . $col . '5');
-            $sheet->setCellValue($col . '4', $header);
-
-            $sheet->getStyle($col . '4')->getFont()->setBold(true);
-            $sheet->getStyle($col . '4')->getAlignment()
-                ->setHorizontal(Alignment::HORIZONTAL_CENTER)
-                ->setVertical(Alignment::VERTICAL_CENTER);
-
-            $sheet->getColumnDimension($col)->setAutoSize(true);
-
-            $col++;
-        }
-    }
 
 
         // 4. Datos
-        $i =1;
+        $i = 1;
         $row = 6;
         foreach ($details as $de) {
             $sheet->setCellValue('B' . $row, $i);
@@ -515,12 +531,12 @@ foreach ($headers as $header => $subHeaders) {
             $sheet->setCellValue('G' . $row, $de->presentation);
             $sheet->setCellValue('H' . $row, $de->laboratory);
             $sheet->setCellValue('I' . $row, $de->invima);
-            $sheet->setCellValue('J' . $row, $de->lote);
-            $sheet->setCellValue('K' . $row, date('Y',strtotime($de->expiration_date)));
-            $sheet->setCellValue('L' . $row, date('m',strtotime($de->expiration_date)));
-            $sheet->setCellValue('M' . $row, 'INFERIOR 30 GR C');
-            $sheet->setCellValue('N' . $row, $de->quantity);
-            $sheet->setCellValue('O' . $row, '');
+            $sheet->setCellValue('J' . $row, '');
+            $sheet->setCellValue('K' . $row, $de->lote);
+            $sheet->setCellValue('L' . $row, date('Y', strtotime($de->expiration_date)));
+            $sheet->setCellValue('M' . $row, date('m', strtotime($de->expiration_date)));
+            $sheet->setCellValue('N' . $row, 'INFERIOR 30 GR C');
+            $sheet->setCellValue('O' . $row, $de->quantity);
             $sheet->setCellValue('P' . $row, '');
             $sheet->setCellValue('Q' . $row, '');
             $sheet->setCellValue('R' . $row, '');
@@ -529,34 +545,35 @@ foreach ($headers as $header => $subHeaders) {
             $sheet->setCellValue('U' . $row, '');
             $sheet->setCellValue('V' . $row, '');
             $sheet->setCellValue('W' . $row, '');
+            $sheet->setCellValue('X' . $row, '');
             $i++;
-            $sheet->getStyle('B'.$row.':' . 'T'.$row)->applyFromArray($borderStyle);
+            $sheet->getStyle('B' . $row . ':' . 'U' . $row)->applyFromArray($borderStyle);
             $row++;
         }
         $row = $row + 2;
 
 
-        $sheet->mergeCells('B'.$row.':F'.$row);
-        $sheet->setCellValue('B'.$row, 'DATOS DEL RESPONSABLE DE LA RECEPCIÓN:');
-        $sheet->getStyle('B'.$row.':' . 'F'.$row)->applyFromArray($borderStyle);
-        $row ++;
-        $sheet->mergeCells('B'.$row.':F'.$row);
-        $sheet->setCellValue('B'.$row, 'FIRMA:');
-        $sheet->getStyle('B'.$row.':' . 'F'.$row)->applyFromArray($borderStyle);
+        $sheet->mergeCells('B' . $row . ':F' . $row);
+        $sheet->setCellValue('B' . $row, 'DATOS DEL RESPONSABLE DE LA RECEPCIÓN:');
+        $sheet->getStyle('B' . $row . ':' . 'F' . $row)->applyFromArray($borderStyle);
+        $row++;
+        $sheet->mergeCells('B' . $row . ':F' . $row);
+        $sheet->setCellValue('B' . $row, 'FIRMA:');
+        $sheet->getStyle('B' . $row . ':' . 'F' . $row)->applyFromArray($borderStyle);
 
-        $row ++;
-        $sheet->mergeCells('B'.$row.':F'.$row);
-        $sheet->setCellValue('B'.$row, 'NOMBRE COMPLETO:');
-        $sheet->getStyle('B'.$row.':' . 'F'.$row)->applyFromArray($borderStyle);
+        $row++;
+        $sheet->mergeCells('B' . $row . ':F' . $row);
+        $sheet->setCellValue('B' . $row, 'NOMBRE COMPLETO:');
+        $sheet->getStyle('B' . $row . ':' . 'F' . $row)->applyFromArray($borderStyle);
 
-        $row ++;
-        $sheet->mergeCells('B'.$row.':F'.$row);
-        $sheet->setCellValue('B'.$row, 'C.C:');
-        $sheet->getStyle('B'.$row.':' . 'F'.$row)->applyFromArray($borderStyle);
+        $row++;
+        $sheet->mergeCells('B' . $row . ':F' . $row);
+        $sheet->setCellValue('B' . $row, 'C.C:');
+        $sheet->getStyle('B' . $row . ':' . 'F' . $row)->applyFromArray($borderStyle);
 
         // 5. Preparar para descarga
         $writer = new Xlsx($spreadsheet);
-        $filename = 'FACTURA_' .$income->voucher_number .'_'.now()->format('Ymd_His') . '.xlsx';
+        $filename = 'FACTURA_' . $income->voucher_number . '_' . now()->format('Ymd_His') . '.xlsx';
 
         return new StreamedResponse(function () use ($writer) {
             $writer->save('php://output');
@@ -566,7 +583,7 @@ foreach ($headers as $header => $subHeaders) {
             "Cache-Control" => "max-age=0",
         ]);
     }
-    
+
 
     /**
      * Show the form for editing the specified resource.
@@ -610,12 +627,12 @@ foreach ($headers as $header => $subHeaders) {
     {
         $mensaje = "";
         try {
-            
+
             //validar si en el historical existe el registro
             $incomeDetailHistorical = IncomeDetailHistorical::where('income_detail_id', $income_detail_id)->first();
-            if ( doubleval($new_price) <= doubleval($incomeDetailHistorical->sale_price)) {  
-                    throw new Exception('El nuevo precio debe ser mayor al precio de venta actual. Si deseas bajarle el precio a un producto, debes contactarte con el administrador del sistema.'); 
-            }else{
+            if (doubleval($new_price) <= doubleval($incomeDetailHistorical->sale_price)) {
+                throw new Exception('El nuevo precio debe ser mayor al precio de venta actual. Si deseas bajarle el precio a un producto, debes contactarte con el administrador del sistema.');
+            } else {
                 $incomeDetail = IncomeDetail::findOrFail($income_detail_id);
                 $incomeDetail->sale_price = $new_price;
                 $incomeDetail->save();

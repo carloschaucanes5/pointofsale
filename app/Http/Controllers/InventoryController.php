@@ -29,14 +29,19 @@ class InventoryController extends Controller
         $incomes_detail = DB::table('product as p')
                     ->join('category as c','p.category_id','=','c.id')
                     ->join('income_detail as ide','p.id','=','ide.product_id')
-                    ->select('ide.id','p.code','p.name','p.stock','p.description','p.image','p.status','c.category','p.presentation','p.concentration','p.laboratory','ide.purchase_price','ide.sale_price','ide.form_sale','ide.expiration_date','ide.quantity')
+                    ->join('income as inco','inco.id','=','ide.income_id')
+                    ->join('voucher as vou','vou.id','=','inco.voucher_id')
+                    ->select('ide.id','p.code','p.name','p.stock','p.description','p.image','p.status','c.category','p.presentation','p.concentration','p.laboratory','ide.purchase_price','ide.sale_price','ide.form_sale','ide.expiration_date','ide.quantity','inco.voucher_id','vou.voucher_number','ide.created_at')
                     ->where(function($query) use ($searchText){
                         $query->where('p.name','like','%'.$searchText.'%')
                               ->orwhere('p.code','like','%'.$searchText.'%');
                     })
                     ->where('ide.quantity','!=',0)
-                    ->orderBy('p.name','asc')
-                    ->paginate(5);
+                    ->orderBy('ide.created_at','desc')
+                    ->paginate(10)
+                    ->appends([
+                        'searchText' => $searchText
+                    ]);;
         return view('store.inventory.index',compact('incomes_detail','searchText'));
     }
 

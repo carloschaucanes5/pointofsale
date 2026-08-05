@@ -61,6 +61,9 @@
                             <th>Costo/U</th>
                             <th>Precio/U</th>
                             <th>Forma Venta</th>
+                            <th>Cod. Factura</th>
+                            <th>Num. Factura</th>
+                            <th>Fecha Ingreso</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -75,6 +78,9 @@
                             <td>${{number_format($incd->purchase_price,2,",",".")}}</td>
                             <td>{{$incd->sale_price}}</td>
                             <td>{{$incd->form_sale}}</td>
+                            <td>{{$incd->voucher_id}}</td>
+                            <td>{{$incd->voucher_number}}</td>
+                            <td>{{$incd->created_at}}</td>
                         </tr>
                         @include('store.inventory.output')
                         @endforeach
