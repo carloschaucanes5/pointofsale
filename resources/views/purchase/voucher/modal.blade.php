@@ -37,11 +37,6 @@
                 <h4 class="modal-title">
                     Factura No. {{$vou->voucher_number}}
                 </h4>
-
-                <button type="button"
-                        class="btn-close"
-                        data-bs-dismiss="modal">
-                </button>
             </div>
 
             <div class="modal-body text-center">

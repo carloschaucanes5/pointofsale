@@ -483,6 +483,30 @@
                                 </li>
                             </ul>
                         </li>
+                        <li class="nav-item">
+                            <a href="#" class="nav-link">
+                                <i class="nav-icon bi bi-gear-fill"></i>
+                                <p>
+                                    Configuración
+                                    <i class="nav-arrow bi bi-chevron-right"></i>
+                                </p>
+                            </a>
+                            <ul class="nav nav-treeview">
+                                <li class="nav-item ms-3">
+                                    <a href="{{route('config.index')}}" class="nav-link">
+                                        <i class="nav-icon bi bi-sliders"></i>
+                                        <p>Parametros</p>
+                                    </a>
+                                </li>
+                                <li class="nav-item ms-3">
+                                    <a href="{{ route('config.backup') }}" class="nav-link">
+                                        <i class="nav-icon bi bi-cloud-arrow-up"></i>
+                                        <p>Copia de Seguridad</p>
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+
                     </ul>
                     <!--end::Sidebar Menu-->
                 </nav>

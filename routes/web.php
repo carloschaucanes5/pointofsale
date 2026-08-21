@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ConfigController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ProductController;
@@ -40,12 +41,12 @@ Route::get('/home', [HomeController::class, 'index'])->name('home');
 
 
 
-Route::middleware(['auth','check.session','role:admin,superadmin,cashier,user'])->group(function() {
-    
+Route::middleware(['auth', 'check.session', 'role:admin,superadmin,cashier,user'])->group(function () {
+
     Route::put('segurity/user/{id}/{person_id?}', [UserController::class, 'update'])->name('user.update');
 
     Route::post('sale/pay_credit}', [SaleController::class, 'pay_credit'])->name('sale.pay_credit');
-  
+
 
     Route::get('sale/cash_close/{id?}', [CashOpeningController::class, 'cash_close'])->name('sale.cash_close');
     Route::post('sale/cash_close/{id?}', [CashOpeningController::class, 'cash_close'])->name('sale.cash_close');
@@ -53,11 +54,11 @@ Route::middleware(['auth','check.session','role:admin,superadmin,cashier,user'])
     Route::get('purchase/income/search_product/{codeOrName}', [IncomeController::class, 'search_product']);
     Route::get('purchase/income/search_product_unit/{codeOrName}', [IncomeController::class, 'search_product_unit']);
     Route::get('purchase/income/search_product_historical/{codeName}', [IncomeController::class, 'search_product_historical']);
-    
+
     Route::get('purchase/income/view_voucher/{voucherId}', [IncomeController::class, 'view_voucher']);
     Route::get('purchase/income/update_sale_price/{income_detail_id}/{new_price}', [IncomeController::class, 'update_sale_price']);
     Route::get('purchase/income/export/{voucherId}', [IncomeController::class, 'export'])->name('purchase.income.export');
-   
+
     Route::get('sale/sale/search_product/{codeName}', [SaleController::class, 'search_product']);
     Route::get('purchase/startinventory', [IncomeController::class, 'startinventory'])->name('purchase.startinventory');
 
@@ -82,6 +83,14 @@ Route::middleware(['auth','check.session','role:admin,superadmin,cashier,user'])
     Route::get('store/inventory/outs', [InventoryController::class, 'get_outs'])->name('store.inventory.outs');
 
 
+    Route::get('/config/exportar', [ConfigController::class, 'exportarBackup'])
+        ->name('config.exportar');
+
+    Route::post('/config/importar', [ConfigController::class, 'importarBackup'])
+        ->name('config.importar');
+
+   Route::get('/config/backup', [ConfigController::class, 'backup'])
+    ->name('config.backup');
 
     Route::resource('store/category', CategoryController::class);
     Route::resource('store/product', ProductController::class);
@@ -95,10 +104,10 @@ Route::middleware(['auth','check.session','role:admin,superadmin,cashier,user'])
     Route::resource('segurity/user', UserController::class);
     Route::resource('sale/cash_opening', CashOpeningController::class);
     Route::resource('movement', MovementController::class);
+    Route::resource('config', ConfigController::class);
 
-    
 
-    });
+});
 
 
 

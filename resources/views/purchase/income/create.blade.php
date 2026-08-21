@@ -699,6 +699,10 @@
                         opcion.selected = true;
                         inputVoucher.add(opcion);
                     }
+
+                    if (result.isDismissed) {
+                        element.checked = false;
+                    }
                 });
             }
 

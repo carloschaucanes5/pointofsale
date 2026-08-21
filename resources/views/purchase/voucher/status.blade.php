@@ -70,9 +70,6 @@
                                     <tr>
                                 </tfoot>
                             </table>                  
-                            <a href="#" class="btn btn-success">
-                                <i class="bi bi-file-earmark-spreadsheet-fill"></i> Exportar
-                            </a>
                         </div>
                     </div>
                 </div>
