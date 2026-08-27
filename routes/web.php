@@ -58,6 +58,9 @@ Route::middleware(['auth', 'check.session', 'role:admin,superadmin,cashier,user'
     Route::get('purchase/income/view_voucher/{voucherId}', [IncomeController::class, 'view_voucher']);
     Route::get('purchase/income/update_sale_price/{income_detail_id}/{new_price}', [IncomeController::class, 'update_sale_price']);
     Route::get('purchase/income/export/{voucherId}', [IncomeController::class, 'export'])->name('purchase.income.export');
+    Route::post('/purchase/income/update_vigencia',[IncomeController::class, 'update_vigencia'])->name('purchase.income.update_vigencia');
+    Route::post('/purchase/income/update_income',[IncomeController::class, 'update_income'])->name('purchase.income.update_income');
+
 
     Route::get('sale/sale/search_product/{codeName}', [SaleController::class, 'search_product']);
     Route::get('purchase/startinventory', [IncomeController::class, 'startinventory'])->name('purchase.startinventory');

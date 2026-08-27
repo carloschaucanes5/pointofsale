@@ -122,7 +122,17 @@
                                     <input type="text" class="form-control" name="invima" id="invima" placeholder="invima">
                                 </div>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label for="validity">Vigencia</label>
+                                    <select name="validity" id="validity" class="form-control">
+                                        @foreach ($vigencias as $vig)
+                                            <option value="{{$vig}}">{{$vig}}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-1">
                                 <div class="form-group">
                                     <label for="btn_add"></label><br />
                                     <button type="button" id="btn_add" onclick="add()"
@@ -151,6 +161,7 @@
                                         <th>F. Venc.</th>
                                         <th>Lote</th>
                                         <th>Invima</th>
+                                        <th>Vigencia</th>
                                     </tr>
                                 </thead>
                                 <tfoot>
@@ -379,6 +390,7 @@
                 document.getElementById('form_sale').value = item1.form_sale;
                 document.getElementById('lote').value = item1.lote;
                 document.getElementById('invima').value = item1.invima;
+                document.getElementById('validity').value = item1.validity;
                 document.getElementById('expiration_date').value = item1.expiration_date;
                 Swal.close();
             }
@@ -505,6 +517,7 @@
                     var expiration_date = document.getElementById('expiration_date').value;
                     var lote = document.getElementById('lote').value;
                     var invima = document.getElementById('invima').value;
+                    var validity = document.getElementById('validity').value;
                     //validar que la fecha de experacion no sea menor a la fecha actual asi viene el formato 2025-06-15
                     if (expiration_date != "" && new Date(expiration_date) <= new Date()) {
                         Swal.fire({
@@ -536,6 +549,7 @@
                                                             <td><input class="form-control" type="hidden" name="expiration_dates[]" value="${expiration_date}">${expiration_date}</td>
                                                             <td><input class="form-control" type="hidden" name="lotes[]" value="${lote}">${lote}</td>
                                                             <td><input class="form-control" type="hidden" name="invimas[]" value="${invima}">${invima}</td>
+                                                            <td><input class="form-control" type="hidden" name="validities[]" value="${validity}">${validity}</td>
                                                         </tr>
                                                     `;
 
@@ -643,6 +657,7 @@
                 document.getElementById('purchase_price').value = "";
                 document.getElementById('sale_price').value = "";
                 document.getElementById('form_sale').value = "";
+                document.getElementById('validity').value = "";
                 document.getElementById('lote').value = "";
                 document.getElementById('invima').value = "";
                 document.getElementById('expiration_date').value = "";

@@ -20,6 +20,7 @@ class IncomeDetailHistorical extends Model
     'product_id',
     'form_sale',
     'lote',
-    'invima'
+    'invima',
+    'validity'
     ];
 }

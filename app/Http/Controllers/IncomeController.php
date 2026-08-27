@@ -22,6 +22,7 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
+use Illuminate\Support\Facades\Validator;
 
 use function PHPUnit\Framework\throwException;
 
@@ -202,6 +203,11 @@ class IncomeController extends Controller
 
     public function create()
     {
+        $vigencias = DB::table('config')
+            ->select('key', 'value')
+            ->where('key', '=', 'validity_invima')
+            ->first()->value;
+
         $vouchers = DB::table("voucher")
             ->join('person', 'voucher.supplier_id', '=', 'person.id')
             ->join('users', 'voucher.users_id', '=', 'users.id')
@@ -228,7 +234,7 @@ class IncomeController extends Controller
             ->select(DB::raw('CONCAT(p.code," ",p.name) as article'), 'p.stock', 'p.id')
             ->where('p.status', '=', 1)
             ->get();
-        return view('purchase.income.create', ['persons' => $persons, 'incomes' => $incomes, 'products' => $products, 'forms' => $forms, 'vouchers' => $vouchers]);
+        return view('purchase.income.create', ['persons' => $persons, 'incomes' => $incomes, 'products' => $products, 'forms' => $forms, 'vouchers' => $vouchers, 'vigencias' => explode(",", $vigencias)]);
     }
 
     /**
@@ -267,6 +273,7 @@ class IncomeController extends Controller
                 $expiration_dates = $request->post('expiration_dates');
                 $lotes = $request->post('lotes');
                 $invimas = $request->post('invimas');
+                $validities = $request->post('validities');
 
                 $cont = 0;
                 while ($cont < count($products)) {
@@ -280,6 +287,7 @@ class IncomeController extends Controller
                     $detail->expiration_date = Carbon::parse($expiration_dates[$cont])->format('Y-m-d');
                     $detail->lote = $lotes[$cont];
                     $detail->invima = $invimas[$cont];
+                    $detail->validity = $validities[$cont];
                     $detail->save();
 
                     $detailhistorical = new IncomeDetailHistorical();
@@ -293,7 +301,7 @@ class IncomeController extends Controller
                     $detailhistorical->expiration_date = Carbon::parse($expiration_dates[$cont])->format('Y-m-d');
                     $detailhistorical->lote = $lotes[$cont];
                     $detailhistorical->invima = $invimas[$cont];
-
+                    $detailhistorical->validity = $validities[$cont];
                     $detailhistorical->save();
 
                     $cont = $cont + 1;
@@ -379,6 +387,13 @@ class IncomeController extends Controller
      */
     public function show(string $id)
     {
+        $vigencias = DB::table('config')
+            ->select('key', 'value')
+            ->where('key', '=', 'validity_invima')
+            ->first()->value;
+
+        $forms = DB::table("formsale")->get();
+
         $income = DB::table("income as i")
             ->join("voucher as v", "v.id", "=", "i.voucher_id")
             ->join("person as p", "p.id", "=", "v.supplier_id")
@@ -395,16 +410,48 @@ class IncomeController extends Controller
 
         $details = DB::table("income_detail_historical as d")
             ->join("product as pro", "pro.id", "=", "d.product_id")
-            ->select("pro.name as article", "d.quantity", "d.purchase_price", "d.sale_price", "d.form_sale", "d.expiration_date", "pro.concentration", "pro.presentation", "d.lote", "d.invima")
+            ->select("pro.id", "pro.name as article", "d.quantity", "d.purchase_price", "d.sale_price", "d.form_sale", "d.expiration_date", "pro.concentration", "pro.presentation", "d.lote", "d.invima", 'd.validity', 'd.income_detail_id')
             ->where("d.income_id", "=", $id)
             ->get();
 
-        return view("purchase.income.show", ["income" => $income, "details" => $details, 'income_id' => $id]);
+        return view("purchase.income.show", ["income" => $income, "details" => $details, 'income_id' => $id, 'vigencias' => explode(',', $vigencias), 'forms' => $forms]);
 
+    }
+
+    public function update_vigencia(Request $request)
+    {
+        $income_detail_id = $request->post('income_detail_id');
+        $vigencia = $request->post('vigencia');
+        $request->validate([
+            'vigencia' => 'required|in:VIGENTE,NO VIGENTE',
+        ]);
+
+        $registro = IncomeDetailHistorical::where("income_detail_id", "=", $income_detail_id)->first();
+        $registro->validity = $request->vigencia;
+        $registro->save();
+
+        $registro = IncomeDetail::findOrFail($income_detail_id);
+        $registro->validity = $request->vigencia;
+        $registro->save();
+        return response()->json([
+            'success' => true,
+            'message' => 'La vigencia se actualizó correctamente.',
+            'vigencia' => $registro->vigencia
+        ]);
     }
 
     public function export(string $id)
     {
+        $nombre_directora_tecnica = DB::table('config')
+            ->select('key', 'value')
+            ->where('key', '=', 'nombre_directora_tecnica')
+            ->first()->value;
+
+        $identificacion_directora_tecnica = DB::table('config')
+            ->select('key', 'value')
+            ->where('key', '=', 'identificacion_directora_tecnica')
+            ->first()->value;
+
         $income = DB::table("income as i")
             ->join("voucher as v", "v.id", "=", "i.voucher_id")
             ->join("person as p", "p.id", "=", "v.supplier_id")
@@ -421,7 +468,7 @@ class IncomeController extends Controller
 
         $details = DB::table("income_detail_historical as d")
             ->join("product as pro", "pro.id", "=", "d.product_id")
-            ->select("pro.name as article", "d.quantity", "d.purchase_price", "pro.laboratory", "d.sale_price", "d.form_sale", "d.expiration_date", "pro.concentration", "pro.presentation", "d.lote", "d.invima")
+            ->select("pro.name as article", "d.quantity", "d.purchase_price", "pro.laboratory", "d.sale_price", "d.form_sale", "d.expiration_date", "pro.concentration", "pro.presentation", "d.lote", "d.invima", "d.validity")
             ->where("d.income_id", "=", $id)
             ->get();
 
@@ -531,7 +578,7 @@ class IncomeController extends Controller
             $sheet->setCellValue('G' . $row, $de->presentation);
             $sheet->setCellValue('H' . $row, $de->laboratory);
             $sheet->setCellValue('I' . $row, $de->invima);
-            $sheet->setCellValue('J' . $row, '');
+            $sheet->setCellValue('J' . $row, $de->validity);
             $sheet->setCellValue('K' . $row, $de->lote);
             $sheet->setCellValue('L' . $row, date('Y', strtotime($de->expiration_date)));
             $sheet->setCellValue('M' . $row, date('m', strtotime($de->expiration_date)));
@@ -554,21 +601,21 @@ class IncomeController extends Controller
 
 
         $sheet->mergeCells('B' . $row . ':F' . $row);
-        $sheet->setCellValue('B' . $row, 'DATOS DEL RESPONSABLE DE LA RECEPCIÓN:');
+        $sheet->setCellValue('B' . $row, 'DATOS DEL RESPONSABLE DE LA RECEPCIÓN:' . $nombre_directora_tecnica);
         $sheet->getStyle('B' . $row . ':' . 'F' . $row)->applyFromArray($borderStyle);
         $row++;
         $sheet->mergeCells('B' . $row . ':F' . $row);
-        $sheet->setCellValue('B' . $row, 'FIRMA:');
-        $sheet->getStyle('B' . $row . ':' . 'F' . $row)->applyFromArray($borderStyle);
-
-        $row++;
-        $sheet->mergeCells('B' . $row . ':F' . $row);
-        $sheet->setCellValue('B' . $row, 'NOMBRE COMPLETO:');
+        $sheet->setCellValue('B' . $row, 'FIRMA:' . $nombre_directora_tecnica);
         $sheet->getStyle('B' . $row . ':' . 'F' . $row)->applyFromArray($borderStyle);
 
         $row++;
         $sheet->mergeCells('B' . $row . ':F' . $row);
-        $sheet->setCellValue('B' . $row, 'C.C:');
+        $sheet->setCellValue('B' . $row, 'NOMBRE COMPLETO:' . $nombre_directora_tecnica);
+        $sheet->getStyle('B' . $row . ':' . 'F' . $row)->applyFromArray($borderStyle);
+
+        $row++;
+        $sheet->mergeCells('B' . $row . ':F' . $row);
+        $sheet->setCellValue('B' . $row, 'C.C:' . $identificacion_directora_tecnica);
         $sheet->getStyle('B' . $row . ':' . 'F' . $row)->applyFromArray($borderStyle);
 
         // 5. Preparar para descarga
@@ -646,6 +693,70 @@ class IncomeController extends Controller
                 'success' => false,
                 'message' => 'Error al actualizar el precio de venta: ' . $e->getMessage()
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    //actualizacion datos entrada
+    public function update_income(Request $request)
+    {
+        try {
+            DB::beginTransaction();
+            $validator = Validator::make($request->all(), [
+                'id' => 'required|integer',
+                'article' => 'required|string',
+                'concentration' => 'nullable|string',
+                'expiration_date' => 'nullable|date',
+                'form_sale' => 'nullable|string',
+                'income_detail_id' => 'nullable|integer',
+                'invima' => 'nullable|string',
+                'lote' => 'nullable|string',
+                'presentation' => 'nullable|string',
+                'vigencia' => 'nullable|string'
+            ]);
+            if ($validator->fails()) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error de validación en los datos ingresados',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+            $data = $validator->validated();
+            $producto = Product::findOrFail($data['id']);
+            $producto->name = $data['article'];
+            $producto->concentration = $data['concentration'];
+            $producto->presentation = $data['presentation'];
+            $producto->save();
+
+            $income_detail = IncomeDetail::findOrFail($data['income_detail_id']);
+            $income_detail->form_sale = $data['form_sale'];
+            $income_detail->expiration_date = $data['expiration_date'];
+            $income_detail->invima = $data['invima'];
+            $income_detail->lote = $data['lote'];
+            $income_detail->validity = $data['vigencia'];
+            $income_detail->update();
+
+            $income_detail_historical = IncomeDetailHistorical::where("income_detail_id","=",$data['income_detail_id'])->first();
+            $income_detail_historical->form_sale = $data['form_sale'];
+            $income_detail_historical->expiration_date = $data['expiration_date'];
+            $income_detail_historical->invima = $data['invima'];
+            $income_detail_historical->lote = $data['lote'];
+            $income_detail_historical->validity = $data['vigencia'];
+            $income_detail_historical->update();
+
+            DB::commit();
+            return response()->json([
+                'message' => 'Registro actualizado correctamente.',
+                'success' => true
+            ]);
+
+        } catch (Exception $err) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al actualizar los datos',
+                'errors' => $err
+            ], 422);
         }
     }
 
