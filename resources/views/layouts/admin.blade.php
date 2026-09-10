@@ -414,6 +414,12 @@
                                         <p>Lista</p>
                                     </a>
                                 </li>
+                                <li class="nav-item ms-3">
+                                    <a href="{{ route('user.task.index') }}" class="nav-link">
+                                        <i class="nav-icon bi bi-list-task"></i>
+                                        <p>Tareas</p>
+                                    </a>
+                                </li>
                             </ul>
                         </li>
                         <li class="nav-item">

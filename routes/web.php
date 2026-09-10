@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ConfigController;
+use App\Http\Controllers\TaskController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ProductController;
@@ -85,7 +86,6 @@ Route::middleware(['auth', 'check.session', 'role:admin,superadmin,cashier,user'
 
     Route::get('store/inventory/outs', [InventoryController::class, 'get_outs'])->name('store.inventory.outs');
 
-
     Route::get('/config/exportar', [ConfigController::class, 'exportarBackup'])
         ->name('config.exportar');
 
@@ -108,8 +108,7 @@ Route::middleware(['auth', 'check.session', 'role:admin,superadmin,cashier,user'
     Route::resource('sale/cash_opening', CashOpeningController::class);
     Route::resource('movement', MovementController::class);
     Route::resource('config', ConfigController::class);
-
-
+    Route::resource('user/task', TaskController::class)->names('user.task');
 });
 
 
