@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\TaskResponse;
 use Exception;
 use Illuminate\Http\Request;
 
@@ -178,7 +179,15 @@ class TaskController extends Controller
             ->first()->value;
 
         $task = Task::findOrFail($id)->first();
-        return view("user.task.edit", ["users" => $users, "tasks" => explode(",", $tasks), "status" => explode(",", $status), "task" => $task]);
+
+        $responses = DB::table('task_responses as tr')
+                     ->join('users as us','us.id','=','tr.user_id')
+                     ->where('task_id',$id)
+                     ->select('tr.id','us.name as username','tr.response','tr.attachment_path','tr.created_at')
+                     ->orderByDesc('tr.created_at')
+                     ->get();
+
+        return view("user.task.edit", ["users" => $users, "tasks" => explode(",", $tasks), "status" => explode(",", $status), "task" => $task,"responses"=>$responses]);
     }
 
     /**

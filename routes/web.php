@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ConfigController;
 use App\Http\Controllers\TaskController;
+use App\Http\Controllers\TaskResponseController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ProductController;
@@ -59,8 +60,8 @@ Route::middleware(['auth', 'check.session', 'role:admin,superadmin,cashier,user'
     Route::get('purchase/income/view_voucher/{voucherId}', [IncomeController::class, 'view_voucher']);
     Route::get('purchase/income/update_sale_price/{income_detail_id}/{new_price}', [IncomeController::class, 'update_sale_price']);
     Route::get('purchase/income/export/{voucherId}', [IncomeController::class, 'export'])->name('purchase.income.export');
-    Route::post('/purchase/income/update_vigencia',[IncomeController::class, 'update_vigencia'])->name('purchase.income.update_vigencia');
-    Route::post('/purchase/income/update_income',[IncomeController::class, 'update_income'])->name('purchase.income.update_income');
+    Route::post('/purchase/income/update_vigencia', [IncomeController::class, 'update_vigencia'])->name('purchase.income.update_vigencia');
+    Route::post('/purchase/income/update_income', [IncomeController::class, 'update_income'])->name('purchase.income.update_income');
 
 
     Route::get('sale/sale/search_product/{codeName}', [SaleController::class, 'search_product']);
@@ -92,8 +93,16 @@ Route::middleware(['auth', 'check.session', 'role:admin,superadmin,cashier,user'
     Route::post('/config/importar', [ConfigController::class, 'importarBackup'])
         ->name('config.importar');
 
-   Route::get('/config/backup', [ConfigController::class, 'backup'])
-    ->name('config.backup');
+    Route::get('/config/backup', [ConfigController::class, 'backup'])
+        ->name('config.backup');
+
+    Route::post('/task/{task_id}/response', [TaskResponseController::class, 'store'])->name('user.task.response.store');
+
+
+    Route::get(
+        '/task-response/download/{id}',
+        [TaskResponseController::class, 'download']
+    )->name('user.task.response.download');
 
     Route::resource('store/category', CategoryController::class);
     Route::resource('store/product', ProductController::class);
@@ -109,6 +118,10 @@ Route::middleware(['auth', 'check.session', 'role:admin,superadmin,cashier,user'
     Route::resource('movement', MovementController::class);
     Route::resource('config', ConfigController::class);
     Route::resource('user/task', TaskController::class)->names('user.task');
+    Route::resource('task/response', TaskResponseController::class);
+
+
+
 });
 
 
