@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\TaskResponse;
+use App\Models\User;
 use Exception;
 use Illuminate\Http\Request;
 
@@ -22,15 +23,16 @@ class TaskController extends Controller
 
     public function index(Request $request)
     {
+        $users = User::where('status', '=', 1)->get();
+        $users_id = auth()->user()->id;
         if ($request) {
             $query = trim($request->get('searchText'));
             $tasks = DB::table('task as ta')
-                ->join('users as us', 'ta.assignee_id', '=', 'us.id')
-                ->leftJoin('users as ua', 'ta.assigner_id', '=', 'ua.id')
-                ->where('us.name', 'like', '%' . $query . '%')
+                ->leftJoin('users as ua', 'ua.id', '=', 'ta.assigner_id')
+                ->leftJoin('users as us', 'us.id', '=', 'ta.assignee_id')
                 ->select(
-                    'us.id as users_id',
-                    'us.name as user_name',
+                    'ta.assignee_id as users_id',
+                    'ua.name as assigner_name',
                     'ta.id as task_id',
                     'ta.name as task_name',
                     'ta.detail',
@@ -39,11 +41,11 @@ class TaskController extends Controller
                     'ta.created_at',
                     'ta.status',
                     'ta.end_at',
-                    'ua.name as assigner_name'
+                    'us.name as assignee_name'
                 )
                 ->orderBy('ta.created_at', 'desc')
                 ->paginate(7);
-            return view('user.task.index', ['tasks' => $tasks, 'searchText' => $query]);
+            return view('user.task.index', ['tasks' => $tasks, 'searchText' => $query, 'users_id' => $users_id, 'users' => $users]);
         }
     }
 
@@ -178,16 +180,16 @@ class TaskController extends Controller
             ->where('key', '=', 'status_task')
             ->first()->value;
 
-        $task = Task::findOrFail($id)->first();
+        $task = Task::findOrFail($id);
 
         $responses = DB::table('task_responses as tr')
-                     ->join('users as us','us.id','=','tr.user_id')
-                     ->where('task_id',$id)
-                     ->select('tr.id','us.name as username','tr.response','tr.attachment_path','tr.created_at')
-                     ->orderByDesc('tr.created_at')
-                     ->get();
+            ->join('users as us', 'us.id', '=', 'tr.user_id')
+            ->where('task_id', $id)
+            ->select('tr.id', 'us.name as username', 'tr.response', 'tr.attachment_path', 'tr.created_at')
+            ->orderByDesc('tr.created_at')
+            ->get();
 
-        return view("user.task.edit", ["users" => $users, "tasks" => explode(",", $tasks), "status" => explode(",", $status), "task" => $task,"responses"=>$responses]);
+        return view("user.task.edit", ["users" => $users, "tasks" => explode(",", $tasks), "status" => explode(",", $status), "task" => $task, "responses" => $responses]);
     }
 
     /**

@@ -3,168 +3,253 @@
 @section('title', 'Crear Factura')
 
 @section('content')
-<div class="col-md-6">
-    <div class="card card-primary">
-        <div class="card-header">
-            <h3 class="card-title">Nueva Factura</h3>
-        </div>
-        <form id="voucherForm" class="form" enctype="multipart/form-data">
-            @csrf
-            <div class="card-body">
-                <div class="form-group">
-                    <label for="supplier_id"><b>Proveedor</b></label>
-                    <select name="supplier_id" id="supplier_id" class="form-control">
-                        @foreach ($suppliers as $per)
-                        <option value="{{$per->id}}-{{$per->name}}">{{$per->name}}</option>   
-                        @endforeach
-                    </select>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card card-primary">
+                <div class="card-header">
+                    <h3 class="card-title">Nueva Factura</h3>
                 </div>
-                <div class="form-group">
-                    <label for="voucher_number"><b>Numero de Factura</b></label>
-                    <input type="text" class="form-control" name="voucher_number" id="voucher_number" required>
-                </div>
-                <div class="form-group">
-                    <label for="status_payment"><b>Estado Pago</b></label>
-                    <select name="status_payment" id="status_payment" class="form-control">
-                        @foreach ($status_payment as $pay)
-                        <option value="{{$pay}}">{{$pay}}</option>   
-                        @endforeach
-                    </select>
-                </div>
-                <div class="mb-3">
-                    <label for="cash_id" class="form-label"><b>Afecta a:</b></label>
-                    <select name="cash_id" id="cash_id" class="form-control" required>
-                        <option value="">Seleccione una caja</option>
-                        @foreach($cashes as $cash)
-                            <option value="{{$cash->id}}">{{$cash->name}}</option>
-                        @endforeach
-                    </select>
-                </div>
-                
-                <div style="background-color:bisque;padding:5%">          
+                <form id="voucherForm" class="form" enctype="multipart/form-data">
+                    @csrf
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="supplier_id"><b>Proveedor</b></label>
+                            <select name="supplier_id" id="supplier_id" class="form-control">
+                                @foreach ($suppliers as $per)
+                                    <option value="{{$per->id}}-{{$per->name}}">{{$per->name}}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="voucher_number"><b>Numero de Factura</b></label>
+                            <input type="text" class="form-control" name="voucher_number" id="voucher_number" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="status_payment"><b>Estado Pago</b></label>
+                            <select name="status_payment" id="status_payment" class="form-control">
+                                @foreach ($status_payment as $pay)
+                                    <option value="{{$pay}}">{{$pay}}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="cash_id" class="form-label"><b>Afecta a:</b></label>
+                            <select name="cash_id" id="cash_id" class="form-control" required>
+                                <option value="">Seleccione una caja</option>
+                                @foreach($cashes as $cash)
+                                    <option value="{{$cash->id}}">{{$cash->name}}</option>
+                                @endforeach
+                            </select>
+                        </div>
 
-                    <div class="form-group">
-                        <div class="row">
-                            <div class="col-md-4">
-                                <label for="payment_method"><b>Medio de Pago</b></label>
-                                <select name="payment_method" id="payment_method" class="form-control">
-                                    @foreach($payment_methods as $method)
-                                        <option value="{{$method}}">{{$method}}</option>
-                                    @endforeach
-                                </select> 
-                            </div>
-                            <div class="col-md-6">
-                                <label></label>
-                                <input type="number" class="form-control"  value="0" min="0" id="payment_value" placeholder="Ingrese valor" />
-                            </div>
-                            <div class="col-md-2">
-                                <label></label><br/>
-                                <button type="button" class="btn btn-primary" onclick="add_payment()"><i class="bi bi-plus-circle"></i></button>
+                        <div style="background-color:bisque;padding:5%">
+
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <label for="payment_method"><b>Medio de Pago</b></label>
+                                        <select name="payment_method" id="payment_method" class="form-control">
+                                            @foreach($payment_methods as $method)
+                                                <option value="{{$method}}">{{$method}}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label></label>
+                                        <input type="number" class="form-control" value="0" min="0" id="payment_value"
+                                            placeholder="Ingrese valor" />
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label></label><br />
+                                        <button type="button" class="btn btn-primary" onclick="add_payment()"><i
+                                                class="bi bi-plus-circle"></i></button>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <table id="table_payments"
+                                        class=" table table-hover mb-1 table-sm table-striped table-hover table-bordered align-middle">
+                                        <thead>
+                                            <th>Medio</th>
+                                            <th>Valor</th>
+                                            <th></th>
+                                        </thead>
+                                        <tbody>
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                         <div class="form-group">
-                            <table id="table_payments" class=" table table-hover mb-1 table-sm table-striped table-hover table-bordered align-middle">
-                                <thead>
-                                    <th>Medio</th><th>Valor</th><th></th>
-                                </thead>
-                                <tbody>
-                                </tbody>
-                            </table>
+                            <label for="total"><b>Valor</b></label>
+                            <input type="number" step="0.001" class="form-control" value="0" readonly name="total"
+                                id="total" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="reception"><b>Para Recepción</b></label>
+                            <select name="reception" id="reception" class="form-control" required>
+                                <option value=""></option>
+                                <option value="1">Si</option>
+                                <option value="0">No</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="description">Descripcion</label>
+                            <textarea rows="3" class="form-control" name="description" id="description"></textarea>
+                        </div>
+                        <div class="form-group"
+                            style="display: flex; justify-content: center;flex-direction: column; align-items: center;">
+                            <label for="photo">Foto de la Factura</label>
+                            <input type="file" name="photos[]" id="photo" multiple accept="image/*">
+                        </div>
+                        <!-- Webcam Section -->
+                        <!--div class="form-group" style="display: flex; justify-content: center;flex-direction: column; align-items: center;">
+                                <label for="photo">Foto de la Factura</label>
+                                <video id="video" class="col-md-12" width="auto" autoplay></video>
+                                <canvas  id="canvas" style="display: none;"></canvas>
+                                <img id="preview" class="img-fluid mt-2" style="display: none;" />
+                                <input type="hidden" name="photo" id="photo" value="0">
+                                <p>
+                                    <button type="button" class="btn btn-sm btn-info mt-2" id="capture"><i class="bi bi-camera"></i></button>
+                                    <button type="button" class="btn btn-sm btn-danger mt-2" id="clear_capture"><i class="bi bi-trash"></i></button>
+                                </p>
+                            </div-->
+                    </div>
+
+                    <div class="card-footer">
+                        <button type="submit" class="btn btn-success me-1 mb-1">Guardar</button>
+                        <button type="reset" class="btn btn-danger me-1 mb-1">Cancelar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <!-- Vista previa a la derecha -->
+        <div class="col-md-6">
+            <div class="card card-info">
+                <div class="card-header">
+                    <h3 class="card-title">Vista previa de imágenes</h3>
+                </div>
+                <div class="card-body">
+                    <div id="preview-images" class="row">
+                        <div class="col-12 text-muted text-center">
+                            No hay imágenes seleccionadas.
                         </div>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label for="total"><b>Valor</b></label>
-                    <input type="number" step="0.001" class="form-control" value="0" readonly name="total" id="total" required>
-                </div>
-                <div class="form-group">
-                    <label for="description">Descripcion</label>
-                    <textarea rows="3" class="form-control" name="description" id="description"></textarea>
-                </div>
-                <div class="form-group" style="display: flex; justify-content: center;flex-direction: column; align-items: center;">
-                    <label for="photo">Foto de la Factura</label>
-                    <input type="file" name="photos[]" id="photo" multiple accept="image/*">
-                </div>
-                <!-- Webcam Section -->
-                <!--div class="form-group" style="display: flex; justify-content: center;flex-direction: column; align-items: center;">
-                    <label for="photo">Foto de la Factura</label>
-                    <video id="video" class="col-md-12" width="auto" autoplay></video>
-                    <canvas  id="canvas" style="display: none;"></canvas>
-                    <img id="preview" class="img-fluid mt-2" style="display: none;" />
-                    <input type="hidden" name="photo" id="photo" value="0">
-                    <p>
-                        <button type="button" class="btn btn-sm btn-info mt-2" id="capture"><i class="bi bi-camera"></i></button>
-                        <button type="button" class="btn btn-sm btn-danger mt-2" id="clear_capture"><i class="bi bi-trash"></i></button>
-                    </p>
-                </div-->
             </div>
-
-            <div class="card-footer">
-                <button type="submit" class="btn btn-success me-1 mb-1">Guardar</button>
-                <button type="reset" class="btn btn-danger me-1 mb-1">Cancelar</button>
-            </div>
-        </form>
+        </div>
     </div>
-</div>
 
-<script>
-    const form = document.getElementById('voucherForm');
-    
-   /* const video = document.getElementById('video');
-    const canvas = document.getElementById('canvas');
-    const preview = document.getElementById('preview');
-    const captureButton = document.getElementById('capture');
-    
+    <script>
 
-    // Iniciar cámara
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false})
-        .then(stream => {
-            video.srcObject = stream;
-        })
-        .catch(err => {
-            console.error("No se pudo acceder a la cámara", err);
+        /*CODIGO*/
+
+        const photoInput = document.getElementById('photo');
+        const previewImages = document.getElementById('preview-images');
+
+        photoInput.addEventListener('change', function () {
+            previewImages.innerHTML = '';
+
+            const files = Array.from(this.files);
+
+            if (files.length === 0) {
+                previewImages.innerHTML = `
+                <div class="col-12 text-muted text-center">
+                    No hay imágenes seleccionadas.
+                </div>`;
+                return;
+            }
+
+            files.forEach((file, index) => {
+                if (!file.type.startsWith('image/')) return;
+
+                const reader = new FileReader();
+
+                reader.onload = function (e) {
+                    const col = document.createElement('div');
+                    col.className = 'col-6 mb-3';
+
+                    col.innerHTML = `
+                    <div class="card h-100">
+                        <img
+                            src="${e.target.result}"
+                            class="card-img-top"
+                            style="height: 160px; object-fit: contain;"
+                            alt="Imagen adjunta ${index + 1}"
+                        >
+                        <div class="card-body p-2 text-center">
+                            <small class="text-muted">
+                                ${file.name}
+                            </small>
+                        </div>
+                    </div>
+                `;
+
+                    previewImages.appendChild(col);
+                };
+
+                reader.readAsDataURL(file);
+            });
         });
 
-    // Limpiar captura
-    document.getElementById('clear_capture').addEventListener('click', () => {
-        const context = canvas.getContext('2d');
-        context.clearRect(0, 0, canvas.width, canvas.height);
-        preview.src = '';
-        preview.style.display = 'none';
-        document.getElementById('photo').value = 0; // Resetear valor de foto
-    });
-    // Capturar foto
-    captureButton.addEventListener('click', () => {
-        const context = canvas.getContext('2d');
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        preview.src = canvas.toDataURL('image/png');
-        preview.style.display = 'block';
-        document.getElementById('photo').value = 1; // Indicar que se ha capturado una foto
-    });
-*/
-    // Enviar formulario con imagen
-    form.addEventListener('submit', function (e) {
-        e.preventDefault();
-        
-        //metodos de pago
+        /*CODIGO*/
+
+        const form = document.getElementById('voucherForm');
+
+        /* const video = document.getElementById('video');
+         const canvas = document.getElementById('canvas');
+         const preview = document.getElementById('preview');
+         const captureButton = document.getElementById('capture');
+
+
+         // Iniciar cámara
+         navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false})
+             .then(stream => {
+                 video.srcObject = stream;
+             })
+             .catch(err => {
+                 console.error("No se pudo acceder a la cámara", err);
+             });
+
+         // Limpiar captura
+         document.getElementById('clear_capture').addEventListener('click', () => {
+             const context = canvas.getContext('2d');
+             context.clearRect(0, 0, canvas.width, canvas.height);
+             preview.src = '';
+             preview.style.display = 'none';
+             document.getElementById('photo').value = 0; // Resetear valor de foto
+         });
+         // Capturar foto
+         captureButton.addEventListener('click', () => {
+             const context = canvas.getContext('2d');
+             canvas.width = video.videoWidth;
+             canvas.height = video.videoHeight;
+             context.drawImage(video, 0, 0, canvas.width, canvas.height);
+             preview.src = canvas.toDataURL('image/png');
+             preview.style.display = 'block';
+             document.getElementById('photo').value = 1; // Indicar que se ha capturado una foto
+         });
+     */
+        // Enviar formulario con imagen
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            //metodos de pago
             const table_payments = document.querySelectorAll("#table_payments tbody tr");
             let methods = [];
             let cc = 0;
             for (let i = 0; i < table_payments.length; i++) {
                 let valorPayment = parseFloat(table_payments[i].children[1].textContent);
                 let methodPayment = table_payments[i].children[0].textContent;
-                if(methodPayment=="credito")cc++;
-                const obj = {method:methodPayment,value:valorPayment};
+                if (methodPayment == "credito") cc++;
+                const obj = { method: methodPayment, value: valorPayment };
                 methods.push(obj);
             }
             //debe haver almenos un metodo de pago cuando el estatus de pago sea credito, los demas metodos pueden ser de otro tipo
-            if(document.getElementById('status_payment').value=="credito"){
-                if(cc==0){
+            if (document.getElementById('status_payment').value == "credito") {
+                if (cc == 0) {
                     Swal.fire({
                         title: 'Error',
-                        text:'Debe haber al menos un método de pago de tipo crédito cuando el estado de pago es crédito',
+                        text: 'Debe haber al menos un método de pago de tipo crédito cuando el estado de pago es crédito',
                         icon: 'error',
                         buttons: true,
                         dangerMode: true,
@@ -172,53 +257,54 @@
                     });
                     return;
                 }
-            }else{
-               if(cc>0){
+            } else {
+                if (cc > 0) {
                     Swal.fire({
                         title: 'Error',
-                        text:'No puede haber métodos de pago de tipo crédito si el estado de pago es contado',
+                        text: 'No puede haber métodos de pago de tipo crédito si el estado de pago es contado',
                         icon: 'error',
                         buttons: true,
                         dangerMode: true,
                         timer: 6000
                     });
                     return;
-               }
+                }
             }
-            
-        
-        //
-        const formData = new FormData();
-        formData.append('voucher_number', document.getElementById('voucher_number').value);
-        formData.append('total', document.getElementById('total').value);
-        formData.append('description', document.getElementById('description').value);
-        formData.append('supplier_id', document.getElementById('supplier_id').value);
-        formData.append('status_payment', document.getElementById('status_payment').value);
-        formData.append('cash_id', document.getElementById('cash_id').value);
-        formData.append('methods',JSON.stringify(methods));
-        // Convertir canvas a blob
-        //canvas.toBlob(function(blob) {
+
+
+            //
+            const formData = new FormData();
+            formData.append('voucher_number', document.getElementById('voucher_number').value);
+            formData.append('total', document.getElementById('total').value);
+            formData.append('description', document.getElementById('description').value);
+            formData.append('supplier_id', document.getElementById('supplier_id').value);
+            formData.append('status_payment', document.getElementById('status_payment').value);
+            formData.append('cash_id', document.getElementById('cash_id').value);
+            formData.append('reception', document.getElementById('reception').value);
+            formData.append('methods', JSON.stringify(methods));
+            // Convertir canvas a blob
+            //canvas.toBlob(function(blob) {
             const photoInput = document.getElementById('photo');
             /*if (photoInput.files.length > 0) {
                 formData.append('photo', photoInput.files[0]);
             }*/
-           for (let i = 0; i < photoInput.files.length; i++) {
+            for (let i = 0; i < photoInput.files.length; i++) {
                 formData.append('photos[]', photoInput.files[i]);
             }
             //if (blob && photoInput.value == 1) {
-                //formData.append('photo', blob, 'captured.png'); 
-                showSpinner();
-                fetch("{{ route('voucher.store') }}", {
-                    method: "POST",
-                    headers: {
-                        'X-CSRF-TOKEN': "{{ csrf_token() }}"
-                    },
-                    body: formData
-                })
+            //formData.append('photo', blob, 'captured.png'); 
+            showSpinner();
+            fetch("{{ route('voucher.store') }}", {
+                method: "POST",
+                headers: {
+                    'X-CSRF-TOKEN': "{{ csrf_token() }}"
+                },
+                body: formData
+            })
                 .then(response => response.json())
                 .then(data => {
                     hideSpinner();
-                    if(data.success) {
+                    if (data.success) {
                         Swal.fire({
                             icon: 'success',
                             title: 'Éxito',
@@ -227,10 +313,10 @@
                         }).then(() => {
                             window.location.href = "{{route('voucher.index')}}";
                         });
-                    }else{
+                    } else {
                         Swal.fire({
                             title: 'Error',
-                            text:data.message,
+                            text: data.message,
                             icon: 'error',
                             buttons: true,
                             dangerMode: true,
@@ -258,27 +344,27 @@
                     document.getElementById('photo').value = 0; // Resetear valor de foto
                 });
             }*/
-        //}, 'image/png');
-    });
+            //}, 'image/png');
+        });
 
-    function add_payment(){
+        function add_payment() {
             //validar si en la tabla ya esta el metodo de pago que seleccionaste para no agregar una segunda ves
             const table_payments = document.querySelectorAll("#table_payments tbody tr");
-            const methodSelected = document.getElementById('payment_method').value; 
+            const methodSelected = document.getElementById('payment_method').value;
             for (let i = 0; i < table_payments.length; i++) {
                 let methodPayment = table_payments[i].children[0].textContent;
-                if(methodPayment==methodSelected){
+                if (methodPayment == methodSelected) {
                     Swal.fire({
-                        title:"Mensaje",
-                        text:"El método de pago ya fue agregado",
-                        icon:"warning"
+                        title: "Mensaje",
+                        text: "El método de pago ya fue agregado",
+                        icon: "warning"
                     })
                     return;
                 }
             }
             const method = document.getElementById('payment_method').value;
             const value = document.getElementById('payment_value').value;
-            if(value.trim()!="" && value!=0){
+            if (value.trim() != "" && value != 0) {
                 const table_payments = document.querySelector("#table_payments tbody");
                 const tr = document.createElement("tr");
                 const td1 = document.createElement("td");
@@ -292,37 +378,36 @@
                 tr.appendChild(td3);
                 table_payments.appendChild(tr);
                 updateTotalChange();
-                document.getElementById('payment_method').value="{{$payment_methods[0]}}";
-                document.getElementById('payment_value').value=0;
+                document.getElementById('payment_method').value = "{{$payment_methods[0]}}";
+                document.getElementById('payment_value').value = 0;
             }
-            else
-            {
+            else {
                 Swal.fire({
-                    title:"Mensaje",
-                    text:"Valor inválido",
-                    icon:"warning"
+                    title: "Mensaje",
+                    text: "Valor inválido",
+                    icon: "warning"
                 })
-            }          
+            }
         }
 
-        function deletePayment(ele){
+        function deletePayment(ele) {
             const tr = ele.closest("tr");
             tr.remove();
             updateTotalChange();
         }
-        
+
         function updateTotalChange() {
             const table_payments = document.querySelectorAll("#table_payments tbody tr");
             let sum_total = 0;
-            if(table_payments.length > 0){
+            if (table_payments.length > 0) {
                 for (let i = 0; i < table_payments.length; i++) {
                     const valorPayment = parseFloat(table_payments[i].children[1].textContent) || 0;
                     sum_total += valorPayment;
-                } 
+                }
                 document.getElementById('total').value = sum_total;
-            }else{
+            } else {
                 document.getElementById('total').value = 0;
             }
         }
-</script>
+    </script>
 @endsection

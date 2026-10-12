@@ -85,6 +85,8 @@ Route::middleware(['auth', 'check.session', 'role:admin,superadmin,cashier,user'
     Route::post('purchase/voucher/historical_income', [VoucherController::class, 'historical_income'])->name('purchase.voucher.historical_income');
     Route::post('purchase/voucher/pay', [VoucherController::class, 'pay'])->name('purchase.voucher.pay');
 
+    Route::post('purchase/voucher/revision-invima',[VoucherController::class, 'asignarRevisionInvima'])->name('purchase.voucher.revision.invima');
+
     Route::get('store/inventory/outs', [InventoryController::class, 'get_outs'])->name('store.inventory.outs');
 
     Route::get('/config/exportar', [ConfigController::class, 'exportarBackup'])
@@ -119,9 +121,6 @@ Route::middleware(['auth', 'check.session', 'role:admin,superadmin,cashier,user'
     Route::resource('config', ConfigController::class);
     Route::resource('user/task', TaskController::class)->names('user.task');
     Route::resource('task/response', TaskResponseController::class);
-
-
-
 });
 
 

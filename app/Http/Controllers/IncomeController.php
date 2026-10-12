@@ -144,13 +144,11 @@ class IncomeController extends Controller
                 'idh.invima'
             )
             ->selectSub(function ($query) {
-                $query->from('income_detail as sub_ide')
-                    ->join('income as sub_i', 'sub_ide.income_id', '=', 'sub_i.id')
-                    ->join('voucher as sub_v', 'sub_i.voucher_id', '=', 'sub_v.id')
-                    ->join('person as sub_p', 'sub_p.id', '=', 'sub_v.supplier_id')
-                    ->selectRaw("CONCAT(sub_p.name, ' - ', sub_p.phone)")
-                    ->whereColumn('sub_ide.id', 'idh.income_detail_id')
-                    ->limit(1);
+                $query->from('voucher as s_vou')
+                    ->join('income as s_inc', 's_inc.voucher_id', '=', 's_vou.id')
+                    ->join('person as s_per', 's_per.id', '=', 's_vou.supplier_id')
+                    ->selectRaw("CONCAT(s_per.name, ' - ', s_per.phone)")
+                    ->whereColumn('s_inc.id', 'idh.income_id');
             }, 'supplier')
             ->where('p.code', 'like', '%' . $codeOrName . '%')
             ->orderBy('idh.created_at', 'desc')
@@ -736,7 +734,7 @@ class IncomeController extends Controller
             $income_detail->validity = $data['vigencia'];
             $income_detail->update();
 
-            $income_detail_historical = IncomeDetailHistorical::where("income_detail_id","=",$data['income_detail_id'])->first();
+            $income_detail_historical = IncomeDetailHistorical::where("income_detail_id", "=", $data['income_detail_id'])->first();
             $income_detail_historical->form_sale = $data['form_sale'];
             $income_detail_historical->expiration_date = $data['expiration_date'];
             $income_detail_historical->invima = $data['invima'];

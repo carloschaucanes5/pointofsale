@@ -31,9 +31,15 @@
                                         <div class="input-group mb-6">
                                             <span class="input-group-text" id="basic-addon1"><i
                                                     class="bi bi-search"></i></span>
-                                            <input type="text" class="form-control" name="searchText"
+                                            <!--input type="text" class="form-control" name="searchText"
                                                 placeholder="Buscar Usuario" value="{{$searchText}}"
-                                                aria-label="campo busqueda" aria-describedby="button-addon2">
+                                                aria-label="campo busqueda" aria-describedby="button-addon2"-->
+                                            <select name="searchText" class="form-control">
+                                                @foreach ($users as $us )
+                                                    <option value="{{ $us->name }}"></option>
+                                                @endforeach
+                                            </select>
+
                                             <button class="btn btn-outline-secondary" type="submit"
                                                 id="button-addon2">Buscar</button>
                                         </div>
@@ -74,12 +80,14 @@
                         @forEach($tasks as $task)
                             <tr>
                                 <td>
-                                    <a href="{{route('user.task.edit',$task->task_id)}}" class="btn btn-warning btn-sm"><i class="bi bi-pen"></i></a>
+                                    @if($users_id == $task->users_id)
+                                        <a href="{{route('user.task.edit',$task->task_id)}}" class="btn btn-warning btn-sm"><i class="bi bi-pen"></i></a>
+                                    @endif
                                     <!--button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#modal-delete-{{$task->task_id}}"><i class="bi bi-trash"></i></button-->
                                 </td>
                                 <td>{{ date('d/m/Y', strtotime($task->created_at)) }}</td>
                                 <td>{{$task->assigner_name}}</td>
-                                <td>{{$task->user_name}}</td>
+                                <td>{{$task->assignee_name}}</td>
                                 <td>{{$task->task_name}}</td>
                                 <td>
                                     @if($task->status == 'ASIGNADA')

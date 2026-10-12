@@ -34,6 +34,10 @@ class VoucherController extends Controller
 
     public function index(Request $request)
     {
+         $users = DB::table("users")
+                  ->where("status","=",1)
+                  ->get();
+
         $from = $request->get('from');
         $to = $request->get('to');
         if($from == '' && $to == ''){
@@ -77,8 +81,8 @@ class VoucherController extends Controller
                     'to'   => date('Y-m-d', strtotime($to))
                 ]);
 
-
-            return view('purchase.voucher.index', ['vouchers' => $vouchers, 'searchText' => $query,'from'=>date('Y-m-d',strtotime($from)),'to'=>date('Y-m-d',strtotime($to))]);
+           
+            return view('purchase.voucher.index', ['vouchers' => $vouchers, 'searchText' => $query,'from'=>date('Y-m-d',strtotime($from)),'to'=>date('Y-m-d',strtotime($to)),'users'=>$users]);
         }
     }
 
@@ -207,6 +211,7 @@ class VoucherController extends Controller
             $voucher->users_id = auth()->user()->id;
             $voucher->status = 1;
             $voucher->photo = '';
+            $voucher->reception = $request->get('reception');
             $voucher->save();
             
 

@@ -72,7 +72,7 @@
                                     Asignó:
                                 </label>
 
-                                <select name="assigner_id" id="assigner_id" class="form-control">
+                                <select name="assigner_id" id="assigner_id" class="form-control" disabled>
 
                                     @foreach ($users as $us)
 
@@ -95,13 +95,13 @@
                                     Responsable:
                                 </label>
 
-                                <select name="assignee_id" id="assignee_id" class="form-control">
+                                <select name="assignee_id" id="assignee_id" class="form-control" disabled>
 
-                                    @foreach ($users as $us)
+                                    @foreach ($users as $use)
 
-                                        <option value="{{ $us->id }}" {{ old('assignee_id', $task->assignee_id) == $us->id ? 'selected' : '' }}>
+                                        <option value="{{ $use->id }}" {{ old('assignee_id', $task->assignee_id) == $use->id ? 'selected' : '' }}>
 
-                                            {{ $us->name }}
+                                            {{ $use->name }}
 
                                         </option>
 
@@ -118,7 +118,7 @@
                                     Tarea:
                                 </label>
 
-                                <select name="name" id="name" class="form-control">
+                                <select name="name" id="name" class="form-control" disabled>
 
                                     @foreach ($tasks as $ta)
 
@@ -141,7 +141,7 @@
                                     Estado:
                                 </label>
 
-                                <select name="status" id="status" class="form-control">
+                                <select name="status" id="status" class="form-control" >
 
                                     @foreach ($status as $st)
 
@@ -166,7 +166,7 @@
 
                                 <input type="date"
                                     value="{{ old('start_at', $task->start_at ? \Carbon\Carbon::parse($task->start_at)->format('Y-m-d') : $fechaInicial) }}"
-                                    class="form-control" name="start_at" id="start_at">
+                                    class="form-control" name="start_at" id="start_at" disabled>
 
                             </div>
 
@@ -179,7 +179,7 @@
 
                                 <input type="date"
                                     value="{{ old('end_at', $task->end_at ? \Carbon\Carbon::parse($task->end_at)->format('Y-m-d') : $fechaFinal) }}"
-                                    class="form-control" name="end_at" id="end_at">
+                                    class="form-control" name="end_at" id="end_at" disabled>
 
                             </div>
 
@@ -191,7 +191,7 @@
                                 </label>
 
                                 <textarea id="detail" class="form-control" name="detail" rows="3"
-                                    placeholder="Ingrese el detalle de la tarea...">{{ old('detail', $task->detail) }}</textarea>
+                                    placeholder="Ingrese el detalle de la tarea..." disabled>{{ old('detail', $task->detail) }}</textarea>
 
                             </div>
 
