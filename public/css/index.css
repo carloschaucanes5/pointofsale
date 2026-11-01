@@ -68,3 +68,49 @@
   unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
 }
 
+/* Ampliar el modal */
+.custom-modal-dialog {
+    width: 95vw;
+    max-width: 1600px;
+    margin: 1rem auto;
+}
+
+/* Aprovechar el espacio disponible */
+#modal-voucher .modal-content {
+    max-height: 95vh;
+}
+
+/* Permitir desplazamiento cuando hay varias imágenes */
+#modal-voucher .modal-body {
+    overflow-y: auto;
+    max-height: calc(95vh - 140px);
+    padding: 20px;
+}
+
+/* Imágenes responsivas */
+#modal-voucher .modal-body img {
+    display: block;
+    max-width: 100%;
+    width: auto;
+    height: auto;
+    max-height: 75vh;
+    object-fit: contain;
+    margin: 0 auto 20px;
+}
+
+/* Ajustes para celulares */
+@media (max-width: 576px) {
+    .custom-modal-dialog {
+        width: 98vw;
+        margin: 0.5rem auto;
+    }
+
+    #modal-voucher .modal-body {
+        padding: 10px;
+        max-height: calc(100vh - 130px);
+    }
+
+    #modal-voucher .modal-body img {
+        max-height: 65vh;
+    }
+}

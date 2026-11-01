@@ -304,7 +304,12 @@
                             let modalBody = document.getElementById('modal-body');
                             let modalTitle = document.getElementById('modal-title');
                             modalTitle.textContent = `Factura: ${data.voucher_number}`;
-                            modalBody.innerHTML = `<img src="${data.photo_url}" class="img-fluid" alt="Voucher">`;
+                            let photos = data.photo_url.split(',');
+                            const urlRaiz = window.location.origin + '/pointofsale/public/';
+                            photos.forEach((fac)=>{
+                                 modalBody.innerHTML += `<img src="${urlRaiz}${fac}" class="img-fluid" alt="Voucher"><br/>`;
+                            });
+                           
                             $('#modal-voucher').modal('show');
                         } else {
                             Swal.fire({ icon: 'error', title: 'Error', text: data.message, });
