@@ -664,7 +664,7 @@ class IncomeController extends Controller
         return response()->json([
             'success' => true,
             'voucher_number' => $voucher->voucher_number,
-            'photo_url' => asset($voucher->photo),
+            'photo_url' => $voucher->photo,
         ]);
     }
 

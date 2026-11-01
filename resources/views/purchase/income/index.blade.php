@@ -101,16 +101,25 @@
         document.querySelectorAll('.btn-view-voucher').forEach(element => {
             let voucherId = element.getAttribute('data-id');
             element.addEventListener('click', function() {
+            let modalBody = document.getElementById('modal-body');
+            let modalTitle = document.getElementById('modal-title');
+            modalBody.innerHTML = '';
+            modalTitle.textContent = '';
                 showSpinner();
                 fetch("{{url('purchase/income/view_voucher')}}/" + encodeURIComponent(voucherId))
                     .then(response => response.json())
                     .then(data => {
+                        
                         hideSpinner();
                         if (data.success) {
-                            let modalBody = document.getElementById('modal-body');
-                            let modalTitle = document.getElementById('modal-title');
                             modalTitle.textContent = `Factura: ${data.voucher_number}`;
-                            modalBody.innerHTML = `<img src="${data.photo_url}" class="img-fluid" alt="Voucher">`;
+                            let photos = data.photo_url.split(",");
+                            const BASE_URL = "{{ url('/') }}";
+                            modalBody.innerHTML = '';
+                            modalTitle.textContent = '';
+                            photos.forEach((url)=>{
+                                modalBody.innerHTML += `<img src="${BASE_URL}/${url}" class="img-fluid" alt="Voucher">`;
+                            });
                             $('#modal-voucher').modal('show');
                         } else {
                             Swal.fire({

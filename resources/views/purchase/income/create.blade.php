@@ -306,6 +306,7 @@
                             modalTitle.textContent = `Factura: ${data.voucher_number}`;
                             let photos = data.photo_url.split(',');
                             const urlRaiz = window.location.origin + '/pointofsale/public/';
+                            modalBody.innerHTML=''; 
                             photos.forEach((fac)=>{
                                  modalBody.innerHTML += `<img src="${urlRaiz}${fac}" class="img-fluid" alt="Voucher"><br/>`;
                             });
