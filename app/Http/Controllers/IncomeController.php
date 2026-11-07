@@ -395,7 +395,7 @@ class IncomeController extends Controller
         $income = DB::table("income as i")
             ->join("voucher as v", "v.id", "=", "i.voucher_id")
             ->join("person as p", "p.id", "=", "v.supplier_id")
-            ->select("i.id", "i.created_at", "i.updated_at", "p.name", "i.tax", "i.status", "v.voucher_number", "v.total")
+            ->select("i.id", "i.created_at", "i.updated_at", "p.name", "i.tax", "i.status", "v.voucher_number", "v.total", "v.reception")
             ->selectSub(function ($query) {
                 $query->from("users")
                     ->select("name")

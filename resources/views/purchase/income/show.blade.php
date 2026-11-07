@@ -16,7 +16,7 @@
                             <p>{{$income->name}}</p>
                         </div>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <div class="form-group">
                             <label for="voucher_number">Número de Comprobante</label>
                             <p>{{$income->voucher_number}}</p>
@@ -28,10 +28,19 @@
                             <p>{{$income->users_name}}</p>
                         </div>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <div class="form-group">
                             <label for="users_id">Valor Factura</label>
                             <p>{{number_format($income->total, 2, ",", ".")}}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            @if ($income->reception == 1)
+                            <p class="alert alert-info" role="alert">Para Recepción</p>
+                            @else
+                             <p class="alert alert-warning" role="alert">Normal</p>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -57,6 +66,7 @@
                             <tbody>
                                 @php
                                     $sum = 0;
+                                    $validity = 0;
                                  @endphp
                                 @foreach($details as $det)
                                     @php
@@ -77,7 +87,10 @@
                                         <td>{{$det->expiration_date}}</td>
                                         <td>{{$det->lote}}</td>
                                         <td>{{$det->invima}}</td>
-                                        @if (!$det->validity)
+                                        @if (!$det->validity || $det->validity == 'NO VIGENTE')
+                                            @php
+                                            $validity++;
+                                            @endphp
                                             <td><button class="btn btn-warning"
                                                     onclick="validar_vigencia({{ $det->income_detail_id }})">Validar</button></td>
                                         @else
@@ -98,9 +111,11 @@
                                 </tr>
                             </tfoot>
                         </table>
+                        @if ($validity==0)
                         <a href="{{ route('purchase.income.export', $income_id) }}" class="btn btn-success">
                             <i class="bi bi-file-earmark-spreadsheet-fill"></i> Exportar
                         </a>
+                        @endif
                     </div>
                 </div>
             </div>

@@ -6,13 +6,14 @@
     <div class="col-md-12">
         <div class="card card-primary">
             <div class="card-header">
-                <h3 class="card-title">Estado Factura</h3><br/>
+                <h3 class="card-title">Estado Factura</h3><br />
             </div>
             <div class="card-body">
-               <div class="row">
+                <div class="row">
                     <form action="{{ route('purchase.voucher.status') }}" method="GET" class="row g-3 mb-4">
                         <div class="col-md-5">
-                            <input type="text" name="text" class="form-control form-control-sm" value="{{ $text }}" placeholder="Buscar producto/code">
+                            <input type="text" name="text" class="form-control form-control-sm" value="{{ $text }}"
+                                placeholder="Buscar producto/code">
                         </div>
                         <div class="col-md-2">
                             <input type="date" name="from" class="form-control form-control-sm" value="{{ $from }}">
@@ -25,60 +26,96 @@
                         </div>
                     </form>
                 </div>
-                    <div class="row">
-                        <div class="col-md-12 table-responsive">
-                            <table class="table table-bordered table-hover table-sm table-striped  small">
-                                <thead class="table-dark">
-                                    <tr>
-                                        <th>Factura</th>
-                                        <th>Fecha</th>
-                                        <th>Proveedor</th>
-                                        <th>Cod</th>
-                                        <th>Producto</th>
-                                        <th>Laboratorio</th>
-                                        <th>C. Inicial</th>
-                                        <th>C. Actual</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach($vouchers as $vou)
-                                    <tr>
-                                        <td><a href="#" data-bs-toggle="modal" data-bs-target="#modal-view-{{$vou->id}}" >{{$vou->voucher_number}}</a></td>
+                <div class="row">
+                    <div class="col-md-12 table-responsive">
+                        <table class="table table-bordered table-hover table-sm   small">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Factura</th>
+                                    <th>Fecha</th>
+                                    <th>Proveedor</th>
+                                    <th>Cod</th>
+                                    <th>Producto</th>
+                                    <th>Laboratorio</th>
+                                    <th>C. Inicial</th>
+                                    <th>C. Actual</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @php
+                                    $facturaAnterior = null;
+                                    $colorFactura = 'table-light';
+                                @endphp
+
+                                @foreach($vouchers as $vou)
+
+                                    @if($facturaAnterior !== $vou->voucher_number)
+                                        @php
+                                            $colorFactura = ($colorFactura == 'table-light')
+                                                ? 'table-secondary'
+                                                : 'table-light';
+
+                                            $facturaAnterior = $vou->voucher_number;
+                                        @endphp
+                                    @endif
+
+                                    <tr class="{{ $colorFactura }}">
+                                        <td>
+                                            <a href="#" data-bs-toggle="modal" data-bs-target="#modal-view-{{$vou->id}}">
+                                                {{$vou->voucher_number}}
+                                            </a>
+                                        </td>
+
                                         <td>{{ \Carbon\Carbon::parse($vou->created_at)->format('d/m/Y')}}</td>
                                         <td>{{$vou->supplier}}</td>
                                         <td>{{$vou->code}}</td>
+
                                         @php
-                                        $nameProduct = $vou->name." ".$vou->concentration." ".$vou->presentation ." ".$vou->laboratory;
-                                        $objProduct = new \stdClass();
-                                        $objProduct->product =  $nameProduct;
-                                        $objProduct->income_detail_id = $vou->income_detail_id;             
+                                            $nameProduct = $vou->name . " " . $vou->concentration . " " . $vou->presentation . " " . $vou->laboratory;
+
+                                            $objProduct = new \stdClass();
+                                            $objProduct->product = $nameProduct;
+                                            $objProduct->income_detail_id = $vou->income_detail_id;
                                         @endphp
+
                                         <td>{{$vou->name}} {{$vou->concentration}} {{$vou->presentation}}</td>
                                         <td>{{$vou->laboratory}}</td>
-                                        <td><a href="#" onclick='historial(@json($objProduct))'>{{$vou->inicial}}</a></td>
-                                        <td>{{$vou->actual}}</td>
+
+                                        @php
+                                        $color = "table-danger";
+                                        if(!$vou->actual || $vou->inicial==0){
+                                            $color = "table-warning";
+                                        }
+                                        @endphp
+                                        <td class="{{$color }}">
+                                            <a href="#" onclick='historial(@json($objProduct))'>
+                                                {{$vou->inicial}}
+                                            </a>
+                                        </td >
+                                        <td class="{{$color }}">{{$vou->actual}}</td>
                                     </tr>
+
                                     @include("purchase.voucher.modal")
-                                    @endforeach
-                                    
-                                </tbody>
-                                <tfoot>
-                                    <tr>
-                                        <td colspan="6">
-                                            {{$vouchers->links()}}
-                                        <td>
-                                    <tr>
-                                </tfoot>
-                            </table>                  
-                        </div>
+
+                                @endforeach
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="6">
+                                        {{$vouchers->links()}}
+                                    <td>
+                                <tr>
+                            </tfoot>
+                        </table>
                     </div>
                 </div>
+            </div>
         </div>
     </div>
 @endsection
 
 <script>
-    function historial(obje){
+    function historial(obje) {
 
         const formData = new FormData();
         formData.append("income_detail_id", obje.income_detail_id);
@@ -89,16 +126,16 @@
             },
             body: formData
         })
-        .then(response => response.json())
-        .then(data => {
-            show_result(data,obje);
-        })
-        .catch(error => {
-            console.error(error);
-        });
+            .then(response => response.json())
+            .then(data => {
+                show_result(data, obje);
+            })
+            .catch(error => {
+                console.error(error);
+            });
     }
-    function show_result(data,ob){
-            let html = `
+    function show_result(data, ob) {
+        let html = `
             <h2>${ob.product}</h2>
             <h3>VENTAS</h3>
             <table class="table table-bordered table-sm">
@@ -131,7 +168,7 @@
             </table>
         `;
 
-         html += `
+        html += `
             <h3>SALIDAS</h3>
             <table class="table table-bordered table-sm">
                 <thead>
